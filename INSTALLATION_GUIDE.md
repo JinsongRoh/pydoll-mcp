@@ -513,7 +513,7 @@ pip index versions pydoll-mcp
 - **Documentation**: [GitHub Wiki](https://github.com/JinsongRoh/pydoll-mcp/wiki)
 - **Issues**: [GitHub Issues](https://github.com/JinsongRoh/pydoll-mcp/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/JinsongRoh/pydoll-mcp/discussions)
-- **Email**: jinsongroh@gmail.com
+- **Email**: enjoydays@gmail.com
 
 ### Useful Resources
 - **PyDoll Documentation**: [autoscrape-labs.github.io/pydoll](https://autoscrape-labs.github.io/pydoll/)
