@@ -1,0 +1,83 @@
+# PyDoll MCP Server - Package Manifest
+# This file specifies which files to include in the distribution package
+
+# Include essential documentation
+include README.md
+include INSTALLATION_GUIDE.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+
+# Include configuration files
+include pyproject.toml
+include setup.py
+include requirements.txt
+include requirements-dev.txt
+
+# Include package metadata
+include pydoll_mcp/py.typed
+include pydoll_mcp/__init__.py
+
+# Include configuration and template files
+recursive-include pydoll_mcp/config *.json *.yaml *.yml
+recursive-include pydoll_mcp/templates *.html *.jinja2
+recursive-include pydoll_mcp/scripts *.js *.css
+recursive-include pydoll_mcp/assets *.png *.jpg *.svg *.ico
+
+# Include test files
+recursive-include tests *.py
+include tests/conftest.py
+include tests/pytest.ini
+
+# Include examples and documentation
+recursive-include examples *.py *.md
+recursive-include docs *.md *.rst *.txt
+
+# Include setup and installation scripts
+recursive-include setup *.bat *.sh *.ps1
+recursive-include scripts *.py *.bat *.sh
+
+# Include CI/CD and development configuration
+include .github/workflows/*.yml
+include .pre-commit-config.yaml
+include .gitignore
+include .dockerignore
+include Dockerfile
+
+# Exclude development and build artifacts
+prune *.egg-info
+prune build
+prune dist
+prune .git
+prune .pytest_cache
+prune .mypy_cache
+prune .ruff_cache
+prune __pycache__
+prune .venv
+prune venv
+prune node_modules
+
+# Exclude IDE and editor files
+global-exclude .DS_Store
+global-exclude Thumbs.db
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude *.so
+global-exclude *.dll
+global-exclude .coverage
+global-exclude .env
+global-exclude .env.local
+
+# Exclude temporary and log files
+global-exclude *.log
+global-exclude *.tmp
+global-exclude *.temp
+global-exclude *.swp
+global-exclude *.swo
+global-exclude *~
+
+# Exclude OS-specific files
+global-exclude .DS_Store
+global-exclude desktop.ini
+global-exclude Thumbs.db
