@@ -1,82 +1,32 @@
-# PyDoll MCP Server - Production Docker Image
-# Multi-stage build for optimized production deployment
+# PyDoll MCP Server - Docker Image
+# Provides a containerized environment for PyDoll browser automation
 
-# Build stage - install dependencies and prepare application
-FROM python:3.11-slim as builder
+# Use official Python runtime as base image
+FROM python:3.11-slim
 
-# Set build arguments
-ARG PYDOLL_VERSION="1.0.0"
-ARG BUILD_DATE
-ARG VCS_REF
+# Set metadata
+LABEL maintainer="Jinsong Roh <jinsongroh@gmail.com>"
+LABEL description="PyDoll MCP Server - Revolutionary Browser Automation for AI"
+LABEL version="1.0.0"
+LABEL org.opencontainers.image.source="https://github.com/JinsongRoh/pydoll-mcp"
 
-# Set environment variables for build
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYDOLL_HEADLESS=true
+ENV PYDOLL_LOG_LEVEL=INFO
+ENV PYDOLL_BROWSER_TYPE=chrome
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies for building
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    # Essential system packages
     curl \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create app user and directories
-RUN groupadd --gid 1000 appuser && \
-    useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
-
-# Set working directory
-WORKDIR /app
-
-# Copy requirements first for better caching
-COPY requirements.txt pyproject.toml ./
-
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY . .
-
-# Install the application
-RUN pip install --no-cache-dir -e .
-
-# Runtime stage - minimal production image
-FROM python:3.11-slim as runtime
-
-# Set metadata labels
-LABEL maintainer="Jinsong Roh <jinsongroh@gmail.com>" \
-      version="$PYDOLL_VERSION" \
-      description="PyDoll MCP Server - Revolutionary Browser Automation for AI" \
-      org.opencontainers.image.title="PyDoll MCP Server" \
-      org.opencontainers.image.description="Revolutionary Model Context Protocol server for PyDoll browser automation" \
-      org.opencontainers.image.version="$PYDOLL_VERSION" \
-      org.opencontainers.image.created="$BUILD_DATE" \
-      org.opencontainers.image.revision="$VCS_REF" \
-      org.opencontainers.image.source="https://github.com/JinsongRoh/pydoll-mcp" \
-      org.opencontainers.image.url="https://github.com/JinsongRoh/pydoll-mcp" \
-      org.opencontainers.image.documentation="https://github.com/JinsongRoh/pydoll-mcp/blob/main/README.md" \
-      org.opencontainers.image.licenses="MIT"
-
-# Set runtime environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYDOLL_LOG_LEVEL=INFO \
-    PYDOLL_BROWSER_TYPE=chrome \
-    PYDOLL_HEADLESS=true \
-    PYDOLL_STEALTH_MODE=true \
-    PYDOLL_AUTO_CAPTCHA_BYPASS=true \
-    PYDOLL_WINDOW_WIDTH=1920 \
-    PYDOLL_WINDOW_HEIGHT=1080 \
-    PYDOLL_DOCKER=true
-
-# Install runtime system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Browser dependencies
     wget \
     gnupg \
-    ca-certificates \
+    unzip \
+    xvfb \
+    # Chrome dependencies
     fonts-liberation \
     libappindicator3-1 \
     libasound2 \
@@ -111,115 +61,113 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender1 \
     libxss1 \
     libxtst6 \
-    lsb-release \
-    xdg-utils \
-    # Utilities
-    curl \
-    unzip \
+    ca-certificates \
+    # Additional utilities
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Google Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends google-chrome-stable && \
-    rm -rf /var/lib/apt/lists/* && \
-    # Verify Chrome installation
-    google-chrome --version
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create app user and directories
-RUN groupadd --gid 1000 appuser && \
-    useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
-
-# Create application directories
-RUN mkdir -p /app /app/logs /app/config /app/data && \
-    chown -R appuser:appuser /app
-
-# Set working directory
+# Create application directory
 WORKDIR /app
 
-# Copy Python environment from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Create non-root user for security
+RUN groupadd -r pydoll && useradd -r -g pydoll -s /bin/bash pydoll \
+    && mkdir -p /home/pydoll \
+    && chown -R pydoll:pydoll /home/pydoll \
+    && chown -R pydoll:pydoll /app
+
+# Copy requirements first for better Docker layer caching
+COPY requirements.txt .
+
+# Upgrade pip and install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY --chown=appuser:appuser . .
+COPY . .
 
-# Create configuration file
-RUN echo '{\
-  "browser": {\
-    "type": "chrome",\
-    "headless": true,\
-    "window_size": [1920, 1080],\
-    "stealth_mode": true\
-  },\
-  "automation": {\
-    "timeout": 30,\
-    "retry_attempts": 3,\
-    "human_behavior": true\
-  },\
-  "captcha": {\
-    "auto_solve": true,\
-    "cloudflare_bypass": true,\
-    "recaptcha_bypass": true\
-  },\
-  "network": {\
-    "monitor_requests": true,\
-    "block_ads": true,\
-    "enable_cache": true\
-  }\
-}' > /app/config/default.json && \
-    chown appuser:appuser /app/config/default.json
+# Install PyDoll MCP Server
+RUN pip install --no-cache-dir -e .
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/screenshots /app/downloads /app/config \
+    && chown -R pydoll:pydoll /app
+
+# Create Chrome user data directory
+RUN mkdir -p /home/pydoll/.config/google-chrome \
+    && chown -R pydoll:pydoll /home/pydoll/.config
 
 # Switch to non-root user
-USER appuser
+USER pydoll
 
-# Create entrypoint script
+# Set up Chrome for non-root user
+RUN google-chrome --version
+
+# Create startup script
 RUN echo '#!/bin/bash\n\
 set -e\n\
 \n\
-# Print banner\n\
-echo "🤖 PyDoll MCP Server v$(python -c \"import pydoll_mcp; print(pydoll_mcp.__version__)\")"\n\
-echo "Revolutionary Browser Automation for AI"\n\
-echo "========================================"\n\
+# Set up display for headless mode\n\
+export DISPLAY=:99\n\
 \n\
-# Verify installation\n\
-echo "Verifying installation..."\n\
-python -m pydoll_mcp.server --test || {\n\
-    echo "❌ Installation verification failed"\n\
-    exit 1\n\
-}\n\
-echo "✅ Installation verified successfully"\n\
+# Start Xvfb in background if not headless\n\
+if [ "$PYDOLL_HEADLESS" != "true" ]; then\n\
+    Xvfb :99 -screen 0 1920x1080x24 &\n\
+    sleep 2\n\
+fi\n\
 \n\
-# Check browser availability\n\
-echo "Checking browser availability..."\n\
-google-chrome --version\n\
-echo "✅ Google Chrome is available"\n\
-\n\
-# Start the server\n\
-echo "Starting PyDoll MCP Server..."\n\
+# Run PyDoll MCP Server\n\
 exec python -m pydoll_mcp.server "$@"\n\
-' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+' > /app/entrypoint.sh \
+    && chmod +x /app/entrypoint.sh
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -m pydoll_mcp.server --test || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import pydoll_mcp; print('OK')" || exit 1
 
-# Expose port (if needed for future web interface)
+# Expose port for HTTP communication (if needed)
 EXPOSE 8080
 
 # Set entrypoint
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Default command
-CMD ["--log-level", "INFO"]
+CMD []
 
-# Build information
-ARG BUILD_INFO="Built with Docker multi-stage build"
-ENV BUILD_INFO="$BUILD_INFO"
-
-# Add build information
-RUN echo "Build Date: $BUILD_DATE" > /app/BUILD_INFO && \
-    echo "VCS Ref: $VCS_REF" >> /app/BUILD_INFO && \
-    echo "Version: $PYDOLL_VERSION" >> /app/BUILD_INFO && \
-    echo "$BUILD_INFO" >> /app/BUILD_INFO
+# Build instructions and usage examples
+# 
+# Build the image:
+#   docker build -t pydoll-mcp:latest .
+#
+# Run the container:
+#   docker run -d --name pydoll-mcp-server \
+#     -p 8080:8080 \
+#     -v $(pwd)/config:/app/config \
+#     -v $(pwd)/logs:/app/logs \
+#     -v $(pwd)/screenshots:/app/screenshots \
+#     -v $(pwd)/downloads:/app/downloads \
+#     pydoll-mcp:latest
+#
+# Run with custom environment:
+#   docker run -d --name pydoll-mcp-server \
+#     -e PYDOLL_HEADLESS=false \
+#     -e PYDOLL_LOG_LEVEL=DEBUG \
+#     -e PYDOLL_BROWSER_TYPE=chrome \
+#     --shm-size=2g \
+#     pydoll-mcp:latest
+#
+# Run interactive test:
+#   docker run -it --rm pydoll-mcp:latest python -m pydoll_mcp.cli test
+#
+# For GUI applications (Linux with X11):
+#   docker run -d --name pydoll-mcp-server \
+#     -e DISPLAY=$DISPLAY \
+#     -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+#     -e PYDOLL_HEADLESS=false \
+#     pydoll-mcp:latest
