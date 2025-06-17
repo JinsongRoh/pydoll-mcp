@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.0
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.1
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,7 +20,7 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.1.0-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.1.1-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
@@ -41,7 +41,8 @@ PyDoll MCP Server brings the groundbreaking capabilities of PyDoll to Claude, Op
 - **⚡ Native Async Architecture**: Lightning-fast concurrent automation
 - **🕵️ Advanced Stealth Mode**: Anti-detection techniques that make automation invisible
 - **🌐 Real-time Network Control**: Intercept, modify, and analyze all web traffic
-- **🔧 One-Click Setup**: NEW! Automatic Claude Desktop configuration
+- **🔧 One-Click Setup**: Automatic Claude Desktop configuration
+- **🌍 Universal Compatibility**: Works on all systems including Korean Windows (NEW in v1.1.1!)
 
 ## 📋 What Can You Do?
 
@@ -494,6 +495,31 @@ python -m pydoll_mcp.cli status --logs
 python -m pydoll_mcp.cli generate-config
 ```
 
+#### Encoding Issues (Korean Windows / International Systems) - NEW in v1.1.1!
+```bash
+# For Korean Windows systems with cp949 encoding
+set PYTHONIOENCODING=utf-8
+python -m pydoll_mcp.server
+
+# Alternative: Use command prompt with UTF-8
+chcp 65001
+python -m pydoll_mcp.server
+
+# Permanent solution: Add to Claude Desktop config
+{
+  "mcpServers": {
+    "pydoll": {
+      "command": "python",
+      "args": ["-m", "pydoll_mcp.server"],
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYDOLL_LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}
+```
+
 #### Configuration Issues
 ```bash
 # Re-run setup
@@ -529,21 +555,31 @@ PyDoll MCP Server provides significant advantages over traditional automation:
 | Speed | 3x faster | Baseline |
 | Reliability | 99%+ | 80-85% |
 
-## 🆕 What's New in v1.1.0
+## 🆕 What's New
 
-### 🔧 One-Click Setup
+### v1.1.1 (Latest)
+
+#### 🐛 Critical Bug Fixes
+- **Fixed Korean Windows Issue**: Resolved `UnicodeEncodeError` that prevented server startup on Korean Windows systems
+- **Enhanced Encoding Support**: Added comprehensive encoding detection and fallback mechanisms
+- **International Compatibility**: Improved support for all non-English Windows environments
+- **Automatic Recovery**: Added robust error recovery for encoding-related failures
+
+### v1.1.0
+
+#### 🔧 One-Click Setup
 - **Auto-configuration**: Automatic Claude Desktop setup during pip installation
 - **Smart detection**: Automatic detection of Claude Desktop config paths
 - **Safe merging**: Intelligent merging with existing configurations
 - **Backup protection**: Automatic backup of existing configurations
 
-### 🚀 Enhanced CLI
+#### 🚀 Enhanced CLI
 - **New Commands**: `auto-setup`, `setup-claude`, `quick-start`
 - **Interactive guides**: Step-by-step setup assistance
 - **Better diagnostics**: Enhanced testing and status reporting
 - **Cross-platform**: Improved Windows, macOS, and Linux support
 
-### 🛠️ Developer Experience
+#### 🛠️ Developer Experience
 - **Post-install hooks**: Automatic setup prompts after installation
 - **Multiple entry points**: Various ways to access setup functionality
 - **Better error handling**: More helpful error messages and recovery suggestions
