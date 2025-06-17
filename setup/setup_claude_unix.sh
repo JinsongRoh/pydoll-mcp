@@ -79,12 +79,12 @@ else
     PYTHON_CMD="python3"
 fi
 
-PYTHON_VERSION=$($PYTHON_CMD --version 2>&1)
+PYTHON_VERSION=$(${PYTHON_CMD} --version 2>&1)
 log_success "Found Python: $PYTHON_VERSION"
 
 # Check Python version
-PYTHON_MAJOR=$($PYTHON_CMD -c "import sys; print(sys.version_info.major)")
-PYTHON_MINOR=$($PYTHON_CMD -c "import sys; print(sys.version_info.minor)")
+PYTHON_MAJOR=$(${PYTHON_CMD} -c "import sys; print(sys.version_info.major)")
+PYTHON_MINOR=$(${PYTHON_CMD} -c "import sys; print(sys.version_info.minor)")
 
 if [[ $PYTHON_MAJOR -lt 3 ]] || [[ $PYTHON_MAJOR -eq 3 && $PYTHON_MINOR -lt 8 ]]; then
     log_error "Python 3.8+ is required. Found: $PYTHON_VERSION"
@@ -107,7 +107,7 @@ else
     PIP_CMD="pip3"
 fi
 
-PIP_VERSION=$($PIP_CMD --version 2>&1)
+PIP_VERSION=$(${PIP_CMD} --version 2>&1)
 log_success "Found pip: $PIP_VERSION"
 
 # Step 3: Install PyDoll MCP Server

@@ -107,7 +107,7 @@ check_python() {
     fi
     
     # Check Python version
-    PYTHON_VERSION=$($PYTHON_CMD --version 2>&1 | cut -d' ' -f2)
+    PYTHON_VERSION=$(${PYTHON_CMD} --version 2>&1 | cut -d' ' -f2)
     PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
     PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d'.' -f2)
     
@@ -139,7 +139,7 @@ check_pip() {
                     sudo dnf install python3-pip
                     ;;
                 "macos")
-                    $PYTHON_CMD -m ensurepip --upgrade
+                    ${PYTHON_CMD} -m ensurepip --upgrade
                     ;;
                 *)
                     print_error "Please install pip manually"
@@ -163,7 +163,7 @@ install_pydoll_mcp() {
     
     # Upgrade pip first
     echo "Upgrading pip..."
-    $PYTHON_CMD -m pip install --upgrade pip
+    ${PYTHON_CMD} -m pip install --upgrade pip
     
     # Install PyDoll MCP Server
     echo "Installing PyDoll MCP Server..."
@@ -189,7 +189,7 @@ install_pydoll_mcp() {
 test_installation() {
     print_step "🧪 Testing installation..."
     
-    if ! $PYTHON_CMD -c "import pydoll_mcp; print('Import successful')" &> /dev/null; then
+    if ! ${PYTHON_CMD} -c "import pydoll_mcp; print('Import successful')" &> /dev/null; then
         print_error "Installation test failed"
         echo "Try running: $PIP_CMD install --force-reinstall pydoll-mcp"
         exit 1
@@ -318,7 +318,7 @@ EOF
 run_tests() {
     print_step "🔍 Running comprehensive test..."
     
-    if ! $PYTHON_CMD -m pydoll_mcp.cli test; then
+    if ! ${PYTHON_CMD} -m pydoll_mcp.cli test; then
         echo ""
         print_warning "Some tests failed, but installation completed"
         echo "Check the test results above for any issues"
@@ -339,7 +339,7 @@ create_launcher() {
     cat > "$LAUNCHER_FILE" << EOF
 #!/bin/bash
 # PyDoll MCP Server Test Launcher
-$PYTHON_CMD -m pydoll_mcp.cli test --browser
+${PYTHON_CMD} -m pydoll_mcp.cli test --browser
 EOF
     
     chmod +x "$LAUNCHER_FILE"
