@@ -10,6 +10,8 @@ import sys
 from pathlib import Path
 
 from setuptools import find_packages, setup
+from setuptools.command.install import install
+from setuptools.command.develop import develop
 
 # Ensure Python version compatibility
 if sys.version_info < (3, 8):
@@ -21,7 +23,7 @@ if sys.version_info < (3, 8):
 here = Path(__file__).parent
 init_file = here / "pydoll_mcp" / "__init__.py"
 
-version = "1.0.0"
+version = "1.1.0"
 if init_file.exists():
     with open(init_file, "r", encoding="utf-8") as f:
         for line in f:
@@ -85,6 +87,46 @@ test_requirements = [
     "aioresponses>=0.7.0",
 ]
 
+
+class PostInstallCommand(install):
+    """Post-installation for production installation mode."""
+    
+    def run(self):
+        install.run(self)
+        self.post_install()
+    
+    def post_install(self):
+        """Run post-installation setup."""
+        try:
+            # Only run in interactive mode and if not in CI/CD
+            if (sys.stdin.isatty() and 
+                not os.environ.get('CI') and 
+                not os.environ.get('GITHUB_ACTIONS') and
+                not os.environ.get('READTHEDOCS')):
+                
+                print("\n🤖 Setting up PyDoll MCP Server...")
+                
+                # Import and run post-install setup
+                try:
+                    from pydoll_mcp.post_install import main as post_install_main
+                    post_install_main()
+                except ImportError:
+                    # Fallback if import fails
+                    print("💡 Run 'python -m pydoll_mcp.cli generate-config' to configure Claude Desktop")
+                    
+        except Exception as e:
+            print(f"⚠️  Post-install setup skipped: {e}")
+            print("💡 Run 'python -m pydoll_mcp.cli generate-config' to configure manually")
+
+
+class PostDevelopCommand(develop):
+    """Post-installation for development installation mode."""
+    
+    def run(self):
+        develop.run(self)
+        PostInstallCommand.post_install(self)
+
+
 setup(
     name="pydoll-mcp",
     version=version,
@@ -126,6 +168,7 @@ setup(
             "pydoll-mcp=pydoll_mcp.server:cli_main",
             "pydoll-mcp-server=pydoll_mcp.server:cli_main",
             "pydoll-mcp-test=pydoll_mcp.cli:test_installation",
+            "pydoll-mcp-setup=pydoll_mcp.post_install:main",
         ],
         "mcp.servers": [
             "pydoll=pydoll_mcp.server:main",
@@ -157,4 +200,8 @@ setup(
         "cloudflare", "recaptcha", "anti-detection", "stealth"
     ],
     zip_safe=False,
+    cmdclass={
+        'install': PostInstallCommand,
+        'develop': PostDevelopCommand,
+    },
 )
