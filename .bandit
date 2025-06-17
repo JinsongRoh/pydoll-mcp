@@ -1,0 +1,35 @@
+# Bandit security configuration for PyDoll MCP Server
+# Configures security checks for the codebase
+
+[bandit]
+# Exclude test files and examples from security scanning
+exclude_dirs = ["tests", "examples", "docs", "build", "dist"]
+
+# Skip specific security checks that are acceptable for this project
+skips = [
+    # B101: assert_used - Allow assertions in development code
+    "B101",
+    # B603: subprocess_without_shell_equals_true - We need subprocess for browser management
+    "B603", 
+    # B607: start_process_with_partial_path - We check browser paths
+    "B607"
+]
+
+# Set confidence levels for findings
+confidence = ["HIGH", "MEDIUM"]
+
+# Set severity levels to report
+severity = ["HIGH", "MEDIUM"]
+
+# Additional settings
+recursive = true
+format = "json"
+include = ["*.py"]
+
+# Specific test exclusions
+[bandit.assert_used]
+skips = ["**/test_*.py", "**/tests/*.py"]
+
+[bandit.hardcoded_password_string]
+# Allow common test passwords
+word_list = ["password", "secret", "token"]
