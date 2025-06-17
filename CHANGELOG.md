@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
-## [1.1.1] - 2024-12-18
+## [1.1.1] - 2025-06-18
 
 ### 🐛 Critical Bug Fixes
 
@@ -66,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.1.0] - 2024-12-18
+## [1.1.0] - 2025-06-18
 
 ### 🔧 One-Click Setup Revolution
 
@@ -275,7 +275,7 @@ pip install pydoll-mcp
 
 ---
 
-## [1.0.0] - 2024-12-17
+## [1.0.0] - 2025-06-17
 
 ### 🎉 Initial Release
 
@@ -488,19 +488,19 @@ This is the first stable release of PyDoll MCP Server, bringing revolutionary br
 
 ### Pre-Release Versions
 
-#### [0.9.0] - 2024-12-10 (Beta)
+#### [0.9.0] - 2025-06-17 (Beta)
 - Initial beta release with core functionality
 - Basic browser automation capabilities
 - MCP server integration
 - Limited tool set (30 tools)
 
-#### [0.8.0] - 2024-12-05 (Alpha)
+#### [0.8.0] - 2025-06-17 (Alpha)
 - Alpha release for early testing
 - Proof-of-concept implementation
 - Core PyDoll integration
 - Basic Claude Desktop integration
 
-#### [0.7.0] - 2024-12-01 (Development)
+#### [0.7.0] - 2025-06-17 (Development)
 - Initial development version
 - Basic MCP server framework
 - PyDoll library integration
