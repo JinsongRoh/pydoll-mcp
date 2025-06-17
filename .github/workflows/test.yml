@@ -255,13 +255,13 @@ jobs:
             const fs = require('fs');
             const benchmark = JSON.parse(fs.readFileSync('benchmark.json', 'utf8'));
             
-            let comment = '## 🚀 Performance Test Results\\n\\n';
-            comment += '| Test | Min | Max | Mean | Std Dev |\\n';
-            comment += '|------|-----|-----|------|---------|\\n';
+            let comment = '## 🚀 Performance Test Results\n\n';
+            comment += '| Test | Min | Max | Mean | Std Dev |\n';
+            comment += '|------|-----|-----|------|---------|\n';
             
             benchmark.benchmarks.forEach(test => {
               const stats = test.stats;
-              comment += `| ${test.name} | ${stats.min.toFixed(3)}s | ${stats.max.toFixed(3)}s | ${stats.mean.toFixed(3)}s | ${stats.stddev.toFixed(3)}s |\\n`;
+              comment += `| ${test.name} | ${stats.min.toFixed(3)}s | ${stats.max.toFixed(3)}s | ${stats.mean.toFixed(3)}s | ${stats.stddev.toFixed(3)}s |\n`;
             });
             
             github.rest.issues.createComment({
