@@ -12,14 +12,12 @@ PyDoll MCP Server features:
 - Professional screenshot and PDF generation
 - Advanced JavaScript execution environment
 - Complete browser lifecycle management
-- One-click automatic Claude Desktop setup (NEW in v1.1.0!)
-- Cross-platform encoding compatibility (NEW in v1.1.1!)
 
 For installation and usage instructions, see:
 https://github.com/JinsongRoh/pydoll-mcp
 """
 
-__version__ = "1.1.1"
+__version__ = "1.1.3"
 __author__ = "Jinsong Roh"
 __email__ = "jinsongroh@gmail.com"
 __license__ = "MIT"
@@ -65,8 +63,6 @@ FEATURES = {
     "multi_browser": "Chrome and Edge browser support",
     "async_performance": "Native asyncio-based high-performance automation",
     "mcp_integration": "Full Model Context Protocol server implementation",
-    "one_click_setup": "Automatic Claude Desktop configuration (NEW in v1.1.0!)",
-    "encoding_compatibility": "Cross-platform encoding safety (NEW in v1.1.1!)",
 }
 
 # Tool categories and counts
@@ -206,15 +202,13 @@ def get_cli_info():
         "main_server": "pydoll-mcp",
         "server_alias": "pydoll-mcp-server", 
         "test_command": "pydoll-mcp-test",
-        "setup_command": "pydoll-mcp-setup",
         "module_run": "python -m pydoll_mcp.server",
         "test_module": "python -m pydoll_mcp.server --test",
-        "setup_module": "python -m pydoll_mcp.cli auto-setup",
     }
 
 # Banner for CLI display
 BANNER = f"""
-[PyDoll] PyDoll MCP Server v{__version__}
+PyDoll MCP Server v{__version__}
 Revolutionary Browser Automation for AI
 
 * Features:
@@ -223,7 +217,6 @@ Revolutionary Browser Automation for AI
   * Human-like interactions with advanced anti-detection
   * Real-time network monitoring & request interception
   * {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
-  * One-click automatic Claude Desktop setup
 
 > Ready to revolutionize your browser automation!
 """
@@ -239,41 +232,62 @@ Revolutionary Browser Automation for AI
   • Human-like interactions with advanced anti-detection
   • Real-time network monitoring & request interception
   • {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
-  • One-click automatic Claude Desktop setup
 
 🚀 Ready to revolutionize your browser automation!
 """
 
-def print_banner():
-    """Print the package banner with encoding safety."""
-    import sys
-    import locale
+def print_banner(use_stderr=True):
+    """Print the package banner with comprehensive encoding safety for all platforms.
     
-    # Try to determine the best banner to use
-    banner_to_use = BANNER
+    Args:
+        use_stderr: If True, print to stderr instead of stdout (for MCP compatibility)
+    """
+    import sys
+    import os
+    
+    # Choose output stream - use stderr for MCP compatibility
+    output_stream = sys.stderr if use_stderr else sys.stdout
+    
+    # Determine which banner to use based on encoding capabilities
+    banner_to_use = BANNER  # Safe default
     
     try:
-        # Check if we can safely print emojis
-        if hasattr(sys.stdout, 'encoding'):
-            encoding = sys.stdout.encoding or 'utf-8'
-            
-            # Test if we can encode emojis with current encoding
-            test_emoji = "🤖"
-            test_emoji.encode(encoding)
-            
-            # If we get here, emojis are supported
+        # Test emoji support
+        test_emoji = "🤖"
+        
+        # Check current encoding
+        current_encoding = 'utf-8'
+        if hasattr(output_stream, 'encoding') and output_stream.encoding:
+            current_encoding = output_stream.encoding.lower()
+        
+        # Try encoding test
+        test_emoji.encode(current_encoding if current_encoding != 'cp949' else 'utf-8')
+        
+        # If we reach here and not using problematic encoding, use emoji banner
+        if current_encoding not in ['cp949', 'euc-kr']:
             banner_to_use = BANNER_WITH_EMOJIS
             
-    except (UnicodeEncodeError, AttributeError, LookupError):
-        # Fall back to safe banner without emojis
+    except (UnicodeEncodeError, UnicodeDecodeError, LookupError, AttributeError):
+        # Stick with safe banner
         banner_to_use = BANNER
     
+    # Print banner with multiple fallback levels
     try:
-        # Try to print the banner
-        print(banner_to_use)
+        print(banner_to_use, file=output_stream, flush=True)
+        return
     except UnicodeEncodeError:
-        # Final fallback - simple text banner
-        fallback_banner = f"""
+        pass
+    
+    # Fallback 1: Try simple banner without emojis
+    try:
+        print(BANNER, file=output_stream, flush=True)
+        return
+    except UnicodeEncodeError:
+        pass
+    
+    # Fallback 2: Ultra-safe ASCII-only banner
+    try:
+        safe_banner = f"""
 PyDoll MCP Server v{__version__}
 Revolutionary Browser Automation for AI
 
@@ -283,14 +297,20 @@ Features:
   - Human-like interactions with advanced anti-detection
   - Real-time network monitoring & request interception
   - {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
-  - One-click automatic Claude Desktop setup
 
 Ready to revolutionize your browser automation!
 """
-        print(fallback_banner)
-    except Exception as e:
-        # Ultimate fallback
-        print(f"PyDoll MCP Server v{__version__} - Starting...")
+        print(safe_banner, file=output_stream, flush=True)
+        return
+    except (UnicodeEncodeError, Exception):
+        pass
+    
+    # Ultimate fallback: Minimal output
+    try:
+        print(f"PyDoll MCP Server v{__version__} - Starting...", file=output_stream, flush=True)
+    except Exception:
+        # If even this fails, just continue silently
+        pass
 
 # Export version for external access
 def get_version():
