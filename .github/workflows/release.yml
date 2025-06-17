@@ -1,0 +1,244 @@
+name: Release & Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Build Distribution Packages
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine check-manifest
+        
+    - name: Verify package configuration
+      run: |
+        check-manifest
+        python -m pip install -e .
+        python -c "import pydoll_mcp; print(f'Package version: {pydoll_mcp.__version__}')"
+        
+    - name: Build distributions
+      run: |
+        python -m build
+        
+    - name: Verify distributions
+      run: |
+        twine check dist/*
+        ls -la dist/
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: python-package-distributions
+        path: dist/
+
+  # GitHub Release
+  github-release:
+    name: Create GitHub Release
+    needs: [build]
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      id-token: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: python-package-distributions
+        path: dist/
+        
+    - name: Extract version from tag
+      id: version
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          VERSION="${GITHUB_REF#refs/tags/}"
+        fi
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "clean_version=${VERSION#v}" >> $GITHUB_OUTPUT
+        
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        VERSION="${{ steps.version.outputs.clean_version }}"
+        cat << EOF > release_notes.md
+        # 🚀 PyDoll MCP Server v${VERSION}
+        
+        ## 🌟 What's New
+        
+        PyDoll MCP Server brings revolutionary browser automation capabilities to Claude and other MCP clients!
+        
+        ### 🔥 Key Features
+        - **Zero WebDrivers**: Direct Chrome DevTools Protocol communication
+        - **AI-Powered Captcha Bypass**: Automatic Cloudflare Turnstile & reCAPTCHA v3 solving
+        - **Human Behavior Simulation**: Undetectable automation
+        - **77+ Tools**: Comprehensive browser automation toolkit
+        - **Cross-Platform**: Windows, Linux, macOS support
+        
+        ### 📦 Installation
+        \`\`\`bash
+        pip install pydoll-mcp
+        \`\`\`
+        
+        ### 🔧 Quick Setup for Claude Desktop
+        \`\`\`json
+        {
+          "mcpServers": {
+            "pydoll": {
+              "command": "python",
+              "args": ["-m", "pydoll_mcp.server"]
+            }
+          }
+        }
+        \`\`\`
+        
+        ### 📚 Resources
+        - 📖 [Documentation](https://github.com/JinsongRoh/pydoll-mcp/wiki)
+        - 🏠 [PyPI Package](https://pypi.org/project/pydoll-mcp/)
+        - 🐳 [Docker Hub](https://hub.docker.com/r/jinsongroh/pydoll-mcp)
+        - 💬 [Discussions](https://github.com/JinsongRoh/pydoll-mcp/discussions)
+        
+        ## 🙏 Acknowledgments
+        Built on the amazing [PyDoll](https://github.com/autoscrape-labs/pydoll) library!
+        
+        ---
+        
+        **Full Changelog**: https://github.com/JinsongRoh/pydoll-mcp/blob/main/CHANGELOG.md
+        EOF
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: "PyDoll MCP Server ${{ steps.version.outputs.version }}"
+        body_path: release_notes.md
+        files: dist/*
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # PyPI Publication
+  pypi-publish:
+    name: Publish to PyPI
+    needs: [github-release]
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pydoll-mcp
+      
+    permissions:
+      id-token: write
+      
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: python-package-distributions
+        path: dist/
+        
+    - name: Verify package contents
+      run: |
+        ls -la dist/
+        echo "📦 Ready to publish:"
+        for file in dist/*; do
+          echo "  - $(basename $file)"
+        done
+        
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        verbose: true
+        verify-metadata: true
+        
+  # Test PyPI Installation
+  test-installation:
+    name: Test PyPI Installation
+    needs: [pypi-publish]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.11', '3.12']
+        
+    steps:
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Wait for PyPI propagation
+      run: sleep 120
+      
+    - name: Install from PyPI
+      run: |
+        python -m pip install --upgrade pip
+        pip install pydoll-mcp
+        
+    - name: Test installation
+      run: |
+        python -c "import pydoll_mcp; print(f'✅ Successfully installed pydoll-mcp v{pydoll_mcp.__version__}')"
+        python -m pydoll_mcp.server --help
+        
+  # Post-Release Notifications
+  notify:
+    name: Post-Release Notifications
+    needs: [test-installation]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Extract version
+      id: version
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          VERSION="${GITHUB_REF#refs/tags/}"
+        fi
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        
+    - name: Send success notification
+      run: |
+        echo "🎉 PyDoll MCP Server ${{ steps.version.outputs.version }} successfully released!"
+        echo ""
+        echo "📦 PyPI: https://pypi.org/project/pydoll-mcp/"
+        echo "📋 GitHub Release: https://github.com/JinsongRoh/pydoll-mcp/releases/tag/${{ steps.version.outputs.version }}"
+        echo "📚 Documentation: https://github.com/JinsongRoh/pydoll-mcp/wiki"
+        echo ""
+        echo "🚀 Users can now install with: pip install pydoll-mcp"
