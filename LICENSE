@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 JinsongRoh
+Copyright (c) 2024 Jinsong Roh
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -18,4 +18,76 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Software.
+
+---
+
+## Third-Party Licenses
+
+This software includes or depends on the following open source packages:
+
+### PyDoll
+- **License**: MIT License
+- **Copyright**: 2024 Thalison Fernandes and contributors
+- **Repository**: https://github.com/autoscrape-labs/pydoll
+- **Description**: Revolutionary browser automation library with zero-webdriver operation
+
+### Model Context Protocol (MCP)
+- **License**: MIT License  
+- **Copyright**: 2024 Anthropic PBC
+- **Repository**: https://github.com/modelcontextprotocol/python-sdk
+- **Description**: Model Context Protocol implementation for Python
+
+### Pydantic
+- **License**: MIT License
+- **Copyright**: 2017 Samuel Colvin and contributors
+- **Repository**: https://github.com/pydantic/pydantic
+- **Description**: Data validation using Python type hints
+
+### asyncio-throttle
+- **License**: MIT License
+- **Repository**: https://github.com/hallazzang/asyncio-throttle
+- **Description**: Simple, easy-to-use throttler for asyncio
+
+### aiofiles
+- **License**: Apache License 2.0
+- **Repository**: https://github.com/Tinche/aiofiles
+- **Description**: File support for asyncio
+
+### python-dotenv
+- **License**: BSD 3-Clause License
+- **Repository**: https://github.com/theskumar/python-dotenv
+- **Description**: Get and set values in your .env file
+
+### Rich
+- **License**: MIT License
+- **Copyright**: 2020 Will McGugan
+- **Repository**: https://github.com/Textualize/rich
+- **Description**: Rich text and beautiful formatting for the terminal
+
+### Click
+- **License**: BSD 3-Clause License
+- **Repository**: https://github.com/pallets/click
+- **Description**: Command line interface framework
+
+## Additional Acknowledgments
+
+Special thanks to:
+- The PyDoll development team for creating the revolutionary browser automation library
+- Anthropic for developing Claude and the Model Context Protocol
+- The open source community for their continuous contributions and support
+- All contributors and users who help improve this project
+
+## Disclaimer
+
+This software is provided for educational and legitimate automation purposes only. 
+Users are responsible for ensuring their use complies with applicable laws, 
+website terms of service, and ethical guidelines. The authors and contributors 
+are not responsible for any misuse of this software.
+
+When using this software for web automation:
+- Respect website robots.txt files
+- Implement appropriate rate limiting
+- Obtain necessary permissions for data collection
+- Comply with data protection regulations
+- Use responsibly and ethically
