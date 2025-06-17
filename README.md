@@ -622,7 +622,7 @@ pre-commit install
 - **[Complete Documentation](https://github.com/JinsongRoh/pydoll-mcp/wiki)**: Full user guide and API reference
 - **[PyDoll Library](https://autoscrape-labs.github.io/pydoll/)**: Core automation library documentation
 - **[MCP Protocol](https://modelcontextprotocol.io/)**: Model Context Protocol specification
-- **[Examples Repository](https://github.com/JinsongRoh/pydoll-mcp-examples)**: Comprehensive automation examples
+- **[Examples Repository](https://github.com/JinsongRoh/pydoll-mcp/tree/main/examples)**: Comprehensive automation examples
 
 ## 🔒 Security & Ethics
 
