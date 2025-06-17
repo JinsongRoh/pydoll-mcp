@@ -12,12 +12,13 @@ PyDoll MCP Server features:
 - Professional screenshot and PDF generation
 - Advanced JavaScript execution environment
 - Complete browser lifecycle management
+- One-click automatic Claude Desktop setup (NEW in v1.1.0!)
 
 For installation and usage instructions, see:
 https://github.com/JinsongRoh/pydoll-mcp
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Jinsong Roh"
 __email__ = "jinsongroh@gmail.com"
 __license__ = "MIT"
@@ -63,6 +64,7 @@ FEATURES = {
     "multi_browser": "Chrome and Edge browser support",
     "async_performance": "Native asyncio-based high-performance automation",
     "mcp_integration": "Full Model Context Protocol server implementation",
+    "one_click_setup": "Automatic Claude Desktop configuration (NEW in v1.1.0!)",
 }
 
 # Tool categories and counts
@@ -202,8 +204,10 @@ def get_cli_info():
         "main_server": "pydoll-mcp",
         "server_alias": "pydoll-mcp-server", 
         "test_command": "pydoll-mcp-test",
+        "setup_command": "pydoll-mcp-setup",  # NEW in v1.1.0
         "module_run": "python -m pydoll_mcp.server",
         "test_module": "python -m pydoll_mcp.server --test",
+        "setup_module": "python -m pydoll_mcp.cli auto-setup",  # NEW in v1.1.0
     }
 
 # Banner for CLI display
@@ -217,6 +221,7 @@ Revolutionary Browser Automation for AI
   • Human-like interactions with advanced anti-detection
   • Real-time network monitoring & request interception
   • {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
+  • One-click automatic Claude Desktop setup (NEW!)
 
 🚀 Ready to revolutionize your browser automation!
 """
