@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.0.0
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.0
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -19,11 +19,14 @@
   <a href="https://modelcontextprotocol.io/">
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
+  <a href="https://pypi.org/project/pydoll-mcp/">
+    <img src="https://img.shields.io/badge/PyPI-v1.1.0-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+  </a>
 </p>
 
 ## 🌟 What Makes PyDoll MCP Server Revolutionary?
 
-PyDoll MCP Server brings the groundbreaking capabilities of [PyDoll](https://github.com/autoscrape-labs/pydoll) to Claude, OpenAI, Gemini and other MCP clients. Unlike traditional browser automation tools that struggle with modern web protection, PyDoll operates at a fundamentally different level.
+PyDoll MCP Server brings the groundbreaking capabilities of PyDoll to Claude, OpenAI, Gemini and other MCP clients. Unlike traditional browser automation tools that struggle with modern web protection, PyDoll operates at a fundamentally different level.
 
 ### PyDoll GitHub and Installation Information
 - GitHub: https://github.com/autoscrape-labs/pydoll
@@ -38,6 +41,7 @@ PyDoll MCP Server brings the groundbreaking capabilities of [PyDoll](https://git
 - **⚡ Native Async Architecture**: Lightning-fast concurrent automation
 - **🕵️ Advanced Stealth Mode**: Anti-detection techniques that make automation invisible
 - **🌐 Real-time Network Control**: Intercept, modify, and analyze all web traffic
+- **🔧 One-Click Setup**: NEW! Automatic Claude Desktop configuration
 
 ## 📋 What Can You Do?
 
@@ -65,14 +69,41 @@ PyDoll MCP Server brings the groundbreaking capabilities of [PyDoll](https://git
 - Validate forms and user interactions
 - Capture screenshots and generate reports
 
-## 💻 Quick Installation
+## 💻 Quick Installation & Setup
 
-### Option 1: Install from PyPI (Recommended)
+### ⚡ One-Command Installation (Recommended)
 ```bash
 pip install pydoll-mcp
 ```
 
-### Option 2: Install from Source
+**NEW in v1.1.0**: The installation now automatically offers to configure Claude Desktop! 🎉
+
+After installation, you'll see:
+```
+🤖 Setting up PyDoll MCP Server...
+
+🎉 PyDoll MCP Server installed successfully!
+============================================================
+
+🚀 Quick Start Options:
+1. 🔧 Auto-configure Claude Desktop
+2. 📋 Generate config manually
+3. 🧪 Test installation
+4. ⏭️  Skip setup (configure later)
+
+🎯 Choose an option (1-4): 1
+```
+
+### 🚀 Alternative Setup Methods
+
+#### Option 1: One-Click Auto Setup
+```bash
+# Install and configure everything automatically
+pip install pydoll-mcp
+python -m pydoll_mcp.cli auto-setup
+```
+
+#### Option 2: Manual Setup from Source
 ```bash
 # Clone the repository
 git clone https://github.com/JinsongRoh/pydoll-mcp.git
@@ -83,9 +114,12 @@ pip install -r requirements.txt
 
 # Install in development mode
 pip install -e .
+
+# Setup Claude Desktop
+python -m pydoll_mcp.cli setup-claude
 ```
 
-### Option 3: Docker Installation
+#### Option 3: Docker Installation
 ```bash
 # Pull and run the Docker container
 docker run -d --name pydoll-mcp -p 8080:8080 jinsongroh/pydoll-mcp:latest
@@ -93,25 +127,51 @@ docker run -d --name pydoll-mcp -p 8080:8080 jinsongroh/pydoll-mcp:latest
 
 ## ⚙️ Claude Desktop Integration
 
-### Automatic Setup (Windows)
-```batch
-# Run the automatic setup script
-.\setup\setup_claude_windows.bat
-```
+### 🔧 Automatic Setup (NEW! v1.1.0)
 
-### Automatic Setup (Linux/macOS)
+The easiest way to get started:
+
 ```bash
-# Run the automatic setup script
-./setup/setup_claude_unix.sh
+# After installing with pip, just run:
+python -m pydoll_mcp.cli auto-setup
 ```
 
-### Manual Setup
-Add to your Claude Desktop configuration:
+This will:
+- ✅ Test your installation
+- ✅ Locate your Claude Desktop config
+- ✅ Backup existing configuration
+- ✅ Add PyDoll MCP Server configuration
+- ✅ Verify everything works
 
-**Windows**: `%APPDATA%\\Claude\\claude_desktop_config.json`  
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`  
-**Linux**: `~/.config/Claude/claude_desktop_config.json`
+### 🛠️ Manual Setup Options
 
+#### Automatic Setup Scripts
+
+**Windows**:
+```batch
+# Download and run setup script
+curl -o setup_claude.bat https://raw.githubusercontent.com/JinsongRoh/pydoll-mcp/main/setup/setup_claude_windows.bat
+setup_claude.bat
+```
+
+**Linux/macOS**:
+```bash
+# Download and run setup script
+curl -o setup_claude.sh https://raw.githubusercontent.com/JinsongRoh/pydoll-mcp/main/setup/setup_claude_unix.sh
+chmod +x setup_claude.sh
+./setup_claude.sh
+```
+
+#### Manual Configuration
+
+If you prefer to configure manually, add this to your Claude Desktop config:
+
+**Config File Locations:**
+- **Windows**: `%APPDATA%\\Claude\\claude_desktop_config.json`
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+**Configuration:**
 ```json
 {
   "mcpServers": {
@@ -126,30 +186,63 @@ Add to your Claude Desktop configuration:
 }
 ```
 
+#### Generate Config File
+```bash
+# Generate configuration file
+python -m pydoll_mcp.cli generate-config
+
+# Generate and auto-setup
+python -m pydoll_mcp.cli generate-config --auto-setup
+
+# Generate in different formats
+python -m pydoll_mcp.cli generate-config --format yaml
+python -m pydoll_mcp.cli generate-config --format env
+```
+
 ## 🚀 Getting Started
 
-### 1. Basic Website Navigation
+### 1. Quick Start Guide
+```bash
+# Interactive setup guide
+python -m pydoll_mcp.cli quick-start
+```
+
+### 2. Test Your Installation
+```bash
+# Test installation
+python -m pydoll_mcp.cli test-installation --verbose
+
+# Test browser automation
+python -m pydoll_mcp.cli test-browser --browser chrome --headless
+
+# Check status
+python -m pydoll_mcp.cli status --logs --stats
+```
+
+### 3. Basic Usage Examples
+
+**Basic Website Navigation:**
 ```
 "Start a browser and go to https://example.com"
 "Take a screenshot of the current page"
 "Find the search box and search for 'browser automation'"
 ```
 
-### 2. Advanced Form Automation
+**Advanced Form Automation:**
 ```
 "Fill the login form with username 'test@example.com' and password 'secure123'"
 "Upload the file 'document.pdf' to the file input"
 "Submit the form and wait for the success message"
 ```
 
-### 3. Protection Bypass
+**Protection Bypass:**
 ```
 "Enable Cloudflare bypass and navigate to the protected site"
 "Automatically solve any captcha challenges that appear"
 "Extract the protected content after bypassing security"
 ```
 
-### 4. Data Extraction & Monitoring
+**Data Extraction & Monitoring:**
 ```
 "Monitor all network requests while browsing this e-commerce site"
 "Extract product information from all visible items"
@@ -332,6 +425,35 @@ Add to your Claude Desktop configuration:
 }
 ```
 
+## 🛠️ Command Line Interface
+
+PyDoll MCP Server comes with a powerful CLI for management and testing:
+
+```bash
+# Main commands
+pydoll-mcp                          # Start MCP server
+pydoll-mcp-test                     # Test installation
+pydoll-mcp-setup                    # Setup Claude Desktop
+
+# Module commands
+python -m pydoll_mcp.server         # Start server
+python -m pydoll_mcp.cli --help     # Show all CLI options
+
+# Setup and configuration
+python -m pydoll_mcp.cli auto-setup        # One-click setup
+python -m pydoll_mcp.cli setup-claude      # Setup Claude Desktop only
+python -m pydoll_mcp.cli quick-start       # Interactive guide
+python -m pydoll_mcp.cli generate-config   # Generate config files
+
+# Testing and diagnostics
+python -m pydoll_mcp.cli test-installation --verbose
+python -m pydoll_mcp.cli test-browser --browser chrome
+python -m pydoll_mcp.cli status --logs --stats
+
+# Maintenance
+python -m pydoll_mcp.cli cleanup           # Clean temp files
+```
+
 ## 🐛 Troubleshooting
 
 ### Common Issues
@@ -354,7 +476,7 @@ pip install pydoll-mcp -v
 python -c "from pydoll.browser import Chrome; print('Browser check passed')"
 
 # Test basic functionality
-python -m pydoll_mcp.test_basic
+python -m pydoll_mcp.cli test-browser
 
 # Check browser permissions
 ls -la /usr/bin/google-chrome  # Linux
@@ -366,10 +488,22 @@ ls -la /usr/bin/google-chrome  # Linux
 python -m pydoll_mcp.server --test
 
 # Check logs
-tail -f ~/.local/share/pydoll-mcp/logs/server.log
+python -m pydoll_mcp.cli status --logs
 
 # Verify Claude Desktop config
-cat "$APPDATA/Claude/claude_desktop_config.json"  # Windows
+python -m pydoll_mcp.cli generate-config
+```
+
+#### Configuration Issues
+```bash
+# Re-run setup
+python -m pydoll_mcp.cli auto-setup --force
+
+# Check configuration
+python -m pydoll_mcp.cli status
+
+# Manual config generation
+python -m pydoll_mcp.cli generate-config --auto-setup
 ```
 
 ### Debug Mode
@@ -395,6 +529,26 @@ PyDoll MCP Server provides significant advantages over traditional automation:
 | Speed | 3x faster | Baseline |
 | Reliability | 99%+ | 80-85% |
 
+## 🆕 What's New in v1.1.0
+
+### 🔧 One-Click Setup
+- **Auto-configuration**: Automatic Claude Desktop setup during pip installation
+- **Smart detection**: Automatic detection of Claude Desktop config paths
+- **Safe merging**: Intelligent merging with existing configurations
+- **Backup protection**: Automatic backup of existing configurations
+
+### 🚀 Enhanced CLI
+- **New Commands**: `auto-setup`, `setup-claude`, `quick-start`
+- **Interactive guides**: Step-by-step setup assistance
+- **Better diagnostics**: Enhanced testing and status reporting
+- **Cross-platform**: Improved Windows, macOS, and Linux support
+
+### 🛠️ Developer Experience
+- **Post-install hooks**: Automatic setup prompts after installation
+- **Multiple entry points**: Various ways to access setup functionality
+- **Better error handling**: More helpful error messages and recovery suggestions
+- **Documentation**: Updated docs with new setup methods
+
 ## 🤝 Contributing
 
 We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
@@ -415,6 +569,9 @@ pip install -e ".[dev]"
 
 # Run tests
 python -m pytest tests/ -v
+
+# Setup pre-commit hooks
+pre-commit install
 ```
 
 ### Adding Features
@@ -448,13 +605,14 @@ python -m pytest tests/ -v
 
 ## 📈 Roadmap
 
-### v1.1.0 (Coming Soon)
+### v1.2.0 (Coming Soon)
 - Firefox browser support
 - Enhanced mobile device emulation
 - Advanced form recognition
 - Improved error handling
+- GUI setup tool
 
-### v1.2.0 (Q3 2025)
+### v1.3.0 (Q3 2025)
 - Visual element recognition
 - Natural language to automation
 - Cloud browser support
