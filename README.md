@@ -22,6 +22,9 @@
   <a href="https://pypi.org/project/pydoll-mcp/">
     <img src="https://img.shields.io/badge/PyPI-v1.1.1-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
+  <a href="https://smithery.ai/server/@JinsongRoh/pydoll-mcp">
+    <img src="https://smithery.ai/badge/@JinsongRoh/pydoll-mcp" alt="Smithery"/>
+  </a>
 </p>
 
 ## 🌟 What Makes PyDoll MCP Server Revolutionary?
@@ -71,6 +74,14 @@ PyDoll MCP Server brings the groundbreaking capabilities of PyDoll to Claude, Op
 - Capture screenshots and generate reports
 
 ## 💻 Quick Installation & Setup
+
+### Installing via Smithery
+
+To install PyDoll MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@JinsongRoh/pydoll-mcp):
+
+```bash
+npx -y @smithery/cli install @JinsongRoh/pydoll-mcp --client claude
+```
 
 ### ⚡ One-Command Installation (Recommended)
 ```bash
