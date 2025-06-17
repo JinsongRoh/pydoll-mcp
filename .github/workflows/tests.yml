@@ -1,0 +1,407 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - unit
+        - integration
+        - browser
+        - performance
+
+env:
+  PYTHONUNBUFFERED: 1
+  FORCE_COLOR: 1
+
+jobs:
+  # Unit Tests
+  unit-tests:
+    name: Unit Tests
+    if: github.event.inputs.test_type == 'unit' || github.event.inputs.test_type == 'all' || github.event.inputs.test_type == ''
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        include:
+          # Add specific test configurations
+          - os: ubuntu-latest
+            python-version: '3.11'
+            coverage: true
+          - os: ubuntu-latest
+            python-version: '3.8'
+            minimal: true
+        exclude:
+          # Reduce CI load by skipping some combinations
+          - os: macos-latest
+            python-version: '3.8'
+          - os: macos-latest
+            python-version: '3.9'
+          - os: windows-latest
+            python-version: '3.8'
+            
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Get pip cache dir
+      id: pip-cache
+      run: echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.pip-cache.outputs.dir }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+          
+    - name: Install minimal dependencies
+      if: matrix.minimal
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio
+        pip install -e .
+        
+    - name: Install full dependencies
+      if: '!matrix.minimal'
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e ".[test]"
+        
+    - name: Run unit tests (minimal)
+      if: matrix.minimal
+      run: |
+        pytest tests/unit/ -v --tb=short -x
+      env:
+        PYDOLL_TEST_MODE: minimal
+        
+    - name: Run unit tests with coverage
+      if: matrix.coverage
+      run: |
+        pytest tests/unit/ -v --cov=pydoll_mcp --cov-report=xml --cov-report=term-missing --cov-fail-under=80
+      env:
+        PYDOLL_TEST_MODE: coverage
+        
+    - name: Run unit tests (standard)
+      if: '!matrix.minimal && !matrix.coverage'
+      run: |
+        pytest tests/unit/ -v --tb=short
+      env:
+        PYDOLL_TEST_MODE: standard
+        
+    - name: Upload coverage reports
+      if: matrix.coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-unit-tests
+
+  # Integration Tests
+  integration-tests:
+    name: Integration Tests
+    if: github.event.inputs.test_type == 'integration' || github.event.inputs.test_type == 'all' || github.event.inputs.test_type == ''
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        test-suite:
+          - mcp-server
+          - browser-manager
+          - tool-handlers
+          - configuration
+          
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          google-chrome-stable \
+          xvfb \
+          libgconf-2-4 \
+          libxss1 \
+          libxtst6 \
+          libxrandr2 \
+          libasound2 \
+          libpangocairo-1.0-0 \
+          libatk1.0-0 \
+          libcairo-gobject2 \
+          libgtk-3-0 \
+          libgdk-pixbuf2.0-0
+          
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-integration-${{ hashFiles('**/requirements*.txt') }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e ".[test]"
+        
+    - name: Start Xvfb
+      run: |
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+        sleep 3
+        
+    - name: Run integration tests - ${{ matrix.test-suite }}
+      run: |
+        pytest tests/integration/test_${{ matrix.test-suite }}.py -v --tb=short
+      env:
+        DISPLAY: :99
+        PYDOLL_HEADLESS: false
+        PYDOLL_TEST_BROWSER: chrome
+        PYDOLL_LOG_LEVEL: DEBUG
+
+  # Browser Compatibility Tests
+  browser-tests:
+    name: Browser Tests
+    if: github.event.inputs.test_type == 'browser' || github.event.inputs.test_type == 'all' || github.event.inputs.test_type == ''
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        browser: [chrome, edge]
+        mode: [headless, headed]
+        exclude:
+          # Skip headed mode for Edge to save CI time
+          - browser: edge
+            mode: headed
+            
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install Chrome
+      if: matrix.browser == 'chrome'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        
+    - name: Install Edge
+      if: matrix.browser == 'edge'
+      run: |
+        curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+        sudo install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
+        sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
+        sudo apt update
+        sudo apt install microsoft-edge-stable
+        
+    - name: Install Xvfb (for headed mode)
+      if: matrix.mode == 'headed'
+      run: |
+        sudo apt-get install -y xvfb
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+        sleep 3
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e ".[test]"
+        
+    - name: Run browser tests
+      run: |
+        pytest tests/browser/ -v --tb=short -k "${{ matrix.browser }}"
+      env:
+        PYDOLL_BROWSER_TYPE: ${{ matrix.browser }}
+        PYDOLL_HEADLESS: ${{ matrix.mode == 'headless' }}
+        DISPLAY: ${{ matrix.mode == 'headed' && ':99' || '' }}
+        
+    - name: Test captcha bypass (Chrome only)
+      if: matrix.browser == 'chrome'
+      run: |
+        pytest tests/captcha/ -v --tb=short -x
+      env:
+        PYDOLL_BROWSER_TYPE: chrome
+        PYDOLL_HEADLESS: true
+        PYDOLL_TEST_CAPTCHA: true
+
+  # Performance Tests
+  performance-tests:
+    name: Performance Tests
+    if: github.event.inputs.test_type == 'performance' || github.event.inputs.test_type == 'all' || github.event.inputs.test_type == ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e ".[test]"
+        pip install pytest-benchmark memory-profiler
+        
+    - name: Run performance benchmarks
+      run: |
+        pytest tests/performance/ -v --benchmark-only --benchmark-json=benchmark.json
+      env:
+        PYDOLL_HEADLESS: true
+        PYDOLL_PERFORMANCE_MODE: true
+        
+    - name: Run memory tests
+      run: |
+        pytest tests/memory/ -v --tb=short
+      env:
+        PYDOLL_HEADLESS: true
+        
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results
+        path: benchmark.json
+
+  # End-to-End Tests
+  e2e-tests:
+    name: End-to-End Tests
+    if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable xvfb
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e ".[test]"
+        
+    - name: Start Xvfb
+      run: |
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+        sleep 3
+        
+    - name: Run E2E test scenarios
+      run: |
+        pytest tests/e2e/ -v --tb=short --durations=10
+      env:
+        DISPLAY: :99
+        PYDOLL_HEADLESS: false
+        PYDOLL_E2E_MODE: true
+        
+    - name: Upload E2E artifacts
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: e2e-artifacts
+        path: |
+          tests/e2e/screenshots/
+          tests/e2e/logs/
+
+  # Test Summary
+  test-summary:
+    name: Test Summary
+    if: always()
+    needs: [unit-tests, integration-tests, browser-tests, performance-tests, e2e-tests]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check test results
+      run: |
+        echo "Test Results Summary:"
+        echo "===================="
+        echo "Unit Tests: ${{ needs.unit-tests.result }}"
+        echo "Integration Tests: ${{ needs.integration-tests.result }}"
+        echo "Browser Tests: ${{ needs.browser-tests.result }}"
+        echo "Performance Tests: ${{ needs.performance-tests.result }}"
+        echo "E2E Tests: ${{ needs.e2e-tests.result }}"
+        
+        # Check if any required tests failed
+        if [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
+           [[ "${{ needs.integration-tests.result }}" == "failure" ]]; then
+          echo "❌ Critical tests failed!"
+          exit 1
+        fi
+        
+        # Check if browser tests failed
+        if [[ "${{ needs.browser-tests.result }}" == "failure" ]]; then
+          echo "⚠️  Browser tests failed - please check browser compatibility"
+        fi
+        
+        echo "✅ Test suite completed successfully!"
+
+  # Nightly Test Report
+  nightly-report:
+    name: Nightly Test Report
+    if: github.event_name == 'schedule'
+    needs: [test-summary]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Generate nightly report
+      run: |
+        echo "🌙 PyDoll MCP Server Nightly Test Report"
+        echo "========================================"
+        echo "Date: $(date)"
+        echo "Commit: ${{ github.sha }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo ""
+        echo "Test Results: ${{ needs.test-summary.result }}"
+        echo ""
+        echo "Report generated automatically by GitHub Actions"
