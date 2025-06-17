@@ -1,5 +1,4 @@
-"""
-Advanced automation examples for PyDoll MCP Server.
+"""Advanced automation examples for PyDoll MCP Server.
 
 This example demonstrates advanced browser automation scenarios
 including complex workflows, protection bypass, and data extraction.
