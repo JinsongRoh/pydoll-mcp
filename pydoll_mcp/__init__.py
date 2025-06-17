@@ -13,12 +13,13 @@ PyDoll MCP Server features:
 - Advanced JavaScript execution environment
 - Complete browser lifecycle management
 - One-click automatic Claude Desktop setup (NEW in v1.1.0!)
+- Cross-platform encoding compatibility (NEW in v1.1.1!)
 
 For installation and usage instructions, see:
 https://github.com/JinsongRoh/pydoll-mcp
 """
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __author__ = "Jinsong Roh"
 __email__ = "jinsongroh@gmail.com"
 __license__ = "MIT"
@@ -65,6 +66,7 @@ FEATURES = {
     "async_performance": "Native asyncio-based high-performance automation",
     "mcp_integration": "Full Model Context Protocol server implementation",
     "one_click_setup": "Automatic Claude Desktop configuration (NEW in v1.1.0!)",
+    "encoding_compatibility": "Cross-platform encoding safety (NEW in v1.1.1!)",
 }
 
 # Tool categories and counts
@@ -204,14 +206,30 @@ def get_cli_info():
         "main_server": "pydoll-mcp",
         "server_alias": "pydoll-mcp-server", 
         "test_command": "pydoll-mcp-test",
-        "setup_command": "pydoll-mcp-setup",  # NEW in v1.1.0
+        "setup_command": "pydoll-mcp-setup",
         "module_run": "python -m pydoll_mcp.server",
         "test_module": "python -m pydoll_mcp.server --test",
-        "setup_module": "python -m pydoll_mcp.cli auto-setup",  # NEW in v1.1.0
+        "setup_module": "python -m pydoll_mcp.cli auto-setup",
     }
 
 # Banner for CLI display
 BANNER = f"""
+[PyDoll] PyDoll MCP Server v{__version__}
+Revolutionary Browser Automation for AI
+
+* Features:
+  * Zero-webdriver automation via Chrome DevTools Protocol
+  * Intelligent Cloudflare Turnstile & reCAPTCHA v3 bypass  
+  * Human-like interactions with advanced anti-detection
+  * Real-time network monitoring & request interception
+  * {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
+  * One-click automatic Claude Desktop setup
+
+> Ready to revolutionize your browser automation!
+"""
+
+# Alternative banner with emojis for UTF-8 capable terminals
+BANNER_WITH_EMOJIS = f"""
 🤖 PyDoll MCP Server v{__version__}
 Revolutionary Browser Automation for AI
 
@@ -221,14 +239,58 @@ Revolutionary Browser Automation for AI
   • Human-like interactions with advanced anti-detection
   • Real-time network monitoring & request interception
   • {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
-  • One-click automatic Claude Desktop setup (NEW!)
+  • One-click automatic Claude Desktop setup
 
 🚀 Ready to revolutionize your browser automation!
 """
 
 def print_banner():
-    """Print the package banner."""
-    print(BANNER)
+    """Print the package banner with encoding safety."""
+    import sys
+    import locale
+    
+    # Try to determine the best banner to use
+    banner_to_use = BANNER
+    
+    try:
+        # Check if we can safely print emojis
+        if hasattr(sys.stdout, 'encoding'):
+            encoding = sys.stdout.encoding or 'utf-8'
+            
+            # Test if we can encode emojis with current encoding
+            test_emoji = "🤖"
+            test_emoji.encode(encoding)
+            
+            # If we get here, emojis are supported
+            banner_to_use = BANNER_WITH_EMOJIS
+            
+    except (UnicodeEncodeError, AttributeError, LookupError):
+        # Fall back to safe banner without emojis
+        banner_to_use = BANNER
+    
+    try:
+        # Try to print the banner
+        print(banner_to_use)
+    except UnicodeEncodeError:
+        # Final fallback - simple text banner
+        fallback_banner = f"""
+PyDoll MCP Server v{__version__}
+Revolutionary Browser Automation for AI
+
+Features:
+  - Zero-webdriver automation via Chrome DevTools Protocol
+  - Intelligent Cloudflare Turnstile & reCAPTCHA v3 bypass  
+  - Human-like interactions with advanced anti-detection
+  - Real-time network monitoring & request interception
+  - {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
+  - One-click automatic Claude Desktop setup
+
+Ready to revolutionize your browser automation!
+"""
+        print(fallback_banner)
+    except Exception as e:
+        # Ultimate fallback
+        print(f"PyDoll MCP Server v{__version__} - Starting...")
 
 # Export version for external access
 def get_version():
