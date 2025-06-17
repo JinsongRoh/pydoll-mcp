@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.1
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.3
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,9 +20,17 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.1.1-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/pypi/v/pydoll-mcp?style=flat-square&color=blue" alt="PyPI Version"/>
   </a>
 </p>
+
+## 📢 Latest Updates (v1.1.3 - 2025-06-18)
+
+### 🐛 Critical Bug Fixes
+- **✅ Fixed JSON Parsing Errors**: Resolved MCP client communication issues
+- **✅ Encoding Compatibility**: Full support for Korean Windows systems (CP949/EUC-KR)  
+- **✅ Protocol Compliance**: Proper stdout/stderr separation for MCP compatibility
+- **✅ Enhanced Stability**: Improved server startup and error handling
 
 ## 🌟 What Makes PyDoll MCP Server Revolutionary?
 
@@ -42,7 +50,8 @@ PyDoll MCP Server brings the groundbreaking capabilities of PyDoll to Claude, Op
 - **🕵️ Advanced Stealth Mode**: Anti-detection techniques that make automation invisible
 - **🌐 Real-time Network Control**: Intercept, modify, and analyze all web traffic
 - **🔧 One-Click Setup**: Automatic Claude Desktop configuration
-- **🌍 Universal Compatibility**: Works on all systems including Korean Windows (NEW in v1.1.1!)
+- **🌍 Universal Compatibility**: Works on all systems including Korean Windows
+- **🐛 MCP Protocol Compliant**: Fixed JSON parsing issues for reliable communication
 
 ## 📋 What Can You Do?
 
@@ -495,7 +504,19 @@ python -m pydoll_mcp.cli status --logs
 python -m pydoll_mcp.cli generate-config
 ```
 
-#### Encoding Issues (Korean Windows / International Systems) - NEW in v1.1.1!
+#### MCP Communication Issues (NEW in v1.1.3!) - FIXED!
+```bash
+# For JSON parsing errors, upgrade to v1.1.3
+pip install --upgrade pydoll-mcp
+
+# Verify the fix
+python -m pydoll_mcp.server --test
+
+# Check server output (should be clean JSON)
+python -m pydoll_mcp.cli status
+```
+
+#### Encoding Issues (Korean Windows / International Systems)
 ```bash
 # For Korean Windows systems with cp949 encoding
 set PYTHONIOENCODING=utf-8
@@ -547,7 +568,7 @@ python -m pydoll_mcp.server --debug
 PyDoll MCP Server provides significant advantages over traditional automation:
 
 | Metric | PyDoll MCP | Traditional Tools |
-|--------|------------|-------------------|
+|--------|------------|-----------------|
 | Setup Time | < 30 seconds | 5-15 minutes |
 | Captcha Success Rate | 95%+ | 20-30% |
 | Detection Evasion | 98%+ | 60-70% |
@@ -557,7 +578,24 @@ PyDoll MCP Server provides significant advantages over traditional automation:
 
 ## 🆕 What's New
 
-### v1.1.1 (Latest)
+### v1.1.3 (Latest - 2025-06-18)
+
+#### 🐛 Critical Bug Fixes
+- **Fixed JSON Parsing Errors**: Resolved critical JSON parsing errors that prevented MCP client communication
+- **Stdout/Stderr Separation**: Modified banner output to use stderr instead of stdout for MCP protocol compliance
+- **Encoding Compatibility**: Fixed character encoding issues on Korean Windows systems (CP949/EUC-KR)
+- **Protocol Compliance**: Ensured all stdout output is valid JSON for proper MCP client integration
+- **Enhanced Error Handling**: Improved error messages with proper JSON formatting for better client parsing
+- **Cross-Platform Stability**: Better handling of international character encodings
+
+### v1.1.2
+
+#### 🛠️ Enhanced Stability
+- **Server Reliability**: Improved server startup and shutdown processes
+- **Error Recovery**: Better error handling and recovery mechanisms
+- **Performance Optimization**: Reduced memory usage and improved response times
+
+### v1.1.1
 
 #### 🐛 Critical Bug Fixes
 - **Fixed Korean Windows Issue**: Resolved `UnicodeEncodeError` that prevented server startup on Korean Windows systems
