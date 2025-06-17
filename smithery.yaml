@@ -1,0 +1,29 @@
+# Smithery configuration file: https://smithery.ai/docs/build/project-config
+
+startCommand:
+  type: stdio
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({ command: 'python', args: ['-m', 'pydoll_mcp.server'], env: { PYDOLL_HEADLESS: config.headless.toString(), PYDOLL_LOG_LEVEL: config.logLevel, PYDOLL_BROWSER_TYPE: config.browserType } })
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required: []
+    properties:
+      headless:
+        type: boolean
+        default: true
+        description: Run browser in headless mode
+      logLevel:
+        type: string
+        default: INFO
+        description: Logging level
+      browserType:
+        type: string
+        default: chrome
+        description: Browser type to use (chrome or firefox)
+  exampleConfig:
+    headless: true
+    logLevel: INFO
+    browserType: chrome
