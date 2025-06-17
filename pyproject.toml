@@ -1,0 +1,281 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pydoll-mcp"
+version = "1.0.0"
+description = "Revolutionary Model Context Protocol (MCP) server for PyDoll browser automation with zero-webdriver operation and intelligent captcha bypass"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Jinsong Roh", email = "jinsongroh@gmail.com"}
+]
+maintainers = [
+    {name = "Jinsong Roh", email = "jinsongroh@gmail.com"}
+]
+keywords = [
+    "mcp", "browser-automation", "web-scraping", "captcha-bypass", 
+    "claude", "ai", "automation", "testing", "selenium-alternative",
+    "cloudflare", "recaptcha", "anti-detection", "stealth"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: Browsers",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Networking",
+    "Environment :: Console",
+    "Framework :: AsyncIO",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pydoll-python>=2.2.0",
+    "mcp>=1.0.0",
+    "pydantic>=2.0.0",
+    "typing-extensions>=4.0.0",
+    "asyncio-throttle>=1.0.0",
+    "aiofiles>=23.0.0",
+    "python-dotenv>=1.0.0",
+    "rich>=13.0.0",
+    "click>=8.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+    "coverage[toml]>=7.0.0",
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "aioresponses>=0.7.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.24.0",
+]
+all = [
+    "pydoll-mcp[dev,test,docs]"
+]
+
+[project.urls]
+Homepage = "https://github.com/JinsongRoh/pydoll-mcp"
+Repository = "https://github.com/JinsongRoh/pydoll-mcp.git"
+Documentation = "https://github.com/JinsongRoh/pydoll-mcp/wiki"
+"Bug Tracker" = "https://github.com/JinsongRoh/pydoll-mcp/issues"
+Changelog = "https://github.com/JinsongRoh/pydoll-mcp/blob/main/CHANGELOG.md"
+Discussions = "https://github.com/JinsongRoh/pydoll-mcp/discussions"
+Sponsor = "https://github.com/sponsors/JinsongRoh"
+
+[project.scripts]
+pydoll-mcp = "pydoll_mcp.server:cli_main"
+pydoll-mcp-server = "pydoll_mcp.server:cli_main"
+pydoll-mcp-test = "pydoll_mcp.cli:test_installation"
+
+[project.entry-points."mcp.servers"]
+pydoll = "pydoll_mcp.server:main"
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pydoll_mcp*"]
+exclude = ["tests*", "docs*", "examples*"]
+
+[tool.setuptools.package-data]
+pydoll_mcp = [
+    "py.typed",
+    "config/*.json",
+    "config/*.yaml",
+    "templates/*.html",
+    "scripts/*.js",
+]
+
+# Code Quality Tools Configuration
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \\.eggs
+  | \\.git
+  | \\.hg
+  | \\.mypy_cache
+  | \\.tox
+  | \\.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+target-version = "py38"
+line-length = 100
+fix = true
+show-fixes = true
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # Warning
+    "W",
+    # pydocstyle
+    "D",
+    # flake8-use-pathlib
+    "PTH",
+    # flake8-bandit
+    "S",
+    # flake8-logging-format
+    "G",
+    # Perflint
+    "PERF",
+    # Refactor
+    "RET",
+]
+ignore = [
+    "D100",  # Missing docstring in public module
+    "D104",  # Missing docstring in public package
+    "D107",  # Missing docstring in __init__
+    "D203",  # 1 blank line required before class docstring
+    "D213",  # Multi-line docstring summary should start at the second line
+    "S101",  # Use of assert detected
+    "S603",  # subprocess call: check for execution of untrusted input
+    "S607",  # Starting a process with a partial executable path
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["D", "S"]
+"setup.py" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+python_version = "3.8"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+implicit_reexport = false
+strict_equality = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "mcp.*",
+    "pydoll.*",
+    "asyncio_throttle.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=pydoll_mcp",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--cov-fail-under=80",
+]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["pydoll_mcp"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# Versioning and Release Configuration
+
+[tool.bumpversion]
+current_version = "1.0.0"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+search = "{current_version}"
+replace = "{new_version}"
+commit = true
+tag = true
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "Bump version: {current_version} → {new_version}"
+allow_dirty = false
+
+[[tool.bumpversion.files]]
+filename = "pydoll_mcp/__init__.py"
+search = "__version__ = \"{current_version}\""
+replace = "__version__ = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = "README.md"
+search = "v{current_version}"
+replace = "v{new_version}"
