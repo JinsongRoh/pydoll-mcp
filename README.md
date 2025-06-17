@@ -23,7 +23,12 @@
 
 ## 🌟 What Makes PyDoll MCP Server Revolutionary?
 
-PyDoll MCP Server brings the groundbreaking capabilities of [PyDoll](https://github.com/autoscrape-labs/pydoll) to Claude and other MCP clients. Unlike traditional browser automation tools that struggle with modern web protection, PyDoll operates at a fundamentally different level.
+PyDoll MCP Server brings the groundbreaking capabilities of [PyDoll](https://github.com/autoscrape-labs/pydoll) to Claude, OpenAI, Gemini and other MCP clients. Unlike traditional browser automation tools that struggle with modern web protection, PyDoll operates at a fundamentally different level.
+
+### PyDoll GitHub and Installation Information
+- GitHub: https://github.com/autoscrape-labs/pydoll
+- How to install: pip install pydoll-python
+- PyDoll version: PyDoll 2.2.1 (2025.06.17)
 
 ### 🚀 Key Breakthrough Features
 
@@ -449,7 +454,7 @@ python -m pytest tests/ -v
 - Advanced form recognition
 - Improved error handling
 
-### v1.2.0 (Q2 2024)
+### v1.2.0 (Q3 2025)
 - Visual element recognition
 - Natural language to automation
 - Cloud browser support
