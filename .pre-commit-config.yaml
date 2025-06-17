@@ -1,0 +1,216 @@
+# PyDoll MCP Server - Pre-commit Configuration
+# Automatic code quality checks before commits
+
+repos:
+  # Pre-commit hooks for basic checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # File format and syntax checks
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-symlinks
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      
+      # Python specific checks
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-docstring-first
+      - id: debug-statements
+      - id: name-tests-test
+      - id: requirements-txt-fixer
+      
+      # Security checks
+      - id: detect-private-key
+      - id: detect-aws-credentials
+
+  # Python code formatting with Black
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=100]
+
+  # Import sorting with isort
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=100]
+
+  # Python linting with Ruff (faster than flake8)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+  # Type checking with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-requests
+          - types-PyYAML
+          - types-python-dateutil
+        args: [--ignore-missing-imports, --strict]
+        exclude: ^(tests/|docs/|setup.py)
+
+  # Security linting with bandit
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.6
+    hooks:
+      - id: bandit
+        args: [-c, .bandit]
+        exclude: ^tests/
+
+  # Documentation checks
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args: [--convention=google]
+        exclude: ^(tests/|setup.py)
+
+  # YAML formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        types: [yaml]
+        exclude: ^\.github/workflows/
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        args: [--ignore, DL3008, --ignore, DL3009]
+
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+
+  # Git commit message checks
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # Secrets detection
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: ^(tests/fixtures/|\.secrets\.baseline)
+
+  # Requirements.txt security check
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.2
+    hooks:
+      - id: python-safety-dependencies-check
+        files: requirements.*\.txt$
+
+  # License headers
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.4
+    hooks:
+      - id: insert-license
+        files: \.py$
+        args:
+          - --license-filepath
+          - .license-header.txt
+          - --comment-style
+          - "#"
+
+  # Local hooks for project-specific checks
+  - repo: local
+    hooks:
+      # Custom PyDoll MCP Server checks
+      - id: check-version-consistency
+        name: Check version consistency
+        entry: python scripts/check_version.py
+        language: python
+        files: ^(pydoll_mcp/__init__.py|pyproject.toml|setup.py)$
+        pass_filenames: false
+        
+      - id: validate-tool-definitions
+        name: Validate MCP tool definitions
+        entry: python scripts/validate_tools.py
+        language: python
+        files: ^pydoll_mcp/tools/.*\.py$
+        pass_filenames: false
+        
+      - id: check-browser-compatibility
+        name: Check browser compatibility
+        entry: python scripts/check_browser_compat.py
+        language: python
+        files: ^pydoll_mcp/browser_manager\.py$
+        pass_filenames: false
+        
+      - id: validate-config-schema
+        name: Validate configuration schema
+        entry: python scripts/validate_config.py
+        language: python
+        files: ^(pydoll_mcp/config/.*|examples/.*config.*\.json)$
+        pass_filenames: false
+        
+      - id: check-docker-security
+        name: Check Docker security
+        entry: python scripts/check_docker_security.py
+        language: python
+        files: ^(Dockerfile|docker-compose.*\.yml)$
+        pass_filenames: false
+
+# Configuration for pre-commit itself
+default_stages: [commit, push]
+fail_fast: false
+minimum_pre_commit_version: '3.0.0'
+
+# CI configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+    
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: [mypy, hadolint-docker, commitizen]
+  submodules: false
+
+# Installation and usage:
+# 
+# 1. Install pre-commit:
+#    pip install pre-commit
+# 
+# 2. Install the git hook scripts:
+#    pre-commit install
+#    pre-commit install --hook-type commit-msg
+# 
+# 3. Run against all files (optional):
+#    pre-commit run --all-files
+# 
+# 4. Update hooks to latest versions:
+#    pre-commit autoupdate
+# 
+# 5. Bypass hooks (use sparingly):
+#    git commit --no-verify
