@@ -16,6 +16,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.1.1] - 2024-12-18
+
+### 🐛 Critical Bug Fixes
+
+#### 🌍 Unicode and Encoding Compatibility
+- **Fixed Windows Korean Environment Issue**: Resolved `UnicodeEncodeError` that prevented server startup on Korean Windows systems
+- **Cross-Platform Encoding Safety**: Added comprehensive encoding detection and fallback mechanisms
+- **Banner Display Enhancement**: Implemented smart banner selection based on terminal encoding capabilities
+- **UTF-8 Standard Compliance**: Enhanced UTF-8 handling across all supported platforms
+
+#### 🔧 Technical Improvements
+- **Encoding Detection**: Automatic terminal encoding detection with graceful fallbacks
+- **Multi-Tier Banner System**: Three-tier banner system (emoji, ASCII art, plain text) for maximum compatibility
+- **Stream Encoding Setup**: Automatic UTF-8 stream configuration where supported
+- **Error Recovery**: Robust error recovery for encoding-related failures
+
+#### 🛡️ Reliability Enhancements
+- **Startup Stability**: Guaranteed server startup regardless of system encoding settings
+- **International Support**: Enhanced support for non-English Windows environments
+- **Terminal Compatibility**: Improved compatibility across different terminal emulators
+- **Fallback Mechanisms**: Multiple fallback strategies for various encoding scenarios
+
+### 🌐 Platform-Specific Fixes
+
+#### Windows Improvements
+- **Korean Windows Support**: Full support for Korean (cp949) encoding environments
+- **Code Page Handling**: Better handling of various Windows code pages
+- **Terminal Detection**: Enhanced Windows terminal capability detection
+- **Environment Variables**: Improved handling of Windows environment variables
+
+#### Linux/macOS Enhancements
+- **Locale Support**: Better handling of various system locales
+- **SSH Terminal Support**: Improved support for SSH and remote terminals
+- **Container Compatibility**: Enhanced Docker container environment support
+- **Unicode Normalization**: Proper Unicode normalization across Unix systems
+
+### 📊 Quality Assurance
+- **Testing Coverage**: Added comprehensive encoding compatibility tests
+- **CI/CD Enhancement**: Extended continuous integration to test various encoding environments
+- **Multi-Language Testing**: Validation across multiple system languages and locales
+- **Regression Prevention**: Safeguards against future encoding-related regressions
+
+### 🔄 Backwards Compatibility
+- **Full Compatibility**: Complete backwards compatibility with all existing configurations
+- **No Breaking Changes**: Zero breaking changes to existing functionality
+- **Seamless Upgrade**: Existing installations upgrade seamlessly without configuration changes
+- **API Stability**: All APIs remain unchanged and fully compatible
+
+---
+
 ## [1.1.0] - 2024-12-18
 
 ### 🔧 One-Click Setup Revolution
