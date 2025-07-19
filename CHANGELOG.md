@@ -16,6 +16,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.1.3] - 2025-07-19
+
+### 🐛 Bug Fixes
+
+#### 🔍 Version Detection & Diagnostics
+- **Fixed Version Detection Issue**: Resolved `__version__` import error that caused version to display as "vunknown"
+- **Enhanced Error Handling**: Added graceful fallback when package metadata is not available
+- **Improved Version Reporting**: Better version detection and reporting in status commands
+
+#### 🛠️ Tool Count Consistency
+- **Fixed Tool Counting**: Resolved inconsistency in tool count reporting between different commands
+- **Standardized Tool Discovery**: Unified tool discovery mechanism across all CLI commands
+- **Accurate Reporting**: Ensured consistent tool count reporting in status and test commands
+
+#### 🖥️ Windows Compatibility
+- **Fixed Windows Command Examples**: Updated documentation to use Windows-compatible commands
+- **Cross-Platform Documentation**: Added platform-specific command examples in README
+- **Improved Error Messages**: Better error messages for Windows-specific issues
+
+#### ⚙️ Configuration & Dependencies
+- **Fixed Pydantic V2 Warnings**: Updated configuration to use Pydantic V2 compatible settings
+- **Removed Deprecated Config**: Replaced `schema_extra` with `json_schema_extra` in model configurations
+- **Updated Dependencies**: Ensured compatibility with latest Pydantic versions
+
+### 🔧 Technical Improvements
+
+#### Version Management
+- **Robust Version Detection**: Implemented fallback mechanisms for version detection
+- **Better Error Recovery**: Graceful handling of missing package metadata
+- **Consistent Versioning**: Unified version reporting across all modules
+
+#### Platform Support
+- **Windows-First Testing**: Enhanced Windows compatibility testing
+- **Command Documentation**: Platform-specific command examples and documentation
+- **Cross-Platform Validation**: Improved validation across different operating systems
+
+#### Code Quality
+- **Warning Resolution**: Eliminated all Pydantic configuration warnings
+- **Future-Proof Configuration**: Updated to latest Pydantic V2 best practices
+- **Type Safety**: Enhanced type annotations and validation
+
+### 📚 Documentation Updates
+
+#### README Improvements
+- **Windows Command Examples**: Added proper Windows command syntax examples
+- **Platform-Specific Sections**: Clear sections for different operating systems
+- **Installation Troubleshooting**: Enhanced troubleshooting for common Windows issues
+
+#### Command Reference
+- **Cross-Platform Commands**: Updated all command examples for Windows, macOS, and Linux
+- **Proper Syntax**: Corrected command syntax for different shells and environments
+- **Error Resolution**: Added solutions for common command-line issues
+
+### 🔄 Backwards Compatibility
+
+#### Full Compatibility Maintained
+- **Existing Configurations**: All existing configurations continue to work unchanged
+- **API Compatibility**: Full API compatibility with previous versions
+- **No Breaking Changes**: Zero breaking changes to existing functionality
+- **Seamless Upgrade**: Existing installations upgrade seamlessly
+
+### 🧪 Testing & Quality Assurance
+
+#### Enhanced Testing
+- **Version Detection Tests**: Added comprehensive tests for version detection
+- **Cross-Platform Testing**: Extended testing across Windows, macOS, and Linux
+- **Tool Count Validation**: Added tests to ensure consistent tool counting
+- **Configuration Testing**: Validation of Pydantic V2 configuration updates
+
+### 🚀 Performance & Reliability
+
+#### Stability Improvements
+- **Error Recovery**: Better error recovery for version detection failures
+- **Consistent Behavior**: More consistent behavior across different environments
+- **Resource Management**: Improved resource handling and cleanup
+
+#### User Experience
+- **Clear Status Reporting**: More accurate and consistent status reporting
+- **Better Error Messages**: Clearer error messages with actionable solutions
+- **Platform Guidance**: Better guidance for platform-specific issues
+
+---
+
 ## [1.1.1] - 2025-06-18
 
 ### 🐛 Critical Bug Fixes
