@@ -33,8 +33,8 @@ def get_tool_count() -> int:
         
         # Create a temporary server instance to count tools
         server = PyDollMCPServer()
-        tool_count = len(server.list_tools())
-        return tool_count
+        tools = server.list_tools()
+        return len(tools)
     except Exception:
         # Fallback to static count from __init__.py
         from . import TOTAL_TOOLS
@@ -157,17 +157,53 @@ def cli():
 
 @cli.command()
 @click.option("--verbose", "-v", is_flag=True, help="Show detailed dependency information")
-def status(verbose: bool):
+@click.option("--logs", is_flag=True, help="Show recent log information")
+@click.option("--stats", is_flag=True, help="Show performance statistics")
+def status(verbose: bool, logs: bool, stats: bool):
     """Show PyDoll MCP Server status and health information."""
     console.print(f"\n[bold blue]PyDoll MCP Server v{__version__}[/bold blue]")
     console.print("Checking system status...\n")
     
     display_status_table(verbose)
+    
+    if logs:
+        console.print("\n[bold yellow]📋 System Information:[/bold yellow]")
+        try:
+            health_info = health_check()
+            if health_info.get("system_info"):
+                sys_info = health_info["system_info"]
+                console.print(f"  • System: {sys_info.get('system', 'Unknown')}")
+                console.print(f"  • Platform: {sys_info.get('platform', 'Unknown')}")
+                console.print(f"  • Architecture: {sys_info.get('architecture', 'Unknown')}")
+        except Exception as e:
+            console.print(f"  ❌ Could not fetch system info: {e}")
+    
+    if stats:
+        console.print("\n[bold yellow]📊 Performance Stats:[/bold yellow]")
+        try:
+            tool_count = get_tool_count()
+            package_info = get_package_info()
+            console.print(f"  • Total Tools: {tool_count}")
+            console.print(f"  • Tool Categories: {len(package_info.get('tool_categories', {}))}")
+            console.print(f"  • PyDoll Version: {get_pydoll_version()}")
+        except Exception as e:
+            console.print(f"  ❌ Could not fetch stats: {e}")
 
 
 @cli.command()
-async def test_installation():
+@click.option("--verbose", "-v", is_flag=True, help="Show detailed test output")
+def test_installation(verbose: bool):
     """Test PyDoll MCP Server installation and functionality."""
+    
+    def run_test():
+        """Synchronous wrapper for the async test."""
+        return asyncio.run(_async_test_installation(verbose))
+    
+    run_test()
+
+
+async def _async_test_installation(verbose: bool):
+    """Async implementation of installation test."""
     console.print(f"\n[bold blue]Testing PyDoll MCP Server v{__version__} Installation[/bold blue]\n")
     
     with Progress(
@@ -199,10 +235,20 @@ async def test_installation():
         else:
             console.print("✅ Dependencies: OK")
         
-        # Test 3: Server startup
-        task3 = progress.add_task("Testing server startup...", total=1)
-        server_ok, server_error = await test_server_startup()
+        # Test 3: PyDoll version detection
+        task3 = progress.add_task("Checking PyDoll version...", total=1)
+        pydoll_version = get_pydoll_version()
         progress.update(task3, completed=1)
+        
+        if pydoll_version and pydoll_version not in ["unknown", None]:
+            console.print(f"✅ PyDoll version: {pydoll_version}")
+        else:
+            console.print("⚠️  PyDoll version: Could not detect (but may still work)")
+        
+        # Test 4: Server startup
+        task4 = progress.add_task("Testing server startup...", total=1)
+        server_ok, server_error = await test_server_startup()
+        progress.update(task4, completed=1)
         
         if server_ok:
             console.print("✅ Server startup: OK")
@@ -210,14 +256,14 @@ async def test_installation():
             console.print(f"❌ Server startup: FAILED - {server_error}")
             return
         
-        # Test 4: Tool enumeration
-        task4 = progress.add_task("Counting available tools...", total=1)
+        # Test 5: Tool enumeration
+        task5 = progress.add_task("Counting available tools...", total=1)
         try:
             tool_count = get_tool_count()
-            progress.update(task4, completed=1)
+            progress.update(task5, completed=1)
             console.print(f"✅ Tools available: {tool_count}")
         except Exception as e:
-            progress.update(task4, completed=1)
+            progress.update(task5, completed=1)
             console.print(f"❌ Tool enumeration: FAILED - {e}")
             return
     
@@ -249,7 +295,8 @@ def info():
     
     # Show tool categories
     console.print("\n[bold]Tool Categories:[/bold]")
-    for category, count in package_info['tool_categories'].items():
+    for category, info in package_info['tool_categories'].items():
+        count = info.get('count', 0) if isinstance(info, dict) else info
         console.print(f"  • {category.replace('_', ' ').title()}: {count} tools")
 
 
@@ -302,6 +349,20 @@ def doctor():
             issues_found.append(issue)
             console.print(f"   ❌ {issue}")
     
+    # Check 5: Tool count consistency
+    console.print("\n[bold]5. Tool Count Verification[/bold]")
+    try:
+        tool_count = get_tool_count()
+        from . import TOTAL_TOOLS
+        if tool_count == TOTAL_TOOLS:
+            console.print(f"   ✅ Tool count consistent: {tool_count}")
+        else:
+            console.print(f"   ⚠️  Tool count mismatch: {tool_count} vs {TOTAL_TOOLS} (expected)")
+    except Exception as e:
+        issue = f"Tool counting error: {e}"
+        issues_found.append(issue)
+        console.print(f"   ❌ {issue}")
+    
     # Summary
     console.print(f"\n[bold]Diagnostic Summary[/bold]")
     if not issues_found:
@@ -315,6 +376,28 @@ def doctor():
         console.print("   • Run: pip install --upgrade pydoll-mcp")
         console.print("   • Run: pip install --upgrade pydoll-python")
         console.print("   • Check Python version (requires >=3.8)")
+
+
+@cli.command()
+def version():
+    """Show version information."""
+    package_info = get_package_info()
+    
+    table = Table(show_header=True, header_style="bold blue")
+    table.add_column("Component", style="cyan")
+    table.add_column("Version", style="green")
+    
+    table.add_row("PyDoll MCP Server", package_info['version'])
+    table.add_row("PyDoll Library", package_info['pydoll_version'])
+    table.add_row("Python", f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+    
+    # Add dependency versions
+    sys_reqs = check_system_requirements()
+    for dep_name, dep_info in sys_reqs["dependencies"].items():
+        if dep_info["installed"]:
+            table.add_row(dep_name, dep_info["version"])
+    
+    console.print(table)
 
 
 def main():
