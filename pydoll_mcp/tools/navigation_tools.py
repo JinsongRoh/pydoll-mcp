@@ -227,17 +227,40 @@ async def handle_navigate_to(arguments: Dict[str, Any]) -> Sequence[TextContent]
         tab = await browser_manager.get_tab(browser_id, tab_id)
         tab = await browser_manager.ensure_tab_methods(tab)
         
-        # Navigate with options
-        navigation_options = {
-            "timeout": timeout * 1000,  # Convert to milliseconds
-            "waitUntil": "load" if wait_for_load else "domcontentloaded"
-        }
+        # Navigate with PyDoll compatible options (updated in v1.4.1)
+        navigation_options = {}
         
+        # Only add supported parameters - check PyDoll API compatibility
         if referrer:
             navigation_options["referer"] = referrer
         
-        # Perform navigation
-        await tab.go_to(url, **navigation_options)
+        try:
+            # Perform navigation - PyDoll doesn't support waitUntil parameter
+            await tab.go_to(url, **navigation_options)
+            
+            # Wait for load state if requested - with fallback for older PyDoll versions
+            if wait_for_load:
+                try:
+                    await tab.wait_for_load_state("load", timeout * 1000)
+                except (AttributeError, TypeError):
+                    # Fallback for older PyDoll versions without wait_for_load_state
+                    import asyncio
+                    await asyncio.sleep(2)  # Basic wait for page load
+                    
+        except Exception as nav_error:
+            # Enhanced error handling for PyDoll API compatibility
+            error_msg = str(nav_error)
+            if "waitUntil" in error_msg or "unexpected keyword argument" in error_msg:
+                # Retry with minimal parameters for older PyDoll versions
+                try:
+                    await tab.go_to(url)
+                    if wait_for_load:
+                        import asyncio
+                        await asyncio.sleep(2)
+                except Exception as retry_error:
+                    raise Exception(f"Navigation failed: {retry_error}")
+            else:
+                raise nav_error
         
         # Get final URL (in case of redirects)
         final_url = await tab.get_url()

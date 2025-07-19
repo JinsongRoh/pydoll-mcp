@@ -16,6 +16,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.4.1] - 2025-07-20
+
+### 🔧 Browser Compatibility & Stability Improvements
+
+#### ✨ Enhanced Browser Support
+- **Chrome Compatibility**: Removed deprecated `--disable-blink-features=AutomationControlled` flag
+- **Stability Flags**: Replaced problematic `--exclude-switches=enable-automation` with safe alternatives
+- **New Safe Options**: Added `--disable-background-timer-throttling`, `--disable-backgrounding-occluded-windows`
+- **Enhanced Stability**: Added `--disable-dev-shm-usage`, `--no-sandbox`, `--disable-gpu-sandbox` for better Linux compatibility
+
+#### 🐛 API Compatibility Fixes
+- **Navigation API**: Fixed `waitUntil` parameter compatibility with different PyDoll versions
+- **Error Handling**: Enhanced error handling for PyDoll API compatibility issues
+- **Graceful Fallbacks**: Added fallback mechanisms for older PyDoll versions
+- **Robust Retry Logic**: Implemented intelligent retry logic for navigation failures
+
+#### 📝 Code Quality
+- **Documentation**: Added inline comments explaining removed deprecated flags
+- **Error Messages**: Improved error messages for better debugging
+- **Version Comments**: Added version tracking comments for future reference
+
+### 🎯 Targeted Issues Resolved
+- Fixed Chrome browser warning messages about unsupported command-line flags
+- Resolved PyDoll API compatibility issues with navigation parameters
+- Enhanced cross-platform stability for Windows 11 and Linux environments
+
 ## [1.4.0] - 2025-07-20
 
 ### 🚀 Major Update - PyDoll 2.3.1 Compatibility

@@ -161,16 +161,30 @@ class BrowserManager:
         
         options.add_argument(f"--window-size={window_width},{window_height}")
         
-        # Stealth and performance options
+        # Stealth and performance options (Chrome compatible)
         if os.getenv("PYDOLL_STEALTH_MODE", "true").lower() == "true":
-            options.add_argument("--disable-blink-features=AutomationControlled")
-            options.add_experimental_option("excludeSwitches", ["enable-automation"])
-            options.add_experimental_option('useAutomationExtension', False)
+            # Safe stealth options for modern Chrome (updated in v1.4.1)
+            options.add_argument("--no-first-run")
+            options.add_argument("--no-default-browser-check")
+            options.add_argument("--disable-web-security")
+            options.add_argument("--disable-features=VizDisplayCompositor")
+            options.add_argument("--disable-extensions")
+            options.add_argument("--disable-background-timer-throttling")
+            options.add_argument("--disable-backgrounding-occluded-windows")
+            options.add_argument("--disable-renderer-backgrounding")
+            options.add_argument("--disable-ipc-flooding-protection")
+            # Note: Removed deprecated flags for better Chrome compatibility:
+            # - --disable-blink-features=AutomationControlled (deprecated)
+            # - --exclude-switches=enable-automation (causes warnings)
+        
+        # Additional stability options
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-gpu-sandbox")
         
         # Performance optimizations
         if os.getenv("PYDOLL_DISABLE_IMAGES", "false").lower() == "true":
-            prefs = {"profile.managed_default_content_settings.images": 2}
-            options.add_experimental_option("prefs", prefs)
+            options.add_argument("--disable-images")
         
         # Proxy configuration
         proxy_server = kwargs.get("proxy", os.getenv("PYDOLL_PROXY_SERVER"))
