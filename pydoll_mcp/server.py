@@ -30,12 +30,18 @@ try:
         SCREENSHOT_TOOLS,
         SCRIPT_TOOLS,
         ADVANCED_TOOLS,
+        PROTECTION_TOOLS,
+        NETWORK_TOOLS,
+        FILE_TOOLS,
         BROWSER_TOOL_HANDLERS,
         NAVIGATION_TOOL_HANDLERS,
         ELEMENT_TOOL_HANDLERS,
         SCREENSHOT_TOOL_HANDLERS,
         SCRIPT_TOOL_HANDLERS,
         ADVANCED_TOOL_HANDLERS,
+        PROTECTION_TOOL_HANDLERS,
+        NETWORK_TOOL_HANDLERS,
+        FILE_TOOL_HANDLERS,
         TOTAL_TOOLS,
         TOOL_CATEGORIES
     )
@@ -53,12 +59,18 @@ except ImportError as e:
     SCREENSHOT_TOOLS = []
     SCRIPT_TOOLS = []
     ADVANCED_TOOLS = []
+    PROTECTION_TOOLS = []
+    NETWORK_TOOLS = []
+    FILE_TOOLS = []
     BROWSER_TOOL_HANDLERS = {}
     NAVIGATION_TOOL_HANDLERS = {}
     ELEMENT_TOOL_HANDLERS = {}
     SCREENSHOT_TOOL_HANDLERS = {}
     SCRIPT_TOOL_HANDLERS = {}
     ADVANCED_TOOL_HANDLERS = {}
+    PROTECTION_TOOL_HANDLERS = {}
+    NETWORK_TOOL_HANDLERS = {}
+    FILE_TOOL_HANDLERS = {}
     TOTAL_TOOLS = 0
     TOOL_CATEGORIES = {}
 
@@ -252,14 +264,20 @@ class PyDollMCPServer:
         
         logger.info(f"Registering {len(all_tools)} tools across {len(all_handlers)} handlers")
         
-        @self.server.list_tools()
-        async def list_tools() -> list[Tool]:
-            """List all available automation tools."""
-            logger.debug(f"Listing {len(all_tools)} available tools")
-            return all_tools
+        # Store references for access in handlers
+        self.all_tools = all_tools
+        self.all_handlers = all_handlers
         
+        # Register list_tools handler
+        @self.server.list_tools()
+        async def handle_list_tools() -> list[Tool]:
+            """List all available automation tools."""
+            logger.debug(f"Listing {len(self.all_tools)} available tools")
+            return self.all_tools
+        
+        # Register call_tool handler
         @self.server.call_tool()
-        async def call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextContent]:
+        async def handle_call_tool(name: str, arguments: dict[str, Any]) -> Sequence[TextContent]:
             """Handle tool execution with comprehensive error handling."""
             self.stats["total_requests"] += 1
             start_time = asyncio.get_event_loop().time()
@@ -267,20 +285,20 @@ class PyDollMCPServer:
             logger.info(f"Executing tool: {name}")
             logger.debug(f"Tool arguments: {arguments}")
             
-            if name not in all_handlers:
+            if name not in self.all_handlers:
                 self.stats["failed_requests"] += 1
                 error_result = {
                     "success": False,
                     "error": "ToolNotFound",
                     "message": f"Tool '{name}' is not available",
-                    "available_tools": list(all_handlers.keys())
+                    "available_tools": list(self.all_handlers.keys())
                 }
                 logger.error(f"Unknown tool requested: {name}")
                 return [TextContent(type="text", text=str(error_result))]
             
             try:
                 # Execute the tool handler
-                handler = all_handlers[name]
+                handler = self.all_handlers[name]
                 result = await handler(arguments)
                 
                 # Calculate execution time

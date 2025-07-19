@@ -44,12 +44,12 @@ NETWORK_TOOLS = [
                 },
                 "modify_requests": {
                     "type": "boolean",
-                    "default": false,
+                    "default": False,
                     "description": "Enable request modification"
                 },
                 "modify_responses": {
                     "type": "boolean",
-                    "default": false,
+                    "default": False,
                     "description": "Enable response modification"
                 }
             },
@@ -156,7 +156,7 @@ NETWORK_TOOLS = [
                 },
                 "save_to_file": {
                     "type": "boolean",
-                    "default": false,
+                    "default": False,
                     "description": "Save responses to files"
                 }
             },
@@ -211,7 +211,7 @@ NETWORK_TOOLS = [
                 },
                 "include_suggestions": {
                     "type": "boolean",
-                    "default": true,
+                    "default": True,
                     "description": "Include optimization suggestions"
                 }
             },
@@ -288,7 +288,7 @@ NETWORK_TOOLS = [
                 },
                 "include_content": {
                     "type": "boolean",
-                    "default": true,
+                    "default": True,
                     "description": "Include response content in HAR"
                 }
             },

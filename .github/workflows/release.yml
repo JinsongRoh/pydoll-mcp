@@ -216,10 +216,146 @@ jobs:
         python -c "import pydoll_mcp; print(f'✅ Successfully installed pydoll-mcp v{pydoll_mcp.__version__}')"
         python -m pydoll_mcp.server --help
         
+  # Update Smithery.ai Registry
+  update-smithery:
+    name: Update Smithery.ai Registry
+    needs: [pypi-publish]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Extract version
+      id: version
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          VERSION="${GITHUB_REF#refs/tags/}"
+        fi
+        CLEAN_VERSION="${VERSION#v}"
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "clean_version=${CLEAN_VERSION}" >> $GITHUB_OUTPUT
+        echo "Extracted version: ${CLEAN_VERSION}"
+    
+    - name: Update Smithery.ai registry
+      run: |
+        VERSION="${{ steps.version.outputs.clean_version }}"
+        
+        # Create Smithery.ai payload with comprehensive metadata
+        cat > smithery_payload.json << EOF
+        {
+          "name": "pydoll-mcp",
+          "description": "Revolutionary browser automation MCP server powered by PyDoll 2.3.1 with advanced captcha bypass, stealth capabilities, and 58 comprehensive automation tools",
+          "version": "$VERSION",
+          "author": "Jinsong Roh",
+          "license": "MIT",
+          "keywords": [
+            "browser-automation",
+            "mcp",
+            "captcha-bypass", 
+            "stealth",
+            "pydoll",
+            "claude",
+            "ai-automation",
+            "web-scraping",
+            "selenium-alternative",
+            "chrome-devtools"
+          ],
+          "homepage": "https://github.com/JinsongRoh/pydoll-mcp",
+          "repository": "https://github.com/JinsongRoh/pydoll-mcp",
+          "documentation": "https://github.com/JinsongRoh/pydoll-mcp/wiki",
+          "installation": {
+            "type": "pip",
+            "package": "pydoll-mcp",
+            "version": "$VERSION",
+            "command": "pip install pydoll-mcp==$VERSION"
+          },
+          "configuration": {
+            "command": "python",
+            "args": ["-m", "pydoll_mcp.server"],
+            "env": {
+              "PYDOLL_LOG_LEVEL": "INFO",
+              "PYTHONIOENCODING": "utf-8"
+            }
+          },
+          "capabilities": {
+            "browser_automation": true,
+            "captcha_bypass": true,
+            "network_monitoring": true,
+            "element_finding": true,
+            "javascript_execution": true,
+            "stealth_mode": true,
+            "screenshot_capture": true,
+            "multi_browser_support": true,
+            "human_like_interaction": true,
+            "protection_bypass": true,
+            "file_management": true
+          },
+          "tools_count": 58,
+          "categories": [
+            "browser-management",
+            "navigation-control", 
+            "element-interaction",
+            "screenshot-media",
+            "script-execution",
+            "advanced-automation",
+            "protection-bypass",
+            "network-monitoring",
+            "file-management"
+          ],
+          "dependencies": {
+            "pydoll_version": "2.3.1",
+            "python_requirement": ">=3.8",
+            "mcp_version": ">=1.0.0"
+          },
+          "platforms": ["windows", "macos", "linux"],
+          "features": {
+            "zero_webdriver": true,
+            "chrome_devtools_protocol": true,
+            "cloudflare_bypass": true,
+            "recaptcha_bypass": true,
+            "anti_detection": true,
+            "human_simulation": true,
+            "network_interception": true,
+            "api_monitoring": true
+          },
+          "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "release_notes": "https://github.com/JinsongRoh/pydoll-mcp/releases/tag/v$VERSION"
+        }
+        EOF
+        
+        echo "📡 Updating Smithery.ai registry for PyDoll MCP Server v$VERSION..."
+        
+        # Update Smithery.ai using the provided API endpoint
+        RESPONSE=$(curl -w "%{http_code}" -s -o response_body.txt -X POST \
+          "https://server.smithery.ai/@smithery-ai/github/mcp?api_key=d5b3fc68-2ac2-4403-842f-3fe77df88b75&profile=agricultural-mink-Ifhgkl" \
+          -H "Content-Type: application/json" \
+          -H "User-Agent: PyDoll-MCP-GitHub-Actions/1.0" \
+          -H "Accept: application/json" \
+          -d @smithery_payload.json)
+        
+        echo "HTTP Response Code: $RESPONSE"
+        echo "Response Body:"
+        cat response_body.txt
+        
+        if [[ "$RESPONSE" =~ ^2[0-9][0-9]$ ]]; then
+          echo "✅ Smithery.ai registry updated successfully!"
+        else
+          echo "❌ Smithery.ai update failed with HTTP $RESPONSE"
+          echo "Response details:"
+          cat response_body.txt
+          exit 1
+        fi
+        
+        # Clean up
+        rm -f smithery_payload.json response_body.txt
+
   # Post-Release Notifications
   notify:
     name: Post-Release Notifications
-    needs: [test-installation]
+    needs: [test-installation, update-smithery]
     runs-on: ubuntu-latest
     
     steps:
@@ -240,5 +376,7 @@ jobs:
         echo "📦 PyPI: https://pypi.org/project/pydoll-mcp/"
         echo "📋 GitHub Release: https://github.com/JinsongRoh/pydoll-mcp/releases/tag/${{ steps.version.outputs.version }}"
         echo "📚 Documentation: https://github.com/JinsongRoh/pydoll-mcp/wiki"
+        echo "🔍 Smithery.ai: https://smithery.ai/package/pydoll-mcp"
         echo ""
         echo "🚀 Users can now install with: pip install pydoll-mcp"
+        echo "🔧 Automatically available in MCP registries!"

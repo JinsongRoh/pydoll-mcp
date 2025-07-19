@@ -16,6 +16,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.4.0] - 2025-07-20
+
+### 🚀 Major Update - PyDoll 2.3.1 Compatibility
+
+#### ✨ New Features
+- **PyDoll 2.3.1 Support**: Updated to support latest PyDoll version with enhanced capabilities
+- **Improved Script Selection**: Better DOM element querying and script execution
+- **Enhanced Click Methods**: More reliable click and selection methods
+- **Fetch Command Improvements**: Added fetch command processing with string body support
+- **WebSocket 14.0 Support**: Upgraded to latest websockets version for better stability
+
+#### 🔧 Improvements
+- **Better Selector Support**: Refined selector conditions to include attribute checks
+- **Request Handling**: Enhanced continue and fulfill request methods with new options
+- **Performance**: Optimized element finding and interaction performance
+
+#### 🐛 Bug Fixes
+- **Python Boolean Syntax**: Fixed false/true to False/True in tool definitions
+- **Request Body Type**: Changed body type from dict to string in fetch commands
+- **Selector Robustness**: Improved selector matching for complex DOM structures
+
+### 📦 Dependencies
+- Updated PyDoll requirement to >=2.3.1
+- Maintained compatibility with Python 3.8+
+
 ## [1.3.1] - 2025-07-20
 
 ### 🐛 Bug Fixes

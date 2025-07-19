@@ -107,12 +107,14 @@ async def test_server_startup() -> Tuple[bool, Optional[str]]:
     """Test if the MCP server can start properly."""
     try:
         from .server import PyDollMCPServer
+        from .tools import ALL_TOOLS
         
         server = PyDollMCPServer()
-        # Test basic server functionality
-        tools = server.list_tools()
+        # Test basic server initialization
+        await server.initialize()
         
-        if len(tools) > 0:
+        # Check if tools are available
+        if len(ALL_TOOLS) > 0:
             return True, None
         else:
             return False, "No tools available"

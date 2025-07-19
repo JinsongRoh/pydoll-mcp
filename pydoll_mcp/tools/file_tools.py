@@ -75,7 +75,7 @@ FILE_TOOLS = [
                 },
                 "wait_for_completion": {
                     "type": "boolean",
-                    "default": true,
+                    "default": True,
                     "description": "Wait for download to complete"
                 }
             },
@@ -126,7 +126,7 @@ FILE_TOOLS = [
                 },
                 "extract_tables": {
                     "type": "boolean",
-                    "default": false,
+                    "default": False,
                     "description": "Extract all tables on the page"
                 }
             },
@@ -172,7 +172,7 @@ FILE_TOOLS = [
                 },
                 "pretty_print": {
                     "type": "boolean",
-                    "default": true,
+                    "default": True,
                     "description": "Format JSON with indentation"
                 }
             },
@@ -195,12 +195,12 @@ FILE_TOOLS = [
                 },
                 "include_cookies": {
                     "type": "boolean",
-                    "default": true,
+                    "default": True,
                     "description": "Include cookies in session"
                 },
                 "include_storage": {
                     "type": "boolean",
-                    "default": true,
+                    "default": True,
                     "description": "Include local/session storage"
                 }
             },
@@ -223,7 +223,7 @@ FILE_TOOLS = [
                 },
                 "merge": {
                     "type": "boolean",
-                    "default": false,
+                    "default": False,
                     "description": "Merge with existing session data"
                 }
             },

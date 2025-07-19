@@ -153,7 +153,7 @@ PROTECTION_TOOLS = [
                 },
                 "random": {
                     "type": "boolean",
-                    "default": false,
+                    "default": False,
                     "description": "Use random user agent"
                 }
             },

@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.3.1
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.4.0
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,11 +20,32 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.3.1-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.4.0-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.3.1 - 2025-07-20)
+## 📢 Latest Updates (v1.4.0 - 2025-07-20)
+
+### 🚀 Major Update - PyDoll 2.3.1 Compatibility
+
+#### ✨ New Features
+- **✅ PyDoll 2.3.1 Support**: Updated to support latest PyDoll version with enhanced capabilities
+- **✅ Improved Script Selection**: Better DOM element querying and script execution
+- **✅ Enhanced Click Methods**: More reliable click and selection methods
+- **✅ Fetch Command Improvements**: Added fetch command processing with string body support
+- **✅ WebSocket 14.0 Support**: Upgraded to latest websockets version for better stability
+
+#### 🔧 Improvements
+- **✅ Better Selector Support**: Refined selector conditions to include attribute checks
+- **✅ Request Handling**: Enhanced continue and fulfill request methods with new options
+- **✅ Performance**: Optimized element finding and interaction performance
+
+#### 🐛 Bug Fixes
+- **✅ Python Boolean Syntax**: Fixed false/true to False/True in tool definitions
+- **✅ Request Body Type**: Changed body type from dict to string in fetch commands
+- **✅ Selector Robustness**: Improved selector matching for complex DOM structures
+
+### Previous Updates (v1.3.1 - 2025-07-20)
 
 ### 🔧 Critical Bug Fixes
 - **✅ Fixed Tool Loading**: All 79 tools now properly load (was only 28 in v1.3.0)
