@@ -2,7 +2,7 @@
 # Core Requirements for Production Use
 
 # Core MCP and Automation Dependencies
-pydoll-python>=2.2.0      # Revolutionary browser automation library
+pydoll-python>=2.3.1      # Revolutionary browser automation library
 mcp>=1.0.0                # Model Context Protocol core
 pydantic>=2.0.0           # Data validation and settings management
 typing-extensions>=4.0.0  # Extended typing support for older Python versions

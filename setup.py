@@ -41,7 +41,7 @@ if readme_file.exists():
 # Read requirements
 requirements_file = here / "requirements.txt"
 requirements = [
-    "pydoll-python>=2.2.0",
+    "pydoll-python>=2.3.1",
     "mcp>=1.0.0",
     "pydantic>=2.0.0",
     "typing-extensions>=4.0.0",
