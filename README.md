@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.3
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.4
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -24,9 +24,16 @@
   </a>
 </p>
 
-## 📢 Latest Updates (v1.1.3 - 2025-06-18)
+## 📢 Latest Updates (v1.1.4 - 2025-07-19)
 
 ### 🐛 Critical Bug Fixes
+- **✅ Fixed PyDoll Version Detection**: Resolved "vunknown" version display issue in status commands
+- **✅ Enhanced CLI Status Commands**: Added comprehensive status reporting with proper version detection
+- **✅ Improved Tool Counting**: Fixed inconsistent tool count reporting between different commands  
+- **✅ Better Error Handling**: Enhanced error messages and diagnostic information
+- **✅ Cross-Platform Compatibility**: Improved Windows command compatibility and path handling
+
+### Previous Updates (v1.1.3 - 2025-06-18)
 - **✅ Fixed JSON Parsing Errors**: Resolved MCP client communication issues
 - **✅ Encoding Compatibility**: Full support for Korean Windows systems (CP949/EUC-KR)  
 - **✅ Protocol Compliance**: Proper stdout/stderr separation for MCP compatibility
@@ -219,13 +226,13 @@ python -m pydoll_mcp.cli quick-start
 
 ### 2. Test Your Installation
 ```bash
-# Test installation
+# Test installation (NEW in v1.1.4: Enhanced with proper version detection)
 python -m pydoll_mcp.cli test-installation --verbose
 
 # Test browser automation
 python -m pydoll_mcp.cli test-browser --browser chrome --headless
 
-# Check status
+# Check status (NEW in v1.1.4: Fixed version detection)
 python -m pydoll_mcp.cli status --logs --stats
 ```
 
@@ -455,10 +462,10 @@ python -m pydoll_mcp.cli setup-claude      # Setup Claude Desktop only
 python -m pydoll_mcp.cli quick-start       # Interactive guide
 python -m pydoll_mcp.cli generate-config   # Generate config files
 
-# Testing and diagnostics
+# Testing and diagnostics (ENHANCED in v1.1.4)
 python -m pydoll_mcp.cli test-installation --verbose
 python -m pydoll_mcp.cli test-browser --browser chrome
-python -m pydoll_mcp.cli status --logs --stats
+python -m pydoll_mcp.cli status --logs --stats    # Now shows correct PyDoll version
 
 # Maintenance
 python -m pydoll_mcp.cli cleanup           # Clean temp files
@@ -504,9 +511,32 @@ python -m pydoll_mcp.cli status --logs
 python -m pydoll_mcp.cli generate-config
 ```
 
-#### MCP Communication Issues (NEW in v1.1.3!) - FIXED!
+#### Version Detection Issues (NEW in v1.1.4!) - FIXED!
 ```bash
-# For JSON parsing errors, upgrade to v1.1.3
+# For "vunknown" version display, upgrade to v1.1.4
+pip install --upgrade pydoll-mcp
+
+# Verify the fix - should now show proper PyDoll version
+python -m pydoll_mcp.cli status
+
+# Check PyDoll version directly
+python -c "import pydoll; print(f'PyDoll version: {pydoll.__version__}')"
+```
+
+#### Tool Count Inconsistencies (NEW in v1.1.4!) - FIXED!
+```bash
+# All commands should now report consistent tool counts
+python -m pydoll_mcp.cli status
+python -m pydoll_mcp.cli test-installation --verbose
+
+# If you see different counts, try reinstalling
+pip uninstall pydoll-mcp
+pip install pydoll-mcp
+```
+
+#### MCP Communication Issues (v1.1.3) - FIXED!
+```bash
+# For JSON parsing errors, upgrade to v1.1.3+
 pip install --upgrade pydoll-mcp
 
 # Verify the fix
@@ -568,7 +598,7 @@ python -m pydoll_mcp.server --debug
 PyDoll MCP Server provides significant advantages over traditional automation:
 
 | Metric | PyDoll MCP | Traditional Tools |
-|--------|------------|-----------------|
+|--------|------------|------------------|
 | Setup Time | < 30 seconds | 5-15 minutes |
 | Captcha Success Rate | 95%+ | 20-30% |
 | Detection Evasion | 98%+ | 60-70% |
@@ -578,7 +608,22 @@ PyDoll MCP Server provides significant advantages over traditional automation:
 
 ## 🆕 What's New
 
-### v1.1.3 (Latest - 2025-06-18)
+### v1.1.4 (Latest - 2025-07-19)
+
+#### 🐛 Critical Bug Fixes
+- **Fixed PyDoll Version Detection**: Resolved the "vunknown" version display issue that appeared in status commands
+- **Enhanced CLI Status Commands**: Added comprehensive status reporting with proper version detection and validation
+- **Improved Tool Counting**: Fixed inconsistent tool count reporting between different CLI commands (status vs test-installation)
+- **Better Error Handling**: Enhanced error messages and diagnostic information for troubleshooting
+- **Cross-Platform Compatibility**: Improved Windows command compatibility and path handling for international systems
+- **Pydantic Configuration Updates**: Updated configuration to use modern Pydantic v2 syntax (json_schema_extra)
+
+#### 🚀 Enhanced Features
+- **Advanced Status Reporting**: New `status` command with detailed system information, PyDoll version, and tool availability
+- **Improved Diagnostics**: Better error detection and reporting for common configuration issues
+- **Version Validation**: Comprehensive version checking for both pydoll-mcp and underlying PyDoll library
+
+### v1.1.3 (2025-06-18)
 
 #### 🐛 Critical Bug Fixes
 - **Fixed JSON Parsing Errors**: Resolved critical JSON parsing errors that prevented MCP client communication
