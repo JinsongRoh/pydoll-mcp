@@ -156,7 +156,7 @@ def get_pydoll_version():
         # Method 5: Check if we can import pydoll at all
         import pydoll
         # If we can import but no version, assume it's working
-        return "2.2.1+ (version detection failed)"
+        return "2.3.1+ (version detection failed)"
     except ImportError:
         pass
     except Exception:

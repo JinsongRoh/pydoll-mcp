@@ -258,7 +258,7 @@ def get_tools_with_capability(capability: str) -> List[Tool]:
 # Version and compatibility information
 
 TOOLS_VERSION = "1.0.0"
-MIN_PYDOLL_VERSION = "2.2.0"
+MIN_PYDOLL_VERSION = "2.3.1"
 MIN_MCP_VERSION = "1.0.0"
 
 COMPATIBILITY_INFO = {
