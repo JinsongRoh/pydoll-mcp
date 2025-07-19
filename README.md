@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.4
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.2
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,24 +20,27 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/pypi/v/pydoll-mcp?style=flat-square&color=blue" alt="PyPI Version"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.1.2-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.1.4 - 2025-07-19)
+## 📢 Latest Updates (v1.1.2 - 2025-06-18)
 
 ### 🐛 Critical Bug Fixes
-- **✅ Fixed PyDoll Version Detection**: Resolved "vunknown" version display issue in status commands
-- **✅ Enhanced CLI Status Commands**: Added comprehensive status reporting with proper version detection
-- **✅ Improved Tool Counting**: Fixed inconsistent tool count reporting between different commands  
-- **✅ Better Error Handling**: Enhanced error messages and diagnostic information
-- **✅ Cross-Platform Compatibility**: Improved Windows command compatibility and path handling
+- **✅ Fixed Korean Windows Encoding Issue**: Resolved `UnicodeEncodeError: 'cp949' codec can't encode character '🤖'` that prevented server startup on Korean Windows systems
+- **✅ Added Missing __main__.py**: Added proper module execution support for `python -m pydoll_mcp` command
+- **✅ Enhanced Multi-level Encoding Safety**: Implemented fallback mechanisms for robust cross-platform compatibility
+- **✅ Improved International Support**: Better handling of non-English Windows environments
 
-### Previous Updates (v1.1.3 - 2025-06-18)
-- **✅ Fixed JSON Parsing Errors**: Resolved MCP client communication issues
-- **✅ Encoding Compatibility**: Full support for Korean Windows systems (CP949/EUC-KR)  
-- **✅ Protocol Compliance**: Proper stdout/stderr separation for MCP compatibility
-- **✅ Enhanced Stability**: Improved server startup and error handling
+### Previous Updates (v1.1.1 - 2025-06-17)
+- **✅ Enhanced Encoding Support**: Added comprehensive encoding detection and fallback mechanisms
+- **✅ International Compatibility**: Improved support for all non-English Windows environments
+- **✅ Automatic Recovery**: Added robust error recovery for encoding-related failures
+
+### Previous Updates (v1.1.0 - 2025-06-16)
+- **✅ One-Click Setup**: Automatic Claude Desktop configuration during pip installation
+- **✅ Enhanced CLI**: New commands for setup, testing, and configuration
+- **✅ Developer Experience**: Post-install hooks and interactive guides
 
 ## 🌟 What Makes PyDoll MCP Server Revolutionary?
 
@@ -58,7 +61,6 @@ PyDoll MCP Server brings the groundbreaking capabilities of PyDoll to Claude, Op
 - **🌐 Real-time Network Control**: Intercept, modify, and analyze all web traffic
 - **🔧 One-Click Setup**: Automatic Claude Desktop configuration
 - **🌍 Universal Compatibility**: Works on all systems including Korean Windows
-- **🐛 MCP Protocol Compliant**: Fixed JSON parsing issues for reliable communication
 
 ## 📋 What Can You Do?
 
@@ -226,13 +228,13 @@ python -m pydoll_mcp.cli quick-start
 
 ### 2. Test Your Installation
 ```bash
-# Test installation (NEW in v1.1.4: Enhanced with proper version detection)
+# Test installation
 python -m pydoll_mcp.cli test-installation --verbose
 
 # Test browser automation
 python -m pydoll_mcp.cli test-browser --browser chrome --headless
 
-# Check status (NEW in v1.1.4: Fixed version detection)
+# Check status
 python -m pydoll_mcp.cli status --logs --stats
 ```
 
@@ -393,84 +395,6 @@ python -m pydoll_mcp.cli status --logs --stats
 
 </details>
 
-## 🔧 Advanced Configuration
-
-### Performance Optimization
-```json
-{
-  "browser_config": {
-    "headless": true,
-    "disable_images": true,
-    "disable_css": false,
-    "block_ads": true,
-    "enable_compression": true,
-    "max_concurrent_tabs": 5
-  },
-  "network_config": {
-    "timeout": 30,
-    "retry_attempts": 3,
-    "enable_caching": true,
-    "throttle_requests": false
-  }
-}
-```
-
-### Stealth Configuration
-```json
-{
-  "stealth_config": {
-    "randomize_fingerprint": true,
-    "rotate_user_agents": true,
-    "humanize_timing": true,
-    "evade_webrtc": true,
-    "spoof_timezone": true,
-    "mask_canvas": true
-  }
-}
-```
-
-### Captcha Bypass Settings
-```json
-{
-  "captcha_config": {
-    "auto_solve_cloudflare": true,
-    "auto_solve_recaptcha": true,
-    "solve_timeout": 30,
-    "retry_failed_attempts": 3,
-    "human_behavior_simulation": true
-  }
-}
-```
-
-## 🛠️ Command Line Interface
-
-PyDoll MCP Server comes with a powerful CLI for management and testing:
-
-```bash
-# Main commands
-pydoll-mcp                          # Start MCP server
-pydoll-mcp-test                     # Test installation
-pydoll-mcp-setup                    # Setup Claude Desktop
-
-# Module commands
-python -m pydoll_mcp.server         # Start server
-python -m pydoll_mcp.cli --help     # Show all CLI options
-
-# Setup and configuration
-python -m pydoll_mcp.cli auto-setup        # One-click setup
-python -m pydoll_mcp.cli setup-claude      # Setup Claude Desktop only
-python -m pydoll_mcp.cli quick-start       # Interactive guide
-python -m pydoll_mcp.cli generate-config   # Generate config files
-
-# Testing and diagnostics (ENHANCED in v1.1.4)
-python -m pydoll_mcp.cli test-installation --verbose
-python -m pydoll_mcp.cli test-browser --browser chrome
-python -m pydoll_mcp.cli status --logs --stats    # Now shows correct PyDoll version
-
-# Maintenance
-python -m pydoll_mcp.cli cleanup           # Clean temp files
-```
-
 ## 🐛 Troubleshooting
 
 ### Common Issues
@@ -485,6 +409,39 @@ python -m pip install --upgrade pip
 
 # Install with verbose output
 pip install pydoll-mcp -v
+```
+
+#### Korean Windows Encoding Issues (FIXED in v1.1.2!)
+```bash
+# For Korean Windows systems with cp949 encoding
+set PYTHONIOENCODING=utf-8
+python -m pydoll_mcp.server
+
+# Alternative: Use command prompt with UTF-8
+chcp 65001
+python -m pydoll_mcp.server
+
+# Permanent solution: Add to Claude Desktop config
+{
+  "mcpServers": {
+    "pydoll": {
+      "command": "python",
+      "args": ["-m", "pydoll_mcp.server"],
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYDOLL_LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}
+```
+
+#### Module Execution Issues (FIXED in v1.1.2!)
+```bash
+# Now you can properly use:
+python -m pydoll_mcp
+
+# Thanks to the added __main__.py file
 ```
 
 #### Browser Issues
@@ -511,78 +468,6 @@ python -m pydoll_mcp.cli status --logs
 python -m pydoll_mcp.cli generate-config
 ```
 
-#### Version Detection Issues (NEW in v1.1.4!) - FIXED!
-```bash
-# For "vunknown" version display, upgrade to v1.1.4
-pip install --upgrade pydoll-mcp
-
-# Verify the fix - should now show proper PyDoll version
-python -m pydoll_mcp.cli status
-
-# Check PyDoll version directly
-python -c "import pydoll; print(f'PyDoll version: {pydoll.__version__}')"
-```
-
-#### Tool Count Inconsistencies (NEW in v1.1.4!) - FIXED!
-```bash
-# All commands should now report consistent tool counts
-python -m pydoll_mcp.cli status
-python -m pydoll_mcp.cli test-installation --verbose
-
-# If you see different counts, try reinstalling
-pip uninstall pydoll-mcp
-pip install pydoll-mcp
-```
-
-#### MCP Communication Issues (v1.1.3) - FIXED!
-```bash
-# For JSON parsing errors, upgrade to v1.1.3+
-pip install --upgrade pydoll-mcp
-
-# Verify the fix
-python -m pydoll_mcp.server --test
-
-# Check server output (should be clean JSON)
-python -m pydoll_mcp.cli status
-```
-
-#### Encoding Issues (Korean Windows / International Systems)
-```bash
-# For Korean Windows systems with cp949 encoding
-set PYTHONIOENCODING=utf-8
-python -m pydoll_mcp.server
-
-# Alternative: Use command prompt with UTF-8
-chcp 65001
-python -m pydoll_mcp.server
-
-# Permanent solution: Add to Claude Desktop config
-{
-  "mcpServers": {
-    "pydoll": {
-      "command": "python",
-      "args": ["-m", "pydoll_mcp.server"],
-      "env": {
-        "PYTHONIOENCODING": "utf-8",
-        "PYDOLL_LOG_LEVEL": "INFO"
-      }
-    }
-  }
-}
-```
-
-#### Configuration Issues
-```bash
-# Re-run setup
-python -m pydoll_mcp.cli auto-setup --force
-
-# Check configuration
-python -m pydoll_mcp.cli status
-
-# Manual config generation
-python -m pydoll_mcp.cli generate-config --auto-setup
-```
-
 ### Debug Mode
 ```bash
 # Enable debug logging
@@ -598,75 +483,13 @@ python -m pydoll_mcp.server --debug
 PyDoll MCP Server provides significant advantages over traditional automation:
 
 | Metric | PyDoll MCP | Traditional Tools |
-|--------|------------|------------------|
+|--------|------------|-------------------|
 | Setup Time | < 30 seconds | 5-15 minutes |
 | Captcha Success Rate | 95%+ | 20-30% |
 | Detection Evasion | 98%+ | 60-70% |
 | Memory Usage | 50% less | Baseline |
 | Speed | 3x faster | Baseline |
 | Reliability | 99%+ | 80-85% |
-
-## 🆕 What's New
-
-### v1.1.4 (Latest - 2025-07-19)
-
-#### 🐛 Critical Bug Fixes
-- **Fixed PyDoll Version Detection**: Resolved the "vunknown" version display issue that appeared in status commands
-- **Enhanced CLI Status Commands**: Added comprehensive status reporting with proper version detection and validation
-- **Improved Tool Counting**: Fixed inconsistent tool count reporting between different CLI commands (status vs test-installation)
-- **Better Error Handling**: Enhanced error messages and diagnostic information for troubleshooting
-- **Cross-Platform Compatibility**: Improved Windows command compatibility and path handling for international systems
-- **Pydantic Configuration Updates**: Updated configuration to use modern Pydantic v2 syntax (json_schema_extra)
-
-#### 🚀 Enhanced Features
-- **Advanced Status Reporting**: New `status` command with detailed system information, PyDoll version, and tool availability
-- **Improved Diagnostics**: Better error detection and reporting for common configuration issues
-- **Version Validation**: Comprehensive version checking for both pydoll-mcp and underlying PyDoll library
-
-### v1.1.3 (2025-06-18)
-
-#### 🐛 Critical Bug Fixes
-- **Fixed JSON Parsing Errors**: Resolved critical JSON parsing errors that prevented MCP client communication
-- **Stdout/Stderr Separation**: Modified banner output to use stderr instead of stdout for MCP protocol compliance
-- **Encoding Compatibility**: Fixed character encoding issues on Korean Windows systems (CP949/EUC-KR)
-- **Protocol Compliance**: Ensured all stdout output is valid JSON for proper MCP client integration
-- **Enhanced Error Handling**: Improved error messages with proper JSON formatting for better client parsing
-- **Cross-Platform Stability**: Better handling of international character encodings
-
-### v1.1.2
-
-#### 🛠️ Enhanced Stability
-- **Server Reliability**: Improved server startup and shutdown processes
-- **Error Recovery**: Better error handling and recovery mechanisms
-- **Performance Optimization**: Reduced memory usage and improved response times
-
-### v1.1.1
-
-#### 🐛 Critical Bug Fixes
-- **Fixed Korean Windows Issue**: Resolved `UnicodeEncodeError` that prevented server startup on Korean Windows systems
-- **Enhanced Encoding Support**: Added comprehensive encoding detection and fallback mechanisms
-- **International Compatibility**: Improved support for all non-English Windows environments
-- **Automatic Recovery**: Added robust error recovery for encoding-related failures
-
-### v1.1.0
-
-#### 🔧 One-Click Setup
-- **Auto-configuration**: Automatic Claude Desktop setup during pip installation
-- **Smart detection**: Automatic detection of Claude Desktop config paths
-- **Safe merging**: Intelligent merging with existing configurations
-- **Backup protection**: Automatic backup of existing configurations
-
-#### 🚀 Enhanced CLI
-- **New Commands**: `auto-setup`, `setup-claude`, `quick-start`
-- **Interactive guides**: Step-by-step setup assistance
-- **Better diagnostics**: Enhanced testing and status reporting
-- **Cross-platform**: Improved Windows, macOS, and Linux support
-
-#### 🛠️ Developer Experience
-- **Post-install hooks**: Automatic setup prompts after installation
-- **Multiple entry points**: Various ways to access setup functionality
-- **Better error handling**: More helpful error messages and recovery suggestions
-- **Documentation**: Updated docs with new setup methods
 
 ## 🤝 Contributing
 
@@ -692,66 +515,6 @@ python -m pytest tests/ -v
 # Setup pre-commit hooks
 pre-commit install
 ```
-
-### Adding Features
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Add tests for new functionality
-4. Ensure all tests pass: `pytest`
-5. Submit a pull request
-
-## 📚 Documentation & Resources
-
-- **[Complete Documentation](https://github.com/JinsongRoh/pydoll-mcp/wiki)**: Full user guide and API reference
-- **[PyDoll Library](https://autoscrape-labs.github.io/pydoll/)**: Core automation library documentation
-- **[MCP Protocol](https://modelcontextprotocol.io/)**: Model Context Protocol specification
-- **[Examples Repository](https://github.com/JinsongRoh/pydoll-mcp/tree/main/examples)**: Comprehensive automation examples
-
-## 🔒 Security & Ethics
-
-### Responsible Use Guidelines
-- **Respect robots.txt**: Honor website crawling policies
-- **Rate Limiting**: Avoid overwhelming servers
-- **Legal Compliance**: Ensure automation follows applicable laws
-- **Privacy**: Handle data responsibly
-- **Terms of Service**: Respect website terms
-
-### Security Features
-- **Sandboxed Execution**: Isolated browser processes
-- **Secure Defaults**: Conservative security settings
-- **Audit Logging**: Comprehensive action logging
-- **Permission Model**: Granular capability control
-
-## 📈 Roadmap
-
-### v1.2.0 (Coming Soon)
-- Firefox browser support
-- Enhanced mobile device emulation
-- Advanced form recognition
-- Improved error handling
-- GUI setup tool
-
-### v1.3.0 (Q3 2025)
-- Visual element recognition
-- Natural language to automation
-- Cloud browser support
-- Enterprise features
-
-### v2.0.0 (Future)
-- AI-powered automation
-- Self-healing scripts
-- Advanced analytics
-- Multi-platform support
-
-## 💝 Support & Sponsorship
-
-If you find PyDoll MCP Server valuable:
-
-- ⭐ **Star the repository** on GitHub
-- 🐛 **Report issues** and suggest improvements
-- 💰 **[Sponsor the project](https://github.com/sponsors/JinsongRoh)** for priority support
-- 📢 **Share** with your network
-- 📝 **Write tutorials** and blog posts
 
 ## 📄 License
 
