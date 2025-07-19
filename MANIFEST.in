@@ -24,6 +24,9 @@ include *.json
 include *.yml
 include *.py
 include *.deprecated
+# Exclude sensitive example files
+exclude .pypirc.example
+# Include other example files
 include *.example
 include .bandit
 

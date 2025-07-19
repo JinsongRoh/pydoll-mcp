@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pydoll-mcp"
-version = "1.5.1"
+version = "1.5.2"
 description = "Revolutionary Model Context Protocol (MCP) server for PyDoll browser automation with zero-webdriver operation and intelligent captcha bypass"
 readme = "README.md"
 license = {text = "MIT"}
@@ -45,7 +45,7 @@ dependencies = [
     "pydantic>=2.0.0",
     "typing-extensions>=4.0.0",
     "asyncio-throttle>=1.0.0",
-    "aiofiles>=23.0.0",
+    "aiofiles>=23.2.1,<24.0.0",
     "python-dotenv>=1.0.0",
     "rich>=13.0.0",
     "click>=8.0.0",
@@ -254,7 +254,7 @@ directory = "htmlcov"
 # Versioning and Release Configuration
 
 [tool.bumpversion]
-current_version = "1.5.1"
+current_version = "1.5.2"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"

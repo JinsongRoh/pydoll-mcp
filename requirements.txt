@@ -9,7 +9,7 @@ typing-extensions>=4.0.0  # Extended typing support for older Python versions
 
 # Async and Performance Dependencies
 asyncio-throttle>=1.0.0   # Rate limiting for requests
-aiofiles>=24.1.0          # Async file operations
+aiofiles>=23.2.1,<24.0.0  # Async file operations (compatible with pydoll-python 2.3.1)
 
 # Configuration and Environment
 python-dotenv>=1.0.0      # Environment variable loading
