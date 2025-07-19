@@ -15,6 +15,9 @@ from .element_tools import ELEMENT_TOOLS, ELEMENT_TOOL_HANDLERS
 from .screenshot_tools import SCREENSHOT_TOOLS, SCREENSHOT_TOOL_HANDLERS
 from .script_tools import SCRIPT_TOOLS, SCRIPT_TOOL_HANDLERS
 from .advanced_tools import ADVANCED_TOOLS, ADVANCED_TOOL_HANDLERS
+from .protection_tools import PROTECTION_TOOLS, PROTECTION_TOOL_HANDLERS
+from .network_tools import NETWORK_TOOLS, NETWORK_TOOL_HANDLERS
+from .file_tools import FILE_TOOLS, FILE_TOOL_HANDLERS
 
 # Combine all tools and handlers
 ALL_TOOLS = (
@@ -23,7 +26,10 @@ ALL_TOOLS = (
     ELEMENT_TOOLS +
     SCREENSHOT_TOOLS +
     SCRIPT_TOOLS +
-    ADVANCED_TOOLS
+    ADVANCED_TOOLS +
+    PROTECTION_TOOLS +
+    NETWORK_TOOLS +
+    FILE_TOOLS
 )
 
 ALL_TOOL_HANDLERS = {
@@ -33,6 +39,9 @@ ALL_TOOL_HANDLERS = {
     **SCREENSHOT_TOOL_HANDLERS,
     **SCRIPT_TOOL_HANDLERS,
     **ADVANCED_TOOL_HANDLERS,
+    **PROTECTION_TOOL_HANDLERS,
+    **NETWORK_TOOL_HANDLERS,
+    **FILE_TOOL_HANDLERS,
 }
 
 # Tool categories for organization

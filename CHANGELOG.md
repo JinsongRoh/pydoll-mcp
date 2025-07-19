@@ -16,6 +16,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.3.1] - 2025-07-20
+
+### 🐛 Bug Fixes
+
+#### 🔧 Tool Loading Issue Fixed
+- **Fixed Missing Tools**: Resolved issue where only 28 out of 79 tools were loading
+- **Added Protection Tools Module**: Created `protection_tools.py` with 12 stealth and bypass tools
+- **Added Network Tools Module**: Created `network_tools.py` with 10 network monitoring tools  
+- **Added File Tools Module**: Created `file_tools.py` with 8 file management tools
+- **Updated Tool Registry**: Modified `__init__.py` to properly import all tool modules
+
+#### ⚙️ Pydantic V2 Compatibility
+- **Fixed Deprecation Warning**: Changed `schema_extra` to `json_schema_extra` in models
+- **Full Pydantic V2 Compliance**: Eliminated all configuration warnings
+
+#### 🛠️ CLI Improvements
+- **Added Missing Function**: Added `generate_config_json()` function to cli.py
+- **Fixed Import Error**: Resolved "cannot import name 'generate_config_json'" error
+
+### 📊 Tool Count Verification
+- **Before**: 28 tools loading (missing protection, network, and file tools)
+- **After**: All 79 tools properly loading and registered
+- **Categories Fixed**:
+  - Protection Bypass: 12 tools ✅
+  - Network Monitoring: 10 tools ✅
+  - File Management: 8 tools ✅
+
+### 🔄 Technical Details
+- Created three new tool modules to match the documented 79 tools
+- Updated tool imports in `tools/__init__.py`
+- Fixed Pydantic V2 deprecation warnings in `models/__init__.py`
+- Added missing CLI function for configuration generation
+
 ## [1.3.0] - 2025-07-19
 
 ### 🔥 Major PyDoll API Integration Upgrade

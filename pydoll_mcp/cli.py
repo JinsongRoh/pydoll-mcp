@@ -22,6 +22,27 @@ from .claude_setup import ClaudeDesktopSetup
 console = Console()
 
 
+def generate_config_json() -> str:
+    """Generate Claude Desktop configuration JSON."""
+    import json
+    import os
+    
+    config = {
+        "mcpServers": {
+            "pydoll": {
+                "command": "python",
+                "args": ["-m", "pydoll_mcp.server"],
+                "env": {
+                    "PYTHONIOENCODING": "utf-8",
+                    "PYDOLL_LOG_LEVEL": "INFO"
+                }
+            }
+        }
+    }
+    
+    return json.dumps(config, indent=2)
+
+
 def format_status_icon(status: bool) -> str:
     """Format status as icon with color."""
     return "✅" if status else "❌"

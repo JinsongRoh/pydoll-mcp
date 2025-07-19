@@ -134,7 +134,7 @@ class BrowserInstance(BaseModel):
     cpu_usage: Optional[float] = Field(None, description="CPU usage percentage")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "instance_id": "browser_abc123",
                 "browser_type": "chrome", 
