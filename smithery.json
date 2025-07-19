@@ -1,7 +1,7 @@
 {
   "name": "pydoll-mcp",
   "description": "Revolutionary browser automation MCP server powered by PyDoll - Zero WebDriver automation with AI-powered captcha bypass",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "author": "JinsongRoh",
   "homepage": "https://github.com/JinsongRoh/pydoll-mcp",
   "repository": "https://github.com/JinsongRoh/pydoll-mcp",
