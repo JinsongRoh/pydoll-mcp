@@ -67,18 +67,18 @@ FEATURES = {
 
 # Dynamic tool counting - this will be updated by server.py when tools are loaded
 TOOL_CATEGORIES = {
-    "browser_management": {"count": 0, "description": "Browser lifecycle and session management"},
-    "navigation_control": {"count": 0, "description": "Page navigation and control"},
-    "element_interaction": {"count": 0, "description": "Element finding and interaction"},
-    "screenshot_media": {"count": 0, "description": "Screenshot and media capture"},
-    "javascript_scripting": {"count": 0, "description": "JavaScript execution and scripting"},
-    "protection_bypass": {"count": 0, "description": "Captcha and protection bypass"},
-    "network_monitoring": {"count": 0, "description": "Network monitoring and interception"},
-    "file_data_management": {"count": 0, "description": "File upload and data management"},
+    "browser_management": {"count": 8, "description": "Browser lifecycle and session management"},
+    "navigation_control": {"count": 6, "description": "Page navigation and control"},
+    "element_interaction": {"count": 15, "description": "Element finding and interaction"},
+    "screenshot_media": {"count": 8, "description": "Screenshot and media capture"},
+    "javascript_scripting": {"count": 10, "description": "JavaScript execution and scripting"},
+    "protection_bypass": {"count": 5, "description": "Captcha and protection bypass"},
+    "network_monitoring": {"count": 4, "description": "Network monitoring and interception"},
+    "file_data_management": {"count": 4, "description": "File upload and data management"},
 }
 
-# Total tools available - will be calculated dynamically
-TOTAL_TOOLS = 0
+# Total tools available - calculated from categories
+TOTAL_TOOLS = sum(cat["count"] for cat in TOOL_CATEGORIES.values())
 
 def update_tool_counts(tool_counts: dict):
     """Update tool category counts dynamically."""
@@ -100,9 +100,91 @@ except ImportError:
     main = None
     get_browser_manager = None
 
-# Package information for debugging
+# Enhanced PyDoll version detection with robust fallback mechanisms
+def get_pydoll_version():
+    """Get PyDoll version with multiple detection methods and robust error handling."""
+    try:
+        import pydoll
+        
+        # Method 1: Check __version__ attribute directly
+        if hasattr(pydoll, '__version__'):
+            version = getattr(pydoll, '__version__')
+            if version and version != "unknown" and version.strip():
+                return version.strip()
+        
+        # Method 2: Try importlib.metadata (Python 3.8+)
+        try:
+            import importlib.metadata
+            version = importlib.metadata.version('pydoll-python')
+            if version and version.strip():
+                return version.strip()
+        except Exception:
+            pass
+        
+        # Method 3: Try older pkg_resources approach
+        try:
+            import pkg_resources
+            dist = pkg_resources.get_distribution('pydoll-python')
+            if dist and dist.version:
+                return dist.version.strip()
+        except Exception:
+            pass
+        
+        # Method 4: Check alternative version attributes
+        for attr in ['version', 'VERSION', '__VERSION__']:
+            if hasattr(pydoll, attr):
+                version = getattr(pydoll, attr)
+                if version and str(version).strip() != "unknown":
+                    return str(version).strip()
+        
+        # Method 5: Feature-based version detection for PyDoll
+        try:
+            from pydoll.browser import Chrome
+            
+            # Check for v2.2.1+ features
+            if hasattr(Chrome, 'create_session') and hasattr(Chrome, 'start_browser'):
+                return "2.2.1+"
+            elif hasattr(Chrome, 'start_browser'):
+                return "2.2.0+"
+            else:
+                return "2.0.0+"
+                
+        except (ImportError, AttributeError):
+            return "2.0.0+"
+        
+        # Method 6: Check pydoll module file path for version hints
+        try:
+            import os
+            pydoll_file = pydoll.__file__
+            if pydoll_file and os.path.exists(pydoll_file):
+                # Try to extract version from file path or metadata
+                pydoll_dir = os.path.dirname(pydoll_file)
+                version_file = os.path.join(pydoll_dir, 'VERSION')
+                if os.path.exists(version_file):
+                    with open(version_file, 'r') as f:
+                        version = f.read().strip()
+                        if version:
+                            return version
+        except Exception:
+            pass
+        
+        # If all methods fail but pydoll is importable, return generic version
+        return "2.2.1"  # Best guess for current PyDoll installations
+        
+    except ImportError:
+        return None
+    except Exception as e:
+        # Log the error but don't crash
+        try:
+            import sys
+            print(f"Warning: PyDoll version detection failed: {e}", file=sys.stderr)
+        except:
+            pass
+        return "unknown"
+
+# Package information for debugging and status reporting
 def get_package_info():
-    """Get comprehensive package information for debugging."""
+    """Get comprehensive package information for debugging and status display."""
     return {
         "version": __version__,
         "version_info": VERSION_INFO,
@@ -116,6 +198,7 @@ def get_package_info():
         "features": FEATURES,
         "tool_categories": TOOL_CATEGORIES,
         "total_tools": TOTAL_TOOLS,
+        "pydoll_version": get_pydoll_version(),
     }
 
 # Version check function
@@ -131,79 +214,57 @@ def check_version():
     
     return True
 
-# Dependency check function with improved PyDoll version detection
+# Enhanced dependency check function with improved error handling
 def check_dependencies():
-    """Check if all required dependencies are available."""
+    """Check if all required dependencies are available with detailed reporting."""
     missing_deps = []
-    pydoll_version = None
+    found_deps = {}
     
-    # Enhanced PyDoll version detection
-    try:
-        import pydoll
-        
-        # Method 1: Try __version__ attribute
-        if hasattr(pydoll, '__version__'):
-            pydoll_version = pydoll.__version__
-        
-        # Method 2: Try pkg_resources for accurate version detection
-        if pydoll_version is None or pydoll_version == "unknown":
-            try:
-                import pkg_resources
-                pydoll_version = pkg_resources.get_distribution("pydoll-python").version
-            except (ImportError, pkg_resources.DistributionNotFound):
-                pass
-        
-        # Method 3: Try importlib.metadata (Python 3.8+)
-        if pydoll_version is None or pydoll_version == "unknown":
-            try:
-                from importlib import metadata
-                pydoll_version = metadata.version("pydoll-python")
-            except (ImportError, metadata.PackageNotFoundError):
-                pass
-        
-        # Method 4: Check for version info in the package
-        if pydoll_version is None or pydoll_version == "unknown":
-            if hasattr(pydoll, 'version'):
-                pydoll_version = pydoll.version
-            elif hasattr(pydoll, 'VERSION'):
-                pydoll_version = pydoll.VERSION
-        
-        # If still unknown, set a reasonable default based on functionality
-        if pydoll_version is None or pydoll_version == "unknown":
-            # Test for v2.2.1 features to infer version
-            try:
-                # Check for features that exist in 2.2.1
-                from pydoll.browser import Chrome
-                if hasattr(Chrome, 'create_session'):  # v2.2.1+ feature
-                    pydoll_version = "2.2.1"
-                else:
-                    pydoll_version = "2.2.0+"
-            except (ImportError, AttributeError):
-                pydoll_version = "2.0.0+"
-                
-    except ImportError:
+    # Check PyDoll
+    pydoll_version = get_pydoll_version()
+    if pydoll_version is None:
         missing_deps.append("pydoll-python>=2.2.0")
-        pydoll_version = None
+    else:
+        found_deps["pydoll-python"] = pydoll_version
     
+    # Check MCP
     try:
         import mcp
+        if hasattr(mcp, '__version__'):
+            found_deps["mcp"] = mcp.__version__
+        else:
+            found_deps["mcp"] = "available"
     except ImportError:
         missing_deps.append("mcp>=1.0.0")
     
+    # Check Pydantic with version detection
     try:
         import pydantic
-        # Check if it's Pydantic v2
-        if hasattr(pydantic, 'VERSION'):
+        if hasattr(pydantic, '__version__'):
+            pydantic_version = pydantic.__version__
+        elif hasattr(pydantic, 'VERSION'):
             pydantic_version = pydantic.VERSION
         else:
-            # For older versions or version detection
-            import pkg_resources
+            # Try pkg_resources as fallback
             try:
+                import pkg_resources
                 pydantic_version = pkg_resources.get_distribution("pydantic").version
             except:
                 pydantic_version = "unknown"
+        
+        found_deps["pydantic"] = pydantic_version
     except ImportError:
         missing_deps.append("pydantic>=2.0.0")
+    
+    # Check typing-extensions
+    try:
+        import typing_extensions
+        if hasattr(typing_extensions, '__version__'):
+            found_deps["typing-extensions"] = typing_extensions.__version__
+        else:
+            found_deps["typing-extensions"] = "available"
+    except ImportError:
+        missing_deps.append("typing-extensions>=4.0.0")
     
     if missing_deps:
         raise ImportError(
@@ -214,11 +275,12 @@ def check_dependencies():
     return {
         "pydoll_version": pydoll_version,
         "dependencies_ok": True,
+        "found_dependencies": found_deps,
     }
 
-# Health check function with improved reliability
+# Comprehensive health check function with detailed system analysis
 def health_check():
-    """Perform a comprehensive health check of the package."""
+    """Perform a comprehensive health check of the package with detailed reporting."""
     health_info = {
         "version_ok": False,
         "dependencies_ok": False,
@@ -226,7 +288,9 @@ def health_check():
         "pydoll_version": "unknown",
         "python_version": None,
         "system_info": {},
+        "dependency_details": {},
         "errors": [],
+        "warnings": [],
     }
     
     # Add Python version info
@@ -240,30 +304,36 @@ def health_check():
             "system": platform.system(),
             "platform": platform.platform(),
             "architecture": platform.architecture()[0],
+            "machine": platform.machine(),
+            "processor": platform.processor(),
         }
     except Exception:
-        pass
+        health_info["warnings"].append("Could not detect system information")
     
+    # Check Python version
     try:
         check_version()
         health_info["version_ok"] = True
     except Exception as e:
         health_info["errors"].append(f"Version check failed: {e}")
     
+    # Check dependencies with detailed reporting
     try:
         dep_info = check_dependencies()
         health_info["dependencies_ok"] = dep_info["dependencies_ok"]
         health_info["pydoll_version"] = dep_info.get("pydoll_version", "unknown")
+        health_info["dependency_details"] = dep_info.get("found_dependencies", {})
     except Exception as e:
         health_info["errors"].append(f"Dependency check failed: {e}")
     
+    # Test basic browser availability
     try:
-        # Test basic browser availability
         import pydoll.browser
         health_info["browser_available"] = True
     except Exception as e:
         health_info["errors"].append(f"Browser check failed: {e}")
     
+    # Overall health status
     health_info["overall_status"] = (
         health_info["version_ok"] and 
         health_info["dependencies_ok"] and 
@@ -274,7 +344,7 @@ def health_check():
 
 # CLI entry point information
 def get_cli_info():
-    """Get information about available CLI commands."""
+    """Get information about available CLI commands and entry points."""
     return {
         "main_server": "pydoll-mcp",
         "server_alias": "pydoll-mcp-server", 
@@ -282,6 +352,8 @@ def get_cli_info():
         "module_run": "python -m pydoll_mcp.server",
         "test_module": "python -m pydoll_mcp.server --test",
         "status_check": "python -m pydoll_mcp.cli status",
+        "enhanced_status": "python -m pydoll_mcp.cli status --verbose",
+        "test_installation": "python -m pydoll_mcp.cli test-installation",
     }
 
 # Banner for CLI display
@@ -294,7 +366,7 @@ Revolutionary Browser Automation for AI
   * Intelligent Cloudflare Turnstile & reCAPTCHA v3 bypass  
   * Human-like interactions with advanced anti-detection
   * Real-time network monitoring & request interception
-  * Dynamic tool loading with comprehensive automation capabilities
+  * {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
 
 > Ready to revolutionize your browser automation!
 """
@@ -309,7 +381,7 @@ Revolutionary Browser Automation for AI
   • Intelligent Cloudflare Turnstile & reCAPTCHA v3 bypass  
   • Human-like interactions with advanced anti-detection
   • Real-time network monitoring & request interception
-  • Dynamic tool loading with comprehensive automation capabilities
+  • {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
 
 🚀 Ready to revolutionize your browser automation!
 """
@@ -374,7 +446,7 @@ Features:
   - Intelligent Cloudflare Turnstile & reCAPTCHA v3 bypass  
   - Human-like interactions with advanced anti-detection
   - Real-time network monitoring & request interception
-  - Dynamic tool loading with comprehensive automation capabilities
+  - {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
 
 Ready to revolutionize your browser automation!
 """
