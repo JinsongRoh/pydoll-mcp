@@ -17,7 +17,7 @@ For installation and usage instructions, see:
 https://github.com/JinsongRoh/pydoll-mcp
 """
 
-__version__ = "1.1.5"
+__version__ = "1.1.6"
 __author__ = "Jinsong Roh"
 __email__ = "jinsongroh@gmail.com"
 __license__ = "MIT"
@@ -101,7 +101,21 @@ except ImportError:
 
 # Enhanced PyDoll version detection with robust fallback mechanisms
 def get_pydoll_version():
-    """Get PyDoll version with multiple detection methods and robust error handling."""
+    """Get PyDoll version with multiple detection methods and robust error handling.
+    
+    This function implements a comprehensive version detection strategy that tries
+    multiple approaches to detect the PyDoll version, including:
+    1. Direct __version__ attribute
+    2. importlib.metadata (Python 3.8+)
+    3. pkg_resources (legacy)
+    4. Alternative version attributes
+    5. Feature-based version detection
+    6. File-based version hints
+    7. Smart fallback with educated guesses
+    
+    Returns:
+        str or None: PyDoll version string, or None if not installed
+    """
     try:
         import pydoll
         
@@ -117,7 +131,7 @@ def get_pydoll_version():
             version = importlib.metadata.version('pydoll-python')
             if version and version.strip():
                 return version.strip()
-        except Exception:
+        except (importlib.metadata.PackageNotFoundError, Exception):
             pass
         
         # Method 3: Try older pkg_resources approach
@@ -126,7 +140,7 @@ def get_pydoll_version():
             dist = pkg_resources.get_distribution('pydoll-python')
             if dist and dist.version:
                 return dist.version.strip()
-        except Exception:
+        except (pkg_resources.DistributionNotFound, Exception):
             pass
         
         # Method 4: Check alternative version attributes
@@ -151,23 +165,84 @@ def get_pydoll_version():
         except (ImportError, AttributeError):
             return "2.0.0+"
         
-        # Method 6: Check pydoll module file path for version hints
+        # Method 6: Try pip show command as fallback
+        try:
+            import subprocess
+            result = subprocess.run(
+                ['pip', 'show', 'pydoll-python'], 
+                capture_output=True, 
+                text=True, 
+                timeout=10
+            )
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    if line.startswith('Version:'):
+                        version = line.split(':', 1)[1].strip()
+                        if version:
+                            return version
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
+            pass
+        
+        # Method 7: Check pydoll module file path for version hints
         try:
             import os
             pydoll_file = pydoll.__file__
             if pydoll_file and os.path.exists(pydoll_file):
                 # Try to extract version from file path or metadata
                 pydoll_dir = os.path.dirname(pydoll_file)
+                
+                # Check for VERSION file
                 version_file = os.path.join(pydoll_dir, 'VERSION')
                 if os.path.exists(version_file):
                     with open(version_file, 'r') as f:
                         version = f.read().strip()
                         if version:
                             return version
+                
+                # Check for _version.py file
+                version_py = os.path.join(pydoll_dir, '_version.py')
+                if os.path.exists(version_py):
+                    try:
+                        with open(version_py, 'r') as f:
+                            content = f.read()
+                            # Look for version assignment
+                            import re
+                            match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
+                            if match:
+                                return match.group(1)
+                    except Exception:
+                        pass
         except Exception:
             pass
         
-        # If all methods fail but pydoll is importable, return generic version
+        # Method 8: Try inspecting the package for version info
+        try:
+            import inspect
+            if hasattr(pydoll, '__path__'):
+                for path_item in pydoll.__path__:
+                    init_file = os.path.join(path_item, '__init__.py')
+                    if os.path.exists(init_file):
+                        try:
+                            with open(init_file, 'r') as f:
+                                content = f.read()
+                                # Look for version patterns
+                                import re
+                                patterns = [
+                                    r'__version__\s*=\s*["\']([^"\']+)["\']',
+                                    r'version\s*=\s*["\']([^"\']+)["\']',
+                                    r'VERSION\s*=\s*["\']([^"\']+)["\']'
+                                ]
+                                for pattern in patterns:
+                                    match = re.search(pattern, content)
+                                    if match:
+                                        return match.group(1)
+                        except Exception:
+                            continue
+        except Exception:
+            pass
+        
+        # If all methods fail but pydoll is importable, return educated guess
+        # Based on when PyDoll MCP Server was last updated
         return "2.2.1"  # Best guess for current PyDoll installations
         
     except ImportError:
