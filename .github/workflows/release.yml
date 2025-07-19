@@ -27,7 +27,7 @@ jobs:
         fetch-depth: 0
         
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         
@@ -94,7 +94,15 @@ jobs:
       id: release_notes
       run: |
         VERSION="${{ steps.version.outputs.clean_version }}"
-        cat << EOF > release_notes.md
+        
+        # Check if release notes file exists
+        RELEASE_NOTES_FILE="RELEASE_NOTES_v${VERSION}.md"
+        if [ -f "$RELEASE_NOTES_FILE" ]; then
+          echo "📋 Using existing release notes from $RELEASE_NOTES_FILE"
+          cp "$RELEASE_NOTES_FILE" release_notes.md
+        else
+          echo "📝 Generating default release notes"
+          cat << EOF > release_notes.md
         # 🚀 PyDoll MCP Server v${VERSION}
         
         ## 🌟 What's New
@@ -105,12 +113,12 @@ jobs:
         - **Zero WebDrivers**: Direct Chrome DevTools Protocol communication
         - **AI-Powered Captcha Bypass**: Automatic Cloudflare Turnstile & reCAPTCHA v3 solving
         - **Human Behavior Simulation**: Undetectable automation
-        - **77+ Tools**: Comprehensive browser automation toolkit
+        - **79+ Tools**: Comprehensive browser automation toolkit
         - **Cross-Platform**: Windows, Linux, macOS support
         
         ### 📦 Installation
         \`\`\`bash
-        pip install pydoll-mcp
+        pip install pydoll-mcp==${VERSION}
         \`\`\`
         
         ### 🔧 Quick Setup for Claude Desktop
@@ -119,7 +127,11 @@ jobs:
           "mcpServers": {
             "pydoll": {
               "command": "python",
-              "args": ["-m", "pydoll_mcp.server"]
+              "args": ["-m", "pydoll_mcp.server"],
+              "env": {
+                "PYDOLL_LOG_LEVEL": "INFO",
+                "PYTHONIOENCODING": "utf-8"
+              }
             }
           }
         }
@@ -128,8 +140,12 @@ jobs:
         ### 📚 Resources
         - 📖 [Documentation](https://github.com/JinsongRoh/pydoll-mcp/wiki)
         - 🏠 [PyPI Package](https://pypi.org/project/pydoll-mcp/)
+        - 🔍 [Smithery.ai Registry](https://smithery.ai/server/@JinsongRoh/pydoll-mcp)
         - 🐳 [Docker Hub](https://hub.docker.com/r/jinsongroh/pydoll-mcp)
         - 💬 [Discussions](https://github.com/JinsongRoh/pydoll-mcp/discussions)
+        
+        ### 📋 Release Notes
+        - 📄 [Detailed Release Notes](https://github.com/JinsongRoh/pydoll-mcp/blob/main/RELEASE_NOTES_v${VERSION}.md)
         
         ## 🙏 Acknowledgments
         Built on the amazing [PyDoll](https://github.com/autoscrape-labs/pydoll) library!
@@ -138,6 +154,7 @@ jobs:
         
         **Full Changelog**: https://github.com/JinsongRoh/pydoll-mcp/blob/main/CHANGELOG.md
         EOF
+        fi
         
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
@@ -181,17 +198,38 @@ jobs:
         # Verify no sensitive files in distribution
         echo "🔍 Security verification of package contents..."
         
+        # Define sensitive patterns to check
+        SENSITIVE_PATTERNS="(\.env|\.secret|\.pypirc|token|password|api_key|secret_key|private_key)"
+        SENSITIVE_EXTENSIONS="(pem|key|crt|p12|pfx|jks)"
+        
         # Check for sensitive patterns in package
-        if find dist/ -name "*.tar.gz" -exec tar -tzf {} \; | grep -E "(\.env|\.secret|key|token|password)" 2>/dev/null; then
-          echo "❌ Sensitive files detected in package!"
-          exit 1
-        fi
+        echo "Checking for sensitive files..."
+        for package in dist/*.tar.gz; do
+          if [ -f "$package" ]; then
+            echo "Scanning: $(basename $package)"
+            if tar -tzf "$package" | grep -iE "${SENSITIVE_PATTERNS}|.*\.${SENSITIVE_EXTENSIONS}$" 2>/dev/null; then
+              echo "❌ Sensitive files detected in package!"
+              exit 1
+            fi
+          fi
+        done
+        
+        # Check wheel files too
+        for wheel in dist/*.whl; do
+          if [ -f "$wheel" ]; then
+            echo "Scanning: $(basename $wheel)"
+            if unzip -l "$wheel" | grep -iE "${SENSITIVE_PATTERNS}|.*\.${SENSITIVE_EXTENSIONS}$" 2>/dev/null; then
+              echo "❌ Sensitive files detected in wheel!"
+              exit 1
+            fi
+          fi
+        done
         
         # Verify package integrity
         python -m pip install --upgrade pip twine
         twine check dist/* --strict
         
-        echo "✅ Security verification passed"
+        echo "✅ Security verification passed - no sensitive files found"
         
     - name: Verify package contents
       run: |
@@ -205,12 +243,24 @@ jobs:
         
     - name: Verify PyPI token is configured
       run: |
-        if [ -z "${{ secrets.PYPI_API_TOKEN }}" ]; then
+        # Never print or log the actual token value
+        # Only check if the secret exists without exposing it
+        if [ -n "${{ secrets.PYPI_API_TOKEN }}" ]; then
+          echo "✅ PYPI_API_TOKEN is configured"
+          # Verify token format without exposing it
+          TOKEN_LENGTH=${#PYPI_TOKEN}
+          if [ $TOKEN_LENGTH -lt 20 ]; then
+            echo "❌ PYPI_API_TOKEN appears to be invalid (too short)"
+            exit 1
+          fi
+        else
           echo "❌ PYPI_API_TOKEN secret not configured"
           echo "Please follow SECURITY_SETUP.md to configure secrets"
+          echo "Required: A valid PyPI API token starting with 'pypi-'"
           exit 1
         fi
-        echo "✅ PYPI_API_TOKEN is configured"
+      env:
+        PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
@@ -219,6 +269,10 @@ jobs:
         verbose: true
         verify-metadata: true
         skip-existing: true
+        print-hash: true  # Print package hashes for verification
+      env:
+        # Ensure secure token handling
+        TWINE_NON_INTERACTIVE: 1
         
   # Test PyPI Installation
   test-installation:
@@ -232,17 +286,35 @@ jobs:
         
     steps:
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         
     - name: Wait for PyPI propagation
-      run: sleep 120
+      run: |
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          powershell -Command "Start-Sleep -Seconds 120"
+        else
+          sleep 120
+        fi
       
     - name: Install from PyPI
       run: |
         python -m pip install --upgrade pip
-        pip install pydoll-mcp
+        # Try to install with retries in case of propagation delay
+        for i in {1..3}; do
+          if pip install pydoll-mcp --no-cache-dir; then
+            echo "✅ Installation successful on attempt $i"
+            break
+          else
+            echo "⚠️  Installation failed on attempt $i, retrying in 30s..."
+            if [ "${{ runner.os }}" == "Windows" ]; then
+              powershell -Command "Start-Sleep -Seconds 30"
+            else
+              sleep 30
+            fi
+          fi
+        done
         
     - name: Test installation
       run: |
@@ -266,19 +338,31 @@ jobs:
       run: |
         echo "🔍 Verifying Smithery.ai configuration..."
         
-        if [ -z "${{ secrets.SMITHERY_API_KEY }}" ]; then
-          echo "❌ SMITHERY_API_KEY secret not configured"
-          echo "Please follow SECURITY_SETUP.md to configure secrets"
-          exit 1
+        # Check secrets without exposing values
+        MISSING_SECRETS=""
+        
+        if [ -n "${{ secrets.SMITHERY_API_KEY }}" ]; then
+          echo "✅ SMITHERY_API_KEY is configured"
+        else
+          MISSING_SECRETS="${MISSING_SECRETS} SMITHERY_API_KEY"
         fi
         
-        if [ -z "${{ secrets.SMITHERY_PROFILE }}" ]; then
-          echo "❌ SMITHERY_PROFILE secret not configured"
-          echo "Please follow SECURITY_SETUP.md to configure secrets"
-          exit 1
+        if [ -n "${{ secrets.SMITHERY_PROFILE }}" ]; then
+          echo "✅ SMITHERY_PROFILE is configured"
+        else
+          MISSING_SECRETS="${MISSING_SECRETS} SMITHERY_PROFILE"
         fi
         
-        echo "✅ Smithery.ai secrets are configured"
+        if [ -n "$MISSING_SECRETS" ]; then
+          echo "❌ Missing secrets:$MISSING_SECRETS"
+          echo "Please follow SECURITY_SETUP.md to configure secrets"
+          echo "⚠️  Smithery.ai update will be skipped (non-critical)"
+          # Don't fail the workflow - Smithery.ai is optional
+          echo "skip_smithery=true" >> $GITHUB_ENV
+        else
+          echo "✅ All Smithery.ai secrets are configured"
+          echo "skip_smithery=false" >> $GITHUB_ENV
+        fi
     
     - name: Extract version
       id: version
@@ -294,6 +378,7 @@ jobs:
         echo "Extracted version: ${CLEAN_VERSION}"
     
     - name: Update Smithery.ai registry
+      if: env.skip_smithery != 'true'
       run: |
         VERSION="${{ steps.version.outputs.clean_version }}"
         
@@ -347,7 +432,7 @@ jobs:
             "protection_bypass": true,
             "file_management": true
           },
-          "tools_count": 58,
+          "tools_count": 79,
           "categories": [
             "browser-management",
             "navigation-control", 
@@ -393,16 +478,21 @@ jobs:
           -d @smithery_payload.json)
         
         echo "HTTP Response Code: $RESPONSE"
-        echo "Response Body:"
-        cat response_body.txt
+        
+        # Only show non-sensitive response info
+        if [ -f response_body.txt ]; then
+          # Filter out any potential sensitive information from response
+          grep -v -E "(token|key|secret|password)" response_body.txt | head -20 || true
+        fi
         
         if [[ "$RESPONSE" =~ ^2[0-9][0-9]$ ]]; then
           echo "✅ Smithery.ai registry updated successfully!"
           echo "Registry should be updated within 5-10 minutes"
         else
           echo "❌ Smithery.ai update failed with HTTP $RESPONSE"
-          echo "Response details:"
-          cat response_body.txt
+          echo "Response details (filtered):"
+          # Show only error message, not full response
+          grep -E "(error|message|detail)" response_body.txt | head -10 || echo "No detailed error message available"
           
           # Don't fail the workflow for Smithery.ai issues (optional service)
           echo "⚠️  Smithery.ai update failed, but continuing workflow"
