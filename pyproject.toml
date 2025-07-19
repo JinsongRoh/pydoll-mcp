@@ -9,10 +9,10 @@ description = "Revolutionary Model Context Protocol (MCP) server for PyDoll brow
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Jinsong Roh", email = "jinsongroh@gmail.com"}
+    {name = "Jinsong Roh", email = "enjoydays@gmail.com"}
 ]
 maintainers = [
-    {name = "Jinsong Roh", email = "jinsongroh@gmail.com"}
+    {name = "Jinsong Roh", email = "enjoydays@gmail.com"}
 ]
 keywords = [
     "mcp", "browser-automation", "web-scraping", "captcha-bypass", 

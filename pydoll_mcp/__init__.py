@@ -21,7 +21,7 @@ https://github.com/JinsongRoh/pydoll-mcp
 
 __version__ = "1.5.2"
 __author__ = "Jinsong Roh"
-__email__ = "jinsongroh@gmail.com"
+__email__ = "enjoydays@gmail.com"
 __license__ = "MIT"
 __description__ = "Revolutionary Model Context Protocol server for PyDoll browser automation"
 __url__ = "https://github.com/JinsongRoh/pydoll-mcp"
