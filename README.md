@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.2
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.3
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,13 +20,27 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.1.2-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.1.3-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.1.2 - 2025-06-18)
+## 📢 Latest Updates (v1.1.3 - 2025-07-19)
 
-### 🐛 Critical Bug Fixes
+### 🐛 Critical Bug Fixes & Improvements
+- **✅ Fixed Version Detection Issue**: Resolved `__version__` import error that caused version to display as "vunknown"
+- **✅ Enhanced Tool Count Consistency**: Fixed inconsistency in tool count reporting between different commands (77 tools confirmed)
+- **✅ Windows Compatibility Enhanced**: Updated documentation with Windows-compatible commands (using `findstr` instead of `grep`)
+- **✅ Pydantic V2 Full Compliance**: Eliminated all configuration warnings by migrating to `json_schema_extra`
+- **✅ Improved Error Handling**: Added graceful fallback mechanisms for version detection and tool discovery
+- **✅ Cross-Platform Documentation**: Added platform-specific command examples for Windows, macOS, and Linux
+
+### 🔧 Technical Improvements
+- **Robust Version Management**: Implemented fallback mechanisms when package metadata is unavailable
+- **Unified Tool Discovery**: Standardized tool discovery mechanism across all CLI commands
+- **Configuration Future-Proofing**: Updated to latest Pydantic V2 best practices
+- **Enhanced Status Reporting**: More accurate and consistent status reporting across different environments
+
+### Previous Updates (v1.1.2 - 2025-06-18)
 - **✅ Fixed Korean Windows Encoding Issue**: Resolved `UnicodeEncodeError: 'cp949' codec can't encode character '🤖'` that prevented server startup on Korean Windows systems
 - **✅ Added Missing __main__.py**: Added proper module execution support for `python -m pydoll_mcp` command
 - **✅ Enhanced Multi-level Encoding Safety**: Implemented fallback mechanisms for robust cross-platform compatibility
@@ -228,17 +242,43 @@ python -m pydoll_mcp.cli quick-start
 
 ### 2. Test Your Installation
 ```bash
-# Test installation
+# Test installation (NEW in v1.1.3: Consistent tool counting!)
 python -m pydoll_mcp.cli test-installation --verbose
 
 # Test browser automation
 python -m pydoll_mcp.cli test-browser --browser chrome --headless
 
-# Check status
+# Check status (NEW in v1.1.3: Accurate version reporting!)
 python -m pydoll_mcp.cli status --logs --stats
 ```
 
-### 3. Basic Usage Examples
+### 3. Platform-Specific Commands (NEW in v1.1.3!)
+
+**Windows Commands:**
+```batch
+# Check PyDoll version (Windows)
+python -c "import pydoll_mcp; print(f'PyDoll MCP version: {pydoll_mcp.__version__}')"
+
+# List installed packages (Windows)
+pip list | findstr pydoll
+
+# Check tool count (Windows)
+python -m pydoll_mcp.cli status
+```
+
+**Linux/macOS Commands:**
+```bash
+# Check PyDoll version (Linux/macOS)
+python -c "import pydoll_mcp; print(f'PyDoll MCP version: {pydoll_mcp.__version__}')"
+
+# List installed packages (Linux/macOS)
+pip list | grep pydoll
+
+# Check tool count (Linux/macOS)
+python -m pydoll_mcp.cli status
+```
+
+### 4. Basic Usage Examples
 
 **Basic Website Navigation:**
 ```
@@ -268,7 +308,7 @@ python -m pydoll_mcp.cli status --logs --stats
 "Capture API responses containing pricing data"
 ```
 
-## 🛠️ Complete Tool Arsenal
+## 🛠️ Complete Tool Arsenal (77 Tools)
 
 <details>
 <summary><strong>🌐 Browser Management (8 tools)</strong></summary>
@@ -411,6 +451,32 @@ python -m pip install --upgrade pip
 pip install pydoll-mcp -v
 ```
 
+#### Version Detection Issues (FIXED in v1.1.3!)
+```bash
+# Check if version is properly detected
+python -c "import pydoll_mcp; print(f'Version: {pydoll_mcp.__version__}')"
+
+# If you still see 'vunknown', try reinstalling:
+pip uninstall pydoll-mcp
+pip install pydoll-mcp
+```
+
+#### Tool Count Inconsistency (FIXED in v1.1.3!)
+```bash
+# All commands now report consistent tool count (77 tools)
+python -m pydoll_mcp.cli status
+python -m pydoll_mcp.cli test-installation
+```
+
+#### Windows Command Compatibility (IMPROVED in v1.1.3!)
+```batch
+# Use Windows-compatible commands
+pip list | findstr pydoll
+
+# Instead of Linux/macOS command:
+# pip list | grep pydoll
+```
+
 #### Korean Windows Encoding Issues (FIXED in v1.1.2!)
 ```bash
 # For Korean Windows systems with cp949 encoding
@@ -452,8 +518,8 @@ python -c "from pydoll.browser import Chrome; print('Browser check passed')"
 # Test basic functionality
 python -m pydoll_mcp.cli test-browser
 
-# Check browser permissions
-ls -la /usr/bin/google-chrome  # Linux
+# Check browser permissions (Linux/macOS)
+ls -la /usr/bin/google-chrome
 ```
 
 #### Connection Issues
