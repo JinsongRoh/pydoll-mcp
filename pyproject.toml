@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pydoll-mcp"
-version = "1.1.4"
+version = "1.1.5"
 description = "Revolutionary Model Context Protocol (MCP) server for PyDoll browser automation with zero-webdriver operation and intelligent captcha bypass"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -50,6 +50,15 @@ dependencies = [
     "rich>=13.0.0",
     "click>=8.0.0",
 ]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/JinsongRoh/pydoll-mcp"
+Documentation = "https://github.com/JinsongRoh/pydoll-mcp/wiki"
+Repository = "https://github.com/JinsongRoh/pydoll-mcp"
+Issues = "https://github.com/JinsongRoh/pydoll-mcp/issues"
+Changelog = "https://github.com/JinsongRoh/pydoll-mcp/blob/main/CHANGELOG.md"
+Sponsor = "https://github.com/sponsors/JinsongRoh"
 
 [project.optional-dependencies]
 dev = [
@@ -57,45 +66,54 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
     "black>=23.0.0",
-    "ruff>=0.1.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
-    "coverage[toml]>=7.0.0",
+    "bandit[toml]>=1.7.5",
+    "safety>=2.3.0",
+    "tox>=4.0.0",
 ]
-test = [
+testing = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
-    "aioresponses>=0.7.0",
+    "pytest-xdist>=3.0.0",
+    "pytest-mock>=3.10.0",
+    "coverage>=7.0.0",
+    "factory-boy>=3.2.0",
+    "faker>=18.0.0",
 ]
 docs = [
-    "mkdocs>=1.5.0",
-    "mkdocs-material>=9.0.0",
-    "mkdocstrings[python]>=0.24.0",
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.2.0",
+    "myst-parser>=1.0.0",
+    "sphinx-autodoc-typehints>=1.19.0",
+    "sphinx-click>=4.4.0",
+]
+performance = [
+    "uvloop>=0.17.0; sys_platform != 'win32'",
+    "orjson>=3.8.0",
+    "msgpack>=1.0.5",
+    "lz4>=4.3.2",
+]
+security = [
+    "cryptography>=41.0.0",
+    "pycryptodome>=3.18.0",
+    "passlib[bcrypt]>=1.7.4",
 ]
 all = [
-    "pydoll-mcp[dev,test,docs]"
+    "pydoll-mcp[dev,testing,docs,performance,security]"
 ]
 
-[project.urls]
-Homepage = "https://github.com/JinsongRoh/pydoll-mcp"
-Repository = "https://github.com/JinsongRoh/pydoll-mcp.git"
-Documentation = "https://github.com/JinsongRoh/pydoll-mcp/wiki"
-"Bug Tracker" = "https://github.com/JinsongRoh/pydoll-mcp/issues"
-Changelog = "https://github.com/JinsongRoh/pydoll-mcp/blob/main/CHANGELOG.md"
-Discussions = "https://github.com/JinsongRoh/pydoll-mcp/discussions"
-Sponsor = "https://github.com/sponsors/JinsongRoh"
-
 [project.scripts]
-pydoll-mcp = "pydoll_mcp.server:cli_main"
-pydoll-mcp-server = "pydoll_mcp.server:cli_main"
-pydoll-mcp-test = "pydoll_mcp.cli:test_installation"
-
-[project.entry-points."mcp.servers"]
-pydoll = "pydoll_mcp.server:main"
+pydoll-mcp = "pydoll_mcp.server:main"
+pydoll-mcp-server = "pydoll_mcp.server:main"
+pydoll-mcp-test = "pydoll_mcp.cli:main"
+pydoll-mcp-cli = "pydoll_mcp.cli:main"
 
 [tool.setuptools]
-zip-safe = false
+package-dir = {"" = "."}
 include-package-data = true
 
 [tool.setuptools.packages.find]
@@ -106,22 +124,26 @@ exclude = ["tests*", "docs*", "examples*"]
 [tool.setuptools.package-data]
 pydoll_mcp = [
     "py.typed",
-    "config/*.json",
-    "config/*.yaml",
-    "templates/*.html",
-    "scripts/*.js",
+    "*.json",
+    "*.yaml",
+    "*.yml",
+    "templates/*",
+    "static/*",
 ]
 
-# Code Quality Tools Configuration
+[tool.setuptools.dynamic]
+version = {attr = "pydoll_mcp.__version__"}
+
+# Development Tools Configuration
 
 [tool.black]
-line-length = 100
+line-length = 88
 target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
-  # directories
-  \.eggs
+    # Directories
+    \.eggs
   | \.git
   | \.hg
   | \.mypy_cache
@@ -129,65 +151,29 @@ extend-exclude = '''
   | \.venv
   | build
   | dist
+  | migrations
 )/
 '''
 
-[tool.ruff]
-target-version = "py38"
-line-length = 100
-fix = true
-show-fixes = true
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["pydoll_mcp"]
+known_third_party = ["pydoll", "mcp", "pydantic", "click", "rich"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 
-[tool.ruff.lint]
-select = [
-    # pycodestyle
-    "E",
-    # Pyflakes
-    "F",
-    # pyupgrade
-    "UP",
-    # flake8-bugbear
-    "B",
-    # flake8-simplify
-    "SIM",
-    # isort
-    "I",
-    # Warning
-    "W",
-    # pydocstyle
-    "D",
-    # flake8-use-pathlib
-    "PTH",
-    # flake8-bandit
-    "S",
-    # flake8-logging-format
-    "G",
-    # Perflint
-    "PERF",
-    # Refactor
-    "RET",
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503", "E501"]
+exclude = [".git", "__pycache__", "build", "dist", ".tox", ".venv", "migrations"]
+per-file-ignores = [
+    "__init__.py:F401",
+    "tests/*:S101",
 ]
-ignore = [
-    "D100",  # Missing docstring in public module
-    "D104",  # Missing docstring in public package
-    "D107",  # Missing docstring in __init__
-    "D203",  # 1 blank line required before class docstring
-    "D213",  # Multi-line docstring summary should start at the second line
-    "S101",  # Use of assert detected
-    "S603",  # subprocess call: check for execution of untrusted input
-    "S607",  # Starting a process with a partial executable path
-]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**/*" = ["D", "S"]
-"setup.py" = ["D"]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
 
 [tool.mypy]
 python_version = "3.8"
-strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -199,39 +185,51 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
-implicit_reexport = false
 strict_equality = true
 show_error_codes = true
 
 [[tool.mypy.overrides]]
 module = [
-    "mcp.*",
     "pydoll.*",
-    "asyncio_throttle.*",
+    "mcp.*",
+    "rich.*",
+    "click.*",
 ]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = [
-    "--strict-markers",
-    "--strict-config",
-    "--cov=pydoll_mcp",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml",
-    "--cov-fail-under=80",
-]
+addopts = "-v --tb=short --strict-markers --strict-config"
 testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests", 
+    "slow: Slow tests",
+    "network: Tests requiring network access",
+    "browser: Tests requiring browser",
+]
 asyncio_mode = "auto"
 filterwarnings = [
+    "error",
+    "ignore::UserWarning",
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
 ]
 
 [tool.coverage.run]
 source = ["pydoll_mcp"]
-branch = true
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+    "*/venv/*",
+    "*/.venv/*",
+]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -243,39 +241,63 @@ exclude_lines = [
     "raise NotImplementedError",
     "if 0:",
     "if __name__ == .__main__.:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
+    "class .*\bProtocol\):",
+    "@(abc\.)?abstractmethod",
 ]
 
-[tool.coverage.html]
-directory = "htmlcov"
+[tool.bandit]
+exclude_dirs = ["tests", "venv", ".venv"]
+skips = ["B101", "B601"]
 
-# Versioning and Release Configuration
+[tool.bandit.assert_used]
+skips = ["*/*test*.py", "*/test_*"]
 
-[tool.bumpversion]
-current_version = "1.1.4"
-parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
-serialize = ["{major}.{minor}.{patch}"]
-search = "{current_version}"
-replace = "{new_version}"
-commit = true
-tag = true
-sign_tags = false
-tag_name = "v{new_version}"
-tag_message = "Bump version: {current_version} → {new_version}"
-allow_dirty = false
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py38,py39,py310,py311,py312,lint,security,docs
+isolated_build = true
 
-[[tool.bumpversion.files]]
-filename = "pydoll_mcp/__init__.py"
-search = "__version__ = \"{current_version}\""
-replace = "__version__ = \"{new_version}\""
+[testenv]
+deps = 
+    pytest>=7.0.0
+    pytest-asyncio>=0.21.0
+    pytest-cov>=4.0.0
+commands = pytest {posargs}
 
-[[tool.bumpversion.files]]
-filename = "pyproject.toml"
-search = "version = \"{current_version}\""
-replace = "version = \"{new_version}\""
+[testenv:lint]
+deps = 
+    black>=23.0.0
+    isort>=5.12.0
+    flake8>=6.0.0
+    mypy>=1.0.0
+commands = 
+    black --check .
+    isort --check-only .
+    flake8 .
+    mypy .
 
-[[tool.bumpversion.files]]
-filename = "README.md"
-search = "v{current_version}"
-replace = "v{new_version}"
+[testenv:security]
+deps = 
+    bandit[toml]>=1.7.5
+    safety>=2.3.0
+commands = 
+    bandit -r pydoll_mcp
+    safety check
+
+[testenv:docs]
+deps = 
+    sphinx>=5.0.0
+    sphinx-rtd-theme>=1.2.0
+commands = sphinx-build -W -b html docs docs/_build
+"""
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variable = "pydoll_mcp/__init__.py:__version__"
+build_command = "pip install build && python -m build"
+dist_path = "dist/"
+upload_to_pypi = true
+upload_to_release = true
+hvcs = "github"
+commit_author = "Jinsong Roh <jinsongroh@gmail.com>"
