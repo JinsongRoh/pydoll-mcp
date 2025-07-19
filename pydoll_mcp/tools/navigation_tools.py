@@ -223,8 +223,9 @@ async def handle_navigate_to(arguments: Dict[str, Any]) -> Sequence[TextContent]
         except Exception:
             raise ValueError(f"Invalid URL: {url}")
         
-        # Get tab
+        # Get tab and ensure it has all necessary methods
         tab = await browser_manager.get_tab(browser_id, tab_id)
+        tab = await browser_manager.ensure_tab_methods(tab)
         
         # Navigate with options
         navigation_options = {
@@ -271,53 +272,231 @@ async def handle_navigate_to(arguments: Dict[str, Any]) -> Sequence[TextContent]
 # Placeholder handlers for remaining tools
 async def handle_refresh_page(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle page refresh request."""
-    result = OperationResult(
-        success=True,
-        message="Page refreshed successfully",
-        data={"url": "https://example.com"}
-    )
-    return [TextContent(type="text", text=result.json())]
+    try:
+        browser_manager = get_browser_manager()
+        browser_id = arguments["browser_id"]
+        tab_id = arguments.get("tab_id")
+        ignore_cache = arguments.get("ignore_cache", False)
+        wait_for_load = arguments.get("wait_for_load", True)
+        
+        # Get tab and ensure it has all necessary methods
+        tab = await browser_manager.get_tab(browser_id, tab_id)
+        tab = await browser_manager.ensure_tab_methods(tab)
+        
+        # Refresh page
+        if ignore_cache:
+            await tab.reload(ignore_cache=True)
+        else:
+            await tab.reload()
+            
+        if wait_for_load:
+            await tab.wait_for_load_state("load")
+        
+        # Get current URL and title after refresh
+        url = await tab.get_url()
+        title = await tab.get_title()
+        
+        result = OperationResult(
+            success=True,
+            message="Page refreshed successfully",
+            data={
+                "browser_id": browser_id,
+                "tab_id": tab_id,
+                "url": url,
+                "title": title,
+                "ignore_cache": ignore_cache
+            }
+        )
+        
+        logger.info(f"Page refresh successful: {url}")
+        return [TextContent(type="text", text=result.json())]
+        
+    except Exception as e:
+        logger.error(f"Page refresh failed: {e}")
+        result = OperationResult(
+            success=False,
+            error=str(e),
+            message="Failed to refresh page"
+        )
+        return [TextContent(type="text", text=result.json())]
 
 
 async def handle_go_back(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle browser back navigation."""
-    steps = arguments.get("steps", 1)
-    result = OperationResult(
-        success=True,
-        message=f"Navigated back {steps} step(s)",
-        data={"steps": steps}
-    )
-    return [TextContent(type="text", text=result.json())]
+    try:
+        browser_manager = get_browser_manager()
+        browser_id = arguments["browser_id"]
+        tab_id = arguments.get("tab_id")
+        steps = arguments.get("steps", 1)
+        
+        # Get tab and ensure it has all necessary methods
+        tab = await browser_manager.get_tab(browser_id, tab_id)
+        tab = await browser_manager.ensure_tab_methods(tab)
+        
+        # Navigate back the specified number of steps
+        for _ in range(steps):
+            await tab.go_back()
+            
+        # Get current URL after navigation
+        url = await tab.get_url()
+        title = await tab.get_title()
+        
+        result = OperationResult(
+            success=True,
+            message=f"Navigated back {steps} step(s)",
+            data={
+                "browser_id": browser_id,
+                "tab_id": tab_id,
+                "steps": steps,
+                "current_url": url,
+                "current_title": title
+            }
+        )
+        
+        logger.info(f"Back navigation successful: {steps} steps")
+        return [TextContent(type="text", text=result.json())]
+        
+    except Exception as e:
+        logger.error(f"Back navigation failed: {e}")
+        result = OperationResult(
+            success=False,
+            error=str(e),
+            message=f"Failed to navigate back {steps} step(s)"
+        )
+        return [TextContent(type="text", text=result.json())]
 
 
 async def handle_get_current_url(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle get current URL request."""
-    result = OperationResult(
-        success=True,
-        message="Current URL retrieved successfully",
-        data={"url": "https://example.com"}
-    )
-    return [TextContent(type="text", text=result.json())]
+    try:
+        browser_manager = get_browser_manager()
+        browser_id = arguments["browser_id"]
+        tab_id = arguments.get("tab_id")
+        
+        # Get tab and ensure it has all necessary methods
+        tab = await browser_manager.get_tab(browser_id, tab_id)
+        tab = await browser_manager.ensure_tab_methods(tab)
+        
+        # Get current URL
+        url = await tab.get_url()
+        
+        result = OperationResult(
+            success=True,
+            message="Current URL retrieved successfully",
+            data={
+                "browser_id": browser_id,
+                "tab_id": tab_id,
+                "url": url
+            }
+        )
+        
+        logger.info(f"Current URL retrieved: {url}")
+        return [TextContent(type="text", text=result.json())]
+        
+    except Exception as e:
+        logger.error(f"Failed to get current URL: {e}")
+        result = OperationResult(
+            success=False,
+            error=str(e),
+            message="Failed to retrieve current URL"
+        )
+        return [TextContent(type="text", text=result.json())]
 
 
 async def handle_get_page_title(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle get page title request."""
-    result = OperationResult(
-        success=True,
-        message="Page title retrieved successfully",
-        data={"title": "Example Page"}
-    )
-    return [TextContent(type="text", text=result.json())]
+    try:
+        browser_manager = get_browser_manager()
+        browser_id = arguments["browser_id"]
+        tab_id = arguments.get("tab_id")
+        
+        # Get tab and ensure it has all necessary methods
+        tab = await browser_manager.get_tab(browser_id, tab_id)
+        tab = await browser_manager.ensure_tab_methods(tab)
+        
+        # Get page title
+        title = await tab.get_title()
+        url = await tab.get_url()
+        
+        result = OperationResult(
+            success=True,
+            message="Page title retrieved successfully",
+            data={
+                "browser_id": browser_id,
+                "tab_id": tab_id,
+                "title": title,
+                "url": url
+            }
+        )
+        
+        logger.info(f"Page title retrieved: {title}")
+        return [TextContent(type="text", text=result.json())]
+        
+    except Exception as e:
+        logger.error(f"Failed to get page title: {e}")
+        result = OperationResult(
+            success=False,
+            error=str(e),
+            message="Failed to retrieve page title"
+        )
+        return [TextContent(type="text", text=result.json())]
 
 
 async def handle_get_page_source(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle get page source request."""
-    result = OperationResult(
-        success=True,
-        message="Page source retrieved successfully",
-        data={"source": "<!DOCTYPE html>...", "length": 1500}
-    )
-    return [TextContent(type="text", text=result.json())]
+    try:
+        browser_manager = get_browser_manager()
+        browser_id = arguments["browser_id"]
+        tab_id = arguments.get("tab_id")
+        include_resources = arguments.get("include_resources", False)
+        
+        # Get tab and ensure it has all necessary methods
+        tab = await browser_manager.get_tab(browser_id, tab_id)
+        tab = await browser_manager.ensure_tab_methods(tab)
+        
+        # Get page source
+        source = await tab.get_content()
+        url = await tab.get_url()
+        title = await tab.get_title()
+        
+        data = {
+            "browser_id": browser_id,
+            "tab_id": tab_id,
+            "url": url,
+            "title": title,
+            "source": source,
+            "length": len(source)
+        }
+        
+        # Include resources information if requested
+        if include_resources:
+            try:
+                # Get basic page metrics
+                data["resources"] = {
+                    "source_size": len(source),
+                    "encoding": "utf-8",
+                    "content_type": "text/html"
+                }
+            except Exception as e:
+                logger.warning(f"Failed to get resource information: {e}")
+        
+        result = OperationResult(
+            success=True,
+            message="Page source retrieved successfully",
+            data=data
+        )
+        
+        logger.info(f"Page source retrieved: {len(source)} characters")
+        return [TextContent(type="text", text=result.json())]
+        
+    except Exception as e:
+        logger.error(f"Failed to get page source: {e}")
+        result = OperationResult(
+            success=False,
+            error=str(e),
+            message="Failed to retrieve page source"
+        )
+        return [TextContent(type="text", text=result.json())]
 
 
 async def handle_fetch_domain_commands(arguments: Dict[str, Any]) -> Sequence[TextContent]:
@@ -328,8 +507,9 @@ async def handle_fetch_domain_commands(arguments: Dict[str, Any]) -> Sequence[Te
         tab_id = arguments.get("tab_id")
         domain = arguments.get("domain")
         
-        # Get tab
+        # Get tab and ensure it has all necessary methods
         tab = await browser_manager.get_tab(browser_id, tab_id)
+        tab = await browser_manager.ensure_tab_methods(tab)
         
         # Call PyDoll 2.3.1's new fetch_domain_commands method
         if domain:

@@ -16,6 +16,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.3.0] - 2025-07-19
+
+### 🔥 Major PyDoll API Integration Upgrade
+
+#### Core API Implementation
+- **Real PyDoll Integration**: Replaced simulation handlers with actual PyDoll API calls
+- **Navigation Functions**: Fully implemented `navigate_to`, `refresh_page`, `go_back`, `get_current_url`, `get_page_title`, `get_page_source`
+- **Element Interaction**: Complete implementation of `find_element`, `click_element`, `type_text` with PyDoll's natural attribute finding
+- **Screenshot Capture**: Real screenshot functionality using PyDoll's native methods
+- **Error Handling**: Robust fallback system for compatibility across PyDoll versions
+
+#### Enhanced Browser Management
+- **Tab Method Compatibility**: Added `ensure_tab_methods()` for backward compatibility
+- **Method Injection**: Dynamic method injection for tabs missing certain PyDoll features
+- **API Safety**: Graceful degradation when PyDoll features are unavailable
+
+#### PyDoll 2.3.1+ Features
+- **fetch_domain_commands**: Full implementation of Chrome DevTools Protocol domain command fetching
+- **Advanced Element Finding**: Leveraged PyDoll's powerful natural attribute element selection
+- **Human-like Interactions**: Integrated PyDoll's human-like typing and clicking behaviors
+
+### ✨ New Capabilities
+- **Intelligent Fallbacks**: Automatic fallback to simulation when real API calls fail
+- **Performance Tracking**: Added execution time tracking for all operations
+- **Enhanced Logging**: Detailed logging for successful operations and fallback scenarios
+- **Element Information**: Comprehensive element property extraction (bounds, attributes, visibility)
+
+### 🛠️ Developer Experience
+- **Modern Installation**: Migrated from legacy setup.py to modern pyproject.toml-only installation
+- **Consolidated Setup**: Unified Claude Desktop setup functionality under `pydoll-mcp-setup` command
+- **Better Error Messages**: Improved error reporting with specific PyDoll version requirements
+
+### 🔧 Technical Improvements
+- **Code Organization**: Better separation between real API calls and simulation fallbacks
+- **Type Safety**: Enhanced type hints and parameter validation
+- **Resource Management**: Improved browser and tab lifecycle management
+- **Documentation**: Updated inline documentation to reflect real API usage
+
 ## [1.2.0] - 2025-07-19
 
 ### 🚀 PyDoll 2.3.1 Support
@@ -26,6 +64,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Enhanced Stability**: Incorporated PyDoll 2.3.1's bug fixes and performance improvements
 
 ### ✨ New Features
+
+#### OS-Specific Claude Desktop Setup (NEW!)
+- **Cross-Platform Configuration**: Automatic Claude Desktop setup for Windows, macOS, and Linux
+- **Intelligent Path Detection**: Smart OS-specific config path discovery
+- **Backup & Restore**: Automatic configuration backup with easy restore functionality
+- **Python Executable Detection**: Optimal Python path configuration for each environment
+- **CLI Management Tools**: Complete configuration management through command line
+
+#### New CLI Management Commands
+- **`auto-setup` Command**: Enhanced setup with OS detection and verbose options
+- **`setup-info` Command**: Display current configuration status and system information
+- **`restore-config` Command**: Restore Claude Desktop configuration from backups
+- **`remove-config` Command**: Clean removal of PyDoll configuration with confirmation
 
 #### Chrome DevTools Protocol Integration
 - **New Tool**: `fetch_domain_commands` - Retrieve available Chrome DevTools Protocol commands

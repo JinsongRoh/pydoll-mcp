@@ -17,6 +17,7 @@ from rich.table import Table
 from rich.text import Text
 
 from . import __version__, get_package_info, health_check, get_pydoll_version
+from .claude_setup import ClaudeDesktopSetup
 
 console = Console()
 
@@ -398,6 +399,74 @@ def version():
             table.add_row(dep_name, dep_info["version"])
     
     console.print(table)
+
+
+@cli.command()
+@click.option("--force", "-f", is_flag=True, help="Force setup without confirmation prompts")
+@click.option("--verbose", "-v", is_flag=True, help="Show detailed setup information")
+def auto_setup(force: bool, verbose: bool):
+    """Automatically configure Claude Desktop to use PyDoll MCP Server."""
+    setup = ClaudeDesktopSetup()
+    
+    if verbose:
+        setup.show_config_info()
+        console.print()
+    
+    success = setup.setup(force=force)
+    
+    if success:
+        console.print("\n[bold green]🎉 Claude Desktop setup completed successfully![/bold green]")
+        console.print("\n[bold]Next Steps:[/bold]")
+        console.print("1. Restart Claude Desktop application")
+        console.print("2. Look for 'pydoll' in the available MCP servers")
+        console.print("3. Start automating with PyDoll!")
+    else:
+        console.print("\n[bold red]❌ Setup failed. Please check the output above for details.[/bold red]")
+        console.print("\n[bold]Troubleshooting:[/bold]")
+        console.print("• Run: [cyan]python -m pydoll_mcp.cli setup-info[/cyan] for more details")
+        console.print("• Check: https://github.com/JinsongRoh/pydoll-mcp for documentation")
+
+
+@cli.command()
+def setup_info():
+    """Show Claude Desktop configuration information."""
+    setup = ClaudeDesktopSetup()
+    setup.show_config_info()
+
+
+@cli.command()
+@click.option("--backup-path", "-b", type=click.Path(exists=True), help="Specific backup file to restore")
+def restore_config(backup_path: Optional[str]):
+    """Restore Claude Desktop configuration from backup."""
+    setup = ClaudeDesktopSetup()
+    
+    if backup_path:
+        from pathlib import Path
+        backup_file = Path(backup_path)
+        success = setup.restore_backup(backup_file)
+    else:
+        success = setup.restore_backup()
+    
+    if success:
+        console.print("[bold green]✅ Configuration restored successfully![/bold green]")
+        console.print("Please restart Claude Desktop to apply changes.")
+    else:
+        console.print("[bold red]❌ Failed to restore configuration.[/bold red]")
+
+
+@cli.command()
+@click.confirmation_option(prompt="Are you sure you want to remove PyDoll from Claude Desktop?")
+def remove_config():
+    """Remove PyDoll MCP Server from Claude Desktop configuration."""
+    setup = ClaudeDesktopSetup()
+    
+    success = setup.remove_configuration()
+    
+    if success:
+        console.print("[bold green]✅ PyDoll configuration removed successfully![/bold green]")
+        console.print("Please restart Claude Desktop to apply changes.")
+    else:
+        console.print("[bold red]❌ Failed to remove configuration.[/bold red]")
 
 
 def main():

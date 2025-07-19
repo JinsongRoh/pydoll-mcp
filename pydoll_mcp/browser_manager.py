@@ -320,6 +320,53 @@ class BrowserManager:
         
         return instance.tabs[tab_id]
     
+    async def ensure_tab_methods(self, tab: Tab) -> Tab:
+        """Ensure tab has all necessary methods for PyDoll operations."""
+        # Add methods that might be missing in older PyDoll versions
+        if not hasattr(tab, 'get_url'):
+            async def get_url():
+                return await tab.evaluate("window.location.href")
+            tab.get_url = get_url
+            
+        if not hasattr(tab, 'get_title'):
+            async def get_title():
+                return await tab.evaluate("document.title")
+            tab.get_title = get_title
+            
+        if not hasattr(tab, 'get_content'):
+            async def get_content():
+                return await tab.evaluate("document.documentElement.outerHTML")
+            tab.get_content = get_content
+            
+        if not hasattr(tab, 'reload'):
+            async def reload(ignore_cache=False):
+                if ignore_cache:
+                    await tab.evaluate("window.location.reload(true)")
+                else:
+                    await tab.evaluate("window.location.reload()")
+            tab.reload = reload
+            
+        if not hasattr(tab, 'go_back'):
+            async def go_back():
+                await tab.evaluate("window.history.back()")
+            tab.go_back = go_back
+            
+        if not hasattr(tab, 'wait_for_load_state'):
+            async def wait_for_load_state(state="load", timeout=30000):
+                if state == "load":
+                    await tab.evaluate("""
+                        new Promise((resolve) => {
+                            if (document.readyState === 'complete') {
+                                resolve();
+                            } else {
+                                window.addEventListener('load', resolve);
+                            }
+                        })
+                    """)
+            tab.wait_for_load_state = wait_for_load_state
+            
+        return tab
+    
     async def close_tab(self, browser_id: str, tab_id: str):
         """Close a specific tab."""
         instance = await self.get_browser(browser_id)

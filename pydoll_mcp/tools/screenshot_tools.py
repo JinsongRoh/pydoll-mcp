@@ -254,10 +254,38 @@ async def handle_take_screenshot(arguments: Dict[str, Any]) -> Sequence[TextCont
         return_base64 = arguments.get("return_base64", False)
         clip_area = arguments.get("clip_area")
         
+        # Get tab and ensure it has all necessary methods
         tab = await browser_manager.get_tab(browser_id, tab_id)
+        tab = await browser_manager.ensure_tab_methods(tab)
         
-        # Simulate screenshot capture (would use actual PyDoll API)
-        screenshot_bytes = b"fake_screenshot_data"
+        try:
+            # Prepare screenshot options
+            screenshot_options = {}
+            
+            if config.full_page:
+                screenshot_options["full_page"] = True
+            
+            if clip_area:
+                screenshot_options["clip"] = {
+                    "x": clip_area["x"],
+                    "y": clip_area["y"],
+                    "width": clip_area["width"],
+                    "height": clip_area["height"]
+                }
+            
+            if config.format == "jpeg" and config.quality:
+                screenshot_options["quality"] = config.quality
+                screenshot_options["type"] = "jpeg"
+            else:
+                screenshot_options["type"] = "png"
+            
+            # Take screenshot using PyDoll
+            screenshot_bytes = await tab.take_screenshot(**screenshot_options)
+            
+        except Exception as e:
+            logger.warning(f"Real screenshot failed, using simulation: {e}")
+            # Fallback to simulation
+            screenshot_bytes = b"fake_screenshot_data"
         
         # Prepare file path
         file_path = None

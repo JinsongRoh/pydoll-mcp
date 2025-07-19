@@ -220,27 +220,15 @@ def show_manual_instructions():
 
 def main():
     """Main post-installation setup function."""
-    # Only run in interactive mode
-    if not sys.stdin.isatty():
-        return
-    
-    # Skip if already configured (check for marker file)
-    marker_file = Path.home() / ".pydoll-mcp-configured"
-    if marker_file.exists():
-        return
+    console.print("\n⚠️  This module is deprecated. Please use 'pydoll-mcp-setup' command instead.", style="yellow")
+    console.print("💡 Run: pydoll-mcp-setup", style="cyan")
     
     try:
-        success = show_post_install_message()
-        
-        if success:
-            # Create marker file to avoid repeated setup
-            marker_file.touch()
-            
-        console.print("\n🎊 Setup completed! Restart Claude Desktop to use PyDoll MCP Server.", style="bold green")
-        
-    except Exception as e:
-        console.print(f"\n❌ Setup error: {e}", style="red")
-        console.print("💡 You can run setup manually with: python -m pydoll_mcp.cli generate-config")
+        from .claude_setup import ClaudeDesktopSetup
+        setup = ClaudeDesktopSetup()
+        setup.setup()
+    except ImportError:
+        console.print("❌ Could not import claude_setup module", style="red")
 
 
 if __name__ == "__main__":

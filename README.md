@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.2.0
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.3.0
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -77,6 +77,7 @@ PyDoll MCP Server brings the groundbreaking capabilities of PyDoll to Claude, Op
 - GitHub: https://github.com/autoscrape-labs/pydoll
 - How to install: pip install pydoll-python
 - PyDoll version: PyDoll 2.3.1 (2025.06.20)
+- **NEW in v1.2.0**: Enhanced Chrome DevTools Protocol support with domain commands and parent element navigation
 
 ### 🚀 Key Breakthrough Features
 
@@ -173,7 +174,7 @@ docker run -d --name pydoll-mcp -p 8080:8080 jinsongroh/pydoll-mcp:latest
 
 ## ⚙️ Claude Desktop Integration
 
-### 🔧 Automatic Setup (NEW! v1.1.0)
+### 🔧 Automatic Setup (Enhanced in v1.2.0)
 
 The easiest way to get started:
 
@@ -182,11 +183,25 @@ The easiest way to get started:
 python -m pydoll_mcp.cli auto-setup
 ```
 
-This will:
+**NEW! CLI Management Commands:**
+```bash
+# Show configuration status
+python -m pydoll_mcp.cli setup-info
+
+# Restore from backup
+python -m pydoll_mcp.cli restore-config
+
+# Remove PyDoll configuration
+python -m pydoll_mcp.cli remove-config
+```
+
+The auto-setup will:
 - ✅ Test your installation
+- ✅ Detect your OS (Windows/macOS/Linux)
 - ✅ Locate your Claude Desktop config
 - ✅ Backup existing configuration
 - ✅ Add PyDoll MCP Server configuration
+- ✅ Configure optimal Python executable path
 - ✅ Verify everything works
 
 ### 🛠️ Manual Setup Options
@@ -558,6 +573,30 @@ export PYDOLL_LOG_LEVEL=DEBUG
 # Run with detailed output
 python -m pydoll_mcp.server --debug
 ```
+
+## 🆕 What's New in v1.2.0
+
+### Enhanced PyDoll 2.3.1 Integration
+- **🔧 New Chrome DevTools Commands**: Access all Chrome DevTools Protocol domain commands
+- **📍 Parent Element Navigation**: Get parent elements with detailed attributes
+- **⏱️ Configurable Browser Timeout**: Customize startup timeout for better reliability
+- **🌐 OS-Specific Setup**: Improved cross-platform Claude Desktop configuration
+
+### New CLI Management Tools
+```bash
+# Enhanced setup with OS detection
+python -m pydoll_mcp.cli auto-setup --verbose
+
+# Configuration management
+python -m pydoll_mcp.cli setup-info     # Show current config status
+python -m pydoll_mcp.cli restore-config # Restore from backup
+python -m pydoll_mcp.cli remove-config  # Clean removal
+```
+
+### Tool Count: **79 Tools** → More Powerful Than Ever!
+- **New Navigation Tools**: fetch_domain_commands for Chrome DevTools access
+- **New Element Tools**: get_parent_element for improved DOM navigation
+- **Enhanced Browser Management**: Configurable startup timeout options
 
 ## 📊 Performance Metrics
 
