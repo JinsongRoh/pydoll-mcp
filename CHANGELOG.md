@@ -16,6 +16,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.4.3] - 2025-07-19
+
+### 🔧 Critical Compatibility & Security Fixes
+
+#### ✨ Version Management
+- **Fixed Version Inconsistency**: Synchronized all configuration files to v1.4.3
+  - Updated `package.json` from 1.3.1 to 1.4.3
+  - Updated `smithery.json` from 1.3.1 to 1.4.3
+  - Ensured consistent versioning across all deployment files
+- **Enhanced Documentation Security**: Sanitized example tokens in security documentation
+  - Replaced partial example tokens with clear placeholders
+  - Improved security guidance for token management
+
+#### 🐛 Bug Fixes
+- **Configuration Synchronization**: Fixed deployment inconsistencies caused by version mismatches
+- **Security Documentation**: Removed potentially confusing example token fragments
+- **Registry Updates**: Ensured Smithery.ai registry reflects correct version information
+
+#### 🛡️ Security Improvements
+- **Token Sanitization**: Cleaned all example tokens from documentation
+- **Security Audit**: Comprehensive review of all files for sensitive information
+- **Documentation Enhancement**: Clearer security setup instructions
+
+### Technical Details
+- All configuration files now maintain consistent v1.4.3 versioning
+- Enhanced security documentation with sanitized examples
+- Improved deployment reliability through version synchronization
+
 ## [1.4.2] - 2025-07-19
 
 ### 🚀 Enhanced Performance & Stability Update

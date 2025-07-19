@@ -52,7 +52,7 @@ Create a `pypi` environment with the following protection rules:
 #### PYPI_API_TOKEN
 ```
 Name: PYPI_API_TOKEN
-Secret: pypi-AgEIcHlwaS5vcmcCJGZjMDA1MGY5LT...  (your full token)
+Secret: pypi-REPLACE_WITH_YOUR_ACTUAL_TOKEN
 ```
 
 #### SMITHERY_API_KEY
@@ -127,7 +127,7 @@ permissions:
 ```yaml
 # DON'T DO THIS!
 env:
-  PYPI_TOKEN: pypi-AgEIcHlwaS5vcmcCJGZjMDA1...
+  PYPI_TOKEN: pypi-REPLACE_WITH_YOUR_ACTUAL_TOKEN
   SMITHERY_KEY: sk-1234567890abcdef...
 ```
 
