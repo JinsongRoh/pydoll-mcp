@@ -19,7 +19,7 @@ For installation and usage instructions, see:
 https://github.com/JinsongRoh/pydoll-mcp
 """
 
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 __author__ = "Jinsong Roh"
 __email__ = "jinsongroh@gmail.com"
 __license__ = "MIT"
@@ -342,8 +342,8 @@ def print_banner():
     
     try:
         # Check if we can safely print emojis
-        if hasattr(sys.stdout, 'encoding'):
-            encoding = sys.stdout.encoding or 'utf-8'
+        if hasattr(sys.stderr, 'encoding'):
+            encoding = sys.stderr.encoding or 'utf-8'
             
             # Test if we can encode emojis with current encoding
             test_emoji = "🤖"
@@ -357,8 +357,8 @@ def print_banner():
         banner_to_use = BANNER
     
     try:
-        # Try to print the banner
-        print(banner_to_use)
+        # Try to print the banner to stderr (not stdout for MCP compliance)
+        print(banner_to_use, file=sys.stderr)
     except UnicodeEncodeError:
         # Final fallback - simple text banner
         fallback_banner = f"""
@@ -375,10 +375,10 @@ Features:
 
 Ready to revolutionize your browser automation!
 """
-        print(fallback_banner)
+        print(fallback_banner, file=sys.stderr)
     except Exception as e:
         # Ultimate fallback
-        print(f"PyDoll MCP Server v{__version__} - Starting...")
+        print(f"PyDoll MCP Server v{__version__} - Starting...", file=sys.stderr)
 
 # Export version for external access
 def get_version():

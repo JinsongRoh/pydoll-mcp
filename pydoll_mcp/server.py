@@ -115,6 +115,68 @@ DEBUG_MODE = os.getenv("PYDOLL_DEBUG", "0").lower() in ("1", "true", "yes")
 logger = setup_logging(LOG_LEVEL, LOG_FILE)
 
 
+def setup_server_encoding():
+    """Setup server encoding for cross-platform compatibility."""
+    import locale
+    
+    # Force UTF-8 for all output
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    os.environ['PYTHONUTF8'] = '1'
+    
+    # Special handling for Windows
+    if sys.platform.startswith('win'):
+        try:
+            # Set console to UTF-8
+            import subprocess
+            subprocess.run(['chcp', '65001'], capture_output=True, shell=True, timeout=1)
+        except Exception:
+            pass
+        
+        # Handle Korean Windows (CP949)
+        try:
+            current_locale = locale.getdefaultlocale()
+            if current_locale and current_locale[1] and any(enc in current_locale[1].lower() for enc in ['cp949', 'euc-kr']):
+                os.environ['LC_ALL'] = 'C.UTF-8'
+                os.environ['LANG'] = 'C.UTF-8'
+        except Exception:
+            pass
+    
+    # Ensure streams use UTF-8
+    try:
+        import io
+        import codecs
+        
+        # Only stdout needs special handling for MCP protocol
+        if hasattr(sys.stdout, 'buffer'):
+            if sys.stdout.encoding != 'utf-8':
+                try:
+                    sys.stdout = io.TextIOWrapper(
+                        sys.stdout.buffer,
+                        encoding='utf-8',
+                        errors='replace',
+                        newline=None,
+                        line_buffering=True
+                    )
+                except Exception:
+                    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'replace')
+        
+        # Stderr for logging and messages
+        if hasattr(sys.stderr, 'buffer'):
+            if sys.stderr.encoding != 'utf-8':
+                try:
+                    sys.stderr = io.TextIOWrapper(
+                        sys.stderr.buffer,
+                        encoding='utf-8',
+                        errors='replace',
+                        newline=None,
+                        line_buffering=True
+                    )
+                except Exception:
+                    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'replace')
+    except Exception:
+        pass
+
+
 class PyDollMCPServer:
     """Advanced PyDoll MCP Server for browser automation.
     
@@ -393,12 +455,18 @@ class PyDollMCPServer:
 
 async def main():
     """Main entry point for the PyDoll MCP Server."""
+    # Ensure proper encoding setup
+    setup_server_encoding()
+    
     server = PyDollMCPServer()
     await server.run()
 
 
 def cli_main():
     """CLI entry point with argument handling."""
+    # Setup encoding early
+    setup_server_encoding()
+    
     import argparse
     
     parser = argparse.ArgumentParser(
@@ -440,8 +508,8 @@ def cli_main():
     
     # Handle test mode
     if args.test:
-        print(f"PyDoll MCP Server v{__version__} - Health Check")
-        print("=" * 50)
+        print(f"PyDoll MCP Server v{__version__} - Health Check", file=sys.stderr)
+        print("=" * 50, file=sys.stderr)
         
         health_info = health_check()
         
@@ -449,14 +517,14 @@ def cli_main():
             if check == "errors":
                 continue
             elif check == "overall_status":
-                print(f"Overall Status: {'✅ PASS' if status else '❌ FAIL'}")
+                print(f"Overall Status: {'✅ PASS' if status else '❌ FAIL'}", file=sys.stderr)
             else:
-                print(f"{check.replace('_', ' ').title()}: {'✅' if status else '❌'}")
+                print(f"{check.replace('_', ' ').title()}: {'✅' if status else '❌'}", file=sys.stderr)
         
         if health_info["errors"]:
-            print("\\nErrors:")
+            print("\\nErrors:", file=sys.stderr)
             for error in health_info["errors"]:
-                print(f"  - {error}")
+                print(f"  - {error}", file=sys.stderr)
         
         sys.exit(0 if health_info["overall_status"] else 1)
     
