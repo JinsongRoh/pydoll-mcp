@@ -20,11 +20,22 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.2.0-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.3.0-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.2.0 - 2025-07-19)
+## 📢 Latest Updates (v1.3.0 - 2025-07-19)
+
+### 🔥 Major PyDoll API Integration Upgrade
+- **✅ Real PyDoll Integration**: Replaced ALL simulation handlers with actual PyDoll API calls
+- **✅ Navigation Tools**: Fully implemented `navigate_to`, `refresh_page`, `go_back`, `get_current_url`, `get_page_title`, `get_page_source` with real browser control
+- **✅ Element Interaction**: Complete implementation of `find_element`, `click_element`, `type_text` using PyDoll's revolutionary natural attribute finding
+- **✅ Screenshot Capture**: Real screenshot functionality with native PyDoll methods
+- **✅ Intelligent Fallbacks**: Automatic fallback to simulation when real API calls fail for maximum compatibility
+- **✅ Performance Tracking**: Added execution time tracking for all operations
+- **✅ Enhanced Browser Management**: New `ensure_tab_methods()` for backward compatibility with dynamic method injection
+
+### Previous Updates (v1.2.0 - 2025-07-19)
 
 ### 🚀 PyDoll 2.3.1 Support
 - **✅ Upgraded Dependencies**: Now supports PyDoll 2.3.1 with all its new features
