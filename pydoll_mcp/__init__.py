@@ -17,7 +17,7 @@ For installation and usage instructions, see:
 https://github.com/JinsongRoh/pydoll-mcp
 """
 
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 __author__ = "Jinsong Roh"
 __email__ = "jinsongroh@gmail.com"
 __license__ = "MIT"
@@ -65,19 +65,18 @@ FEATURES = {
     "mcp_integration": "Full Model Context Protocol server implementation",
 }
 
-# Tool categories and counts
+# Tool categories and counts (updated for accuracy)
 TOOL_CATEGORIES = {
     "browser_management": 8,
-    "navigation_control": 10, 
+    "navigation_control": 6, 
     "element_interaction": 15,
-    "screenshot_media": 6,
-    "javascript_scripting": 8,
-    "protection_bypass": 12,
-    "network_monitoring": 10,
-    "file_data_management": 8,
+    "screenshot_media": 8,
+    "javascript_scripting": 10,
+    "protection_bypass": 5,
+    "network_monitoring": 4,
 }
 
-# Total tools available
+# Total tools available (corrected count)
 TOTAL_TOOLS = sum(TOOL_CATEGORIES.values())
 
 # Import main components for easy access
@@ -89,6 +88,53 @@ except ImportError:
     PyDollMCPServer = None
     main = None
     get_browser_manager = None
+
+# Enhanced PyDoll version detection
+def get_pydoll_version():
+    """Get PyDoll version with multiple detection methods."""
+    try:
+        import pydoll
+        
+        # Method 1: Check __version__ attribute
+        if hasattr(pydoll, '__version__'):
+            return pydoll.__version__
+        
+        # Method 2: Check version attribute
+        if hasattr(pydoll, 'version'):
+            return pydoll.version
+        
+        # Method 3: Check VERSION attribute
+        if hasattr(pydoll, 'VERSION'):
+            return pydoll.VERSION
+        
+        # Method 4: Try to get from package metadata
+        try:
+            import importlib.metadata
+            return importlib.metadata.version('pydoll-python')
+        except Exception:
+            pass
+        
+        # Method 5: Try older pkg_resources
+        try:
+            import pkg_resources
+            return pkg_resources.get_distribution('pydoll-python').version
+        except Exception:
+            pass
+        
+        # Method 6: Check if any version info exists in module
+        for attr in dir(pydoll):
+            if 'version' in attr.lower():
+                val = getattr(pydoll, attr)
+                if isinstance(val, str) and '.' in val:
+                    return val
+        
+        # If all methods fail, but pydoll is importable
+        return "installed"
+        
+    except ImportError:
+        return None
+    except Exception:
+        return "unknown"
 
 # Package information for debugging
 def get_package_info():
@@ -106,6 +152,7 @@ def get_package_info():
         "features": FEATURES,
         "tool_categories": TOOL_CATEGORIES,
         "total_tools": TOTAL_TOOLS,
+        "pydoll_version": get_pydoll_version(),
     }
 
 # Version check function
@@ -121,20 +168,14 @@ def check_version():
     
     return True
 
-# Dependency check function  
+# Enhanced dependency check function  
 def check_dependencies():
     """Check if all required dependencies are available."""
     missing_deps = []
     
-    try:
-        import pydoll
-        if hasattr(pydoll, '__version__'):
-            pydoll_version = pydoll.__version__
-        else:
-            pydoll_version = "unknown"
-    except ImportError:
+    pydoll_version = get_pydoll_version()
+    if pydoll_version is None:
         missing_deps.append("pydoll-python>=2.2.0")
-        pydoll_version = None
     
     try:
         import mcp
