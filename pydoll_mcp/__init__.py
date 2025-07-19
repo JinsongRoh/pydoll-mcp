@@ -12,12 +12,14 @@ PyDoll MCP Server features:
 - Professional screenshot and PDF generation
 - Advanced JavaScript execution environment
 - Complete browser lifecycle management
+- One-click automatic Claude Desktop setup (NEW in v1.1.0!)
+- Cross-platform encoding compatibility (NEW in v1.1.1!)
 
 For installation and usage instructions, see:
 https://github.com/JinsongRoh/pydoll-mcp
 """
 
-__version__ = "1.1.6"
+__version__ = "1.1.2"
 __author__ = "Jinsong Roh"
 __email__ = "jinsongroh@gmail.com"
 __license__ = "MIT"
@@ -63,31 +65,24 @@ FEATURES = {
     "multi_browser": "Chrome and Edge browser support",
     "async_performance": "Native asyncio-based high-performance automation",
     "mcp_integration": "Full Model Context Protocol server implementation",
+    "one_click_setup": "Automatic Claude Desktop configuration (NEW in v1.1.0!)",
+    "encoding_compatibility": "Cross-platform encoding safety (NEW in v1.1.1!)",
 }
 
-# Dynamic tool counting - this will be updated by server.py when tools are loaded
+# Tool categories and counts
 TOOL_CATEGORIES = {
-    "browser_management": {"count": 8, "description": "Browser lifecycle and session management"},
-    "navigation_control": {"count": 6, "description": "Page navigation and control"},
-    "element_interaction": {"count": 15, "description": "Element finding and interaction"},
-    "screenshot_media": {"count": 8, "description": "Screenshot and media capture"},
-    "javascript_scripting": {"count": 10, "description": "JavaScript execution and scripting"},
-    "protection_bypass": {"count": 5, "description": "Captcha and protection bypass"},
-    "network_monitoring": {"count": 4, "description": "Network monitoring and interception"},
+    "browser_management": 8,
+    "navigation_control": 10, 
+    "element_interaction": 15,
+    "screenshot_media": 6,
+    "javascript_scripting": 8,
+    "protection_bypass": 12,
+    "network_monitoring": 10,
+    "file_data_management": 8,
 }
 
-# Total tools available - calculated from categories
-TOTAL_TOOLS = sum(cat["count"] for cat in TOOL_CATEGORIES.values())
-
-def update_tool_counts(tool_counts: dict):
-    """Update tool category counts dynamically."""
-    global TOTAL_TOOLS, TOOL_CATEGORIES
-    
-    for category, count in tool_counts.items():
-        if category in TOOL_CATEGORIES:
-            TOOL_CATEGORIES[category]["count"] = count
-    
-    TOTAL_TOOLS = sum(cat.get("count", 0) for cat in TOOL_CATEGORIES.values())
+# Total tools available
+TOTAL_TOOLS = sum(TOOL_CATEGORIES.values())
 
 # Import main components for easy access
 try:
@@ -99,166 +94,9 @@ except ImportError:
     main = None
     get_browser_manager = None
 
-# Enhanced PyDoll version detection with robust fallback mechanisms
-def get_pydoll_version():
-    """Get PyDoll version with multiple detection methods and robust error handling.
-    
-    This function implements a comprehensive version detection strategy that tries
-    multiple approaches to detect the PyDoll version, including:
-    1. Direct __version__ attribute
-    2. importlib.metadata (Python 3.8+)
-    3. pkg_resources (legacy)
-    4. Alternative version attributes
-    5. Feature-based version detection
-    6. File-based version hints
-    7. Smart fallback with educated guesses
-    
-    Returns:
-        str or None: PyDoll version string, or None if not installed
-    """
-    try:
-        import pydoll
-        
-        # Method 1: Check __version__ attribute directly
-        if hasattr(pydoll, '__version__'):
-            version = getattr(pydoll, '__version__')
-            if version and version != "unknown" and version.strip():
-                return version.strip()
-        
-        # Method 2: Try importlib.metadata (Python 3.8+)
-        try:
-            import importlib.metadata
-            version = importlib.metadata.version('pydoll-python')
-            if version and version.strip():
-                return version.strip()
-        except (importlib.metadata.PackageNotFoundError, Exception):
-            pass
-        
-        # Method 3: Try older pkg_resources approach
-        try:
-            import pkg_resources
-            dist = pkg_resources.get_distribution('pydoll-python')
-            if dist and dist.version:
-                return dist.version.strip()
-        except (pkg_resources.DistributionNotFound, Exception):
-            pass
-        
-        # Method 4: Check alternative version attributes
-        for attr in ['version', 'VERSION', '__VERSION__']:
-            if hasattr(pydoll, attr):
-                version = getattr(pydoll, attr)
-                if version and str(version).strip() != "unknown":
-                    return str(version).strip()
-        
-        # Method 5: Feature-based version detection for PyDoll
-        try:
-            from pydoll.browser import Chrome
-            
-            # Check for v2.2.1+ features
-            if hasattr(Chrome, 'create_session') and hasattr(Chrome, 'start_browser'):
-                return "2.2.1+"
-            elif hasattr(Chrome, 'start_browser'):
-                return "2.2.0+"
-            else:
-                return "2.0.0+"
-                
-        except (ImportError, AttributeError):
-            return "2.0.0+"
-        
-        # Method 6: Try pip show command as fallback
-        try:
-            import subprocess
-            result = subprocess.run(
-                ['pip', 'show', 'pydoll-python'], 
-                capture_output=True, 
-                text=True, 
-                timeout=10
-            )
-            if result.returncode == 0:
-                for line in result.stdout.split('\n'):
-                    if line.startswith('Version:'):
-                        version = line.split(':', 1)[1].strip()
-                        if version:
-                            return version
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
-            pass
-        
-        # Method 7: Check pydoll module file path for version hints
-        try:
-            import os
-            pydoll_file = pydoll.__file__
-            if pydoll_file and os.path.exists(pydoll_file):
-                # Try to extract version from file path or metadata
-                pydoll_dir = os.path.dirname(pydoll_file)
-                
-                # Check for VERSION file
-                version_file = os.path.join(pydoll_dir, 'VERSION')
-                if os.path.exists(version_file):
-                    with open(version_file, 'r') as f:
-                        version = f.read().strip()
-                        if version:
-                            return version
-                
-                # Check for _version.py file
-                version_py = os.path.join(pydoll_dir, '_version.py')
-                if os.path.exists(version_py):
-                    try:
-                        with open(version_py, 'r') as f:
-                            content = f.read()
-                            # Look for version assignment
-                            import re
-                            match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
-                            if match:
-                                return match.group(1)
-                    except Exception:
-                        pass
-        except Exception:
-            pass
-        
-        # Method 8: Try inspecting the package for version info
-        try:
-            import inspect
-            if hasattr(pydoll, '__path__'):
-                for path_item in pydoll.__path__:
-                    init_file = os.path.join(path_item, '__init__.py')
-                    if os.path.exists(init_file):
-                        try:
-                            with open(init_file, 'r') as f:
-                                content = f.read()
-                                # Look for version patterns
-                                import re
-                                patterns = [
-                                    r'__version__\s*=\s*["\']([^"\']+)["\']',
-                                    r'version\s*=\s*["\']([^"\']+)["\']',
-                                    r'VERSION\s*=\s*["\']([^"\']+)["\']'
-                                ]
-                                for pattern in patterns:
-                                    match = re.search(pattern, content)
-                                    if match:
-                                        return match.group(1)
-                        except Exception:
-                            continue
-        except Exception:
-            pass
-        
-        # If all methods fail but pydoll is importable, return educated guess
-        # Based on when PyDoll MCP Server was last updated
-        return "2.2.1"  # Best guess for current PyDoll installations
-        
-    except ImportError:
-        return None
-    except Exception as e:
-        # Log the error but don't crash
-        try:
-            import sys
-            print(f"Warning: PyDoll version detection failed: {e}", file=sys.stderr)
-        except:
-            pass
-        return "unknown"
-
-# Package information for debugging and status reporting
+# Package information for debugging
 def get_package_info():
-    """Get comprehensive package information for debugging and status display."""
+    """Get comprehensive package information for debugging."""
     return {
         "version": __version__,
         "version_info": VERSION_INFO,
@@ -272,7 +110,6 @@ def get_package_info():
         "features": FEATURES,
         "tool_categories": TOOL_CATEGORIES,
         "total_tools": TOTAL_TOOLS,
-        "pydoll_version": get_pydoll_version(),
     }
 
 # Version check function
@@ -288,57 +125,30 @@ def check_version():
     
     return True
 
-# Enhanced dependency check function with improved error handling
+# Dependency check function  
 def check_dependencies():
-    """Check if all required dependencies are available with detailed reporting."""
+    """Check if all required dependencies are available."""
     missing_deps = []
-    found_deps = {}
     
-    # Check PyDoll
-    pydoll_version = get_pydoll_version()
-    if pydoll_version is None:
+    try:
+        import pydoll
+        if hasattr(pydoll, '__version__'):
+            pydoll_version = pydoll.__version__
+        else:
+            pydoll_version = "unknown"
+    except ImportError:
         missing_deps.append("pydoll-python>=2.2.0")
-    else:
-        found_deps["pydoll-python"] = pydoll_version
+        pydoll_version = None
     
-    # Check MCP
     try:
         import mcp
-        if hasattr(mcp, '__version__'):
-            found_deps["mcp"] = mcp.__version__
-        else:
-            found_deps["mcp"] = "available"
     except ImportError:
         missing_deps.append("mcp>=1.0.0")
     
-    # Check Pydantic with version detection
     try:
         import pydantic
-        if hasattr(pydantic, '__version__'):
-            pydantic_version = pydantic.__version__
-        elif hasattr(pydantic, 'VERSION'):
-            pydantic_version = pydantic.VERSION
-        else:
-            # Try pkg_resources as fallback
-            try:
-                import pkg_resources
-                pydantic_version = pkg_resources.get_distribution("pydantic").version
-            except:
-                pydantic_version = "unknown"
-        
-        found_deps["pydantic"] = pydantic_version
     except ImportError:
         missing_deps.append("pydantic>=2.0.0")
-    
-    # Check typing-extensions
-    try:
-        import typing_extensions
-        if hasattr(typing_extensions, '__version__'):
-            found_deps["typing-extensions"] = typing_extensions.__version__
-        else:
-            found_deps["typing-extensions"] = "available"
-    except ImportError:
-        missing_deps.append("typing-extensions>=4.0.0")
     
     if missing_deps:
         raise ImportError(
@@ -349,65 +159,38 @@ def check_dependencies():
     return {
         "pydoll_version": pydoll_version,
         "dependencies_ok": True,
-        "found_dependencies": found_deps,
     }
 
-# Comprehensive health check function with detailed system analysis
+# Health check function
 def health_check():
-    """Perform a comprehensive health check of the package with detailed reporting."""
+    """Perform a comprehensive health check of the package."""
     health_info = {
         "version_ok": False,
         "dependencies_ok": False,
         "browser_available": False,
-        "pydoll_version": "unknown",
-        "python_version": None,
-        "system_info": {},
-        "dependency_details": {},
         "errors": [],
-        "warnings": [],
     }
     
-    # Add Python version info
-    import sys
-    health_info["python_version"] = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    
-    # Add system info
-    try:
-        import platform
-        health_info["system_info"] = {
-            "system": platform.system(),
-            "platform": platform.platform(),
-            "architecture": platform.architecture()[0],
-            "machine": platform.machine(),
-            "processor": platform.processor(),
-        }
-    except Exception:
-        health_info["warnings"].append("Could not detect system information")
-    
-    # Check Python version
     try:
         check_version()
         health_info["version_ok"] = True
     except Exception as e:
         health_info["errors"].append(f"Version check failed: {e}")
     
-    # Check dependencies with detailed reporting
     try:
         dep_info = check_dependencies()
         health_info["dependencies_ok"] = dep_info["dependencies_ok"]
-        health_info["pydoll_version"] = dep_info.get("pydoll_version", "unknown")
-        health_info["dependency_details"] = dep_info.get("found_dependencies", {})
+        health_info["pydoll_version"] = dep_info.get("pydoll_version")
     except Exception as e:
         health_info["errors"].append(f"Dependency check failed: {e}")
     
-    # Test basic browser availability
     try:
+        # Test basic browser availability
         import pydoll.browser
         health_info["browser_available"] = True
     except Exception as e:
         health_info["errors"].append(f"Browser check failed: {e}")
     
-    # Overall health status
     health_info["overall_status"] = (
         health_info["version_ok"] and 
         health_info["dependencies_ok"] and 
@@ -418,21 +201,20 @@ def health_check():
 
 # CLI entry point information
 def get_cli_info():
-    """Get information about available CLI commands and entry points."""
+    """Get information about available CLI commands."""
     return {
         "main_server": "pydoll-mcp",
         "server_alias": "pydoll-mcp-server", 
         "test_command": "pydoll-mcp-test",
+        "setup_command": "pydoll-mcp-setup",
         "module_run": "python -m pydoll_mcp.server",
         "test_module": "python -m pydoll_mcp.server --test",
-        "status_check": "python -m pydoll_mcp.cli status",
-        "enhanced_status": "python -m pydoll_mcp.cli status --verbose",
-        "test_installation": "python -m pydoll_mcp.cli test-installation",
+        "setup_module": "python -m pydoll_mcp.cli auto-setup",
     }
 
 # Banner for CLI display
 BANNER = f"""
-PyDoll MCP Server v{__version__}
+[PyDoll] PyDoll MCP Server v{__version__}
 Revolutionary Browser Automation for AI
 
 * Features:
@@ -441,6 +223,7 @@ Revolutionary Browser Automation for AI
   * Human-like interactions with advanced anti-detection
   * Real-time network monitoring & request interception
   * {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
+  * One-click automatic Claude Desktop setup
 
 > Ready to revolutionize your browser automation!
 """
@@ -456,62 +239,41 @@ Revolutionary Browser Automation for AI
   • Human-like interactions with advanced anti-detection
   • Real-time network monitoring & request interception
   • {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
+  • One-click automatic Claude Desktop setup
 
 🚀 Ready to revolutionize your browser automation!
 """
 
-def print_banner(use_stderr=True):
-    """Print the package banner with comprehensive encoding safety for all platforms.
-    
-    Args:
-        use_stderr: If True, print to stderr instead of stdout (for MCP compatibility)
-    """
+def print_banner():
+    """Print the package banner with encoding safety."""
     import sys
-    import os
+    import locale
     
-    # Choose output stream - use stderr for MCP compatibility
-    output_stream = sys.stderr if use_stderr else sys.stdout
-    
-    # Determine which banner to use based on encoding capabilities
-    banner_to_use = BANNER  # Safe default
+    # Try to determine the best banner to use
+    banner_to_use = BANNER
     
     try:
-        # Test emoji support
-        test_emoji = "🤖"
-        
-        # Check current encoding
-        current_encoding = 'utf-8'
-        if hasattr(output_stream, 'encoding') and output_stream.encoding:
-            current_encoding = output_stream.encoding.lower()
-        
-        # Try encoding test
-        test_emoji.encode(current_encoding if current_encoding != 'cp949' else 'utf-8')
-        
-        # If we reach here and not using problematic encoding, use emoji banner
-        if current_encoding not in ['cp949', 'euc-kr']:
+        # Check if we can safely print emojis
+        if hasattr(sys.stdout, 'encoding'):
+            encoding = sys.stdout.encoding or 'utf-8'
+            
+            # Test if we can encode emojis with current encoding
+            test_emoji = "🤖"
+            test_emoji.encode(encoding)
+            
+            # If we get here, emojis are supported
             banner_to_use = BANNER_WITH_EMOJIS
             
-    except (UnicodeEncodeError, UnicodeDecodeError, LookupError, AttributeError):
-        # Stick with safe banner
+    except (UnicodeEncodeError, AttributeError, LookupError):
+        # Fall back to safe banner without emojis
         banner_to_use = BANNER
     
-    # Print banner with multiple fallback levels
     try:
-        print(banner_to_use, file=output_stream, flush=True)
-        return
+        # Try to print the banner
+        print(banner_to_use)
     except UnicodeEncodeError:
-        pass
-    
-    # Fallback 1: Try simple banner without emojis
-    try:
-        print(BANNER, file=output_stream, flush=True)
-        return
-    except UnicodeEncodeError:
-        pass
-    
-    # Fallback 2: Ultra-safe ASCII-only banner
-    try:
-        safe_banner = f"""
+        # Final fallback - simple text banner
+        fallback_banner = f"""
 PyDoll MCP Server v{__version__}
 Revolutionary Browser Automation for AI
 
@@ -521,20 +283,14 @@ Features:
   - Human-like interactions with advanced anti-detection
   - Real-time network monitoring & request interception
   - {TOTAL_TOOLS} powerful automation tools across {len(TOOL_CATEGORIES)} categories
+  - One-click automatic Claude Desktop setup
 
 Ready to revolutionize your browser automation!
 """
-        print(safe_banner, file=output_stream, flush=True)
-        return
-    except (UnicodeEncodeError, Exception):
-        pass
-    
-    # Ultimate fallback: Minimal output
-    try:
-        print(f"PyDoll MCP Server v{__version__} - Starting...", file=output_stream, flush=True)
-    except Exception:
-        # If even this fails, just continue silently
-        pass
+        print(fallback_banner)
+    except Exception as e:
+        # Ultimate fallback
+        print(f"PyDoll MCP Server v{__version__} - Starting...")
 
 # Export version for external access
 def get_version():
