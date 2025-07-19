@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.1
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.3
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,11 +20,32 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.5.1-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.5.3-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.5.1 - 2025-07-20)
+## 📢 Latest Updates (v1.5.3 - 2025-07-20)
+
+### 🔧 Quality Improvements & Updates
+
+#### ✅ Enhanced Documentation
+- **Improved**: Enhanced server module documentation with comprehensive feature list
+- **Updated**: Clarified dependency requirements for better compatibility
+- **Fixed**: Updated author email address for proper contact information
+
+#### 📦 Dependency Updates
+- **Updated**: Refined dependency constraints for improved stability
+- **Maintained**: Full compatibility with PyDoll 2.3.1 and aiofiles 23.x
+
+## 📢 Previous Updates (v1.5.2 - 2025-07-20)
+
+### 🐛 Dependency Fix
+
+#### ✅ Fixed aiofiles Version Conflict
+- **Fixed**: Resolved deployment issues on Smithery.ai
+- **Updated**: aiofiles requirement to `>=23.2.1,<24.0.0` for PyDoll 2.3.1 compatibility
+
+## 📢 Previous Updates (v1.5.1 - 2025-07-20)
 
 ### 🐛 Critical Bug Fix
 

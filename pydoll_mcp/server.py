@@ -2,6 +2,14 @@
 
 This module provides the core MCP server implementation for PyDoll browser automation.
 It handles tool registration, request routing, error handling, and lifecycle management.
+
+Features:
+- Complete browser automation via Chrome DevTools Protocol
+- AI-powered captcha solving (Cloudflare Turnstile, reCAPTCHA v3)
+- Advanced anti-detection and stealth mode
+- Real-time network monitoring and interception
+- Comprehensive element interaction capabilities
+- Professional screenshot and PDF generation
 """
 
 import asyncio
