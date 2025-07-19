@@ -3,20 +3,20 @@
 
 # Core MCP and Automation Dependencies
 pydoll-python>=2.3.1      # Revolutionary browser automation library
-mcp>=1.0.0                # Model Context Protocol core
-pydantic>=2.0.0           # Data validation and settings management
+mcp>=1.2.0                # Model Context Protocol core
+pydantic>=2.10.4          # Data validation and settings management
 typing-extensions>=4.0.0  # Extended typing support for older Python versions
 
 # Async and Performance Dependencies
 asyncio-throttle>=1.0.0   # Rate limiting for requests
-aiofiles>=23.0.0          # Async file operations
+aiofiles>=24.1.0          # Async file operations
 
 # Configuration and Environment
 python-dotenv>=1.0.0      # Environment variable loading
 
 # CLI and User Interface
 rich>=13.0.0              # Rich text and beautiful formatting
-click>=8.0.0              # Command line interface framework
+click>=8.1.0              # Command line interface framework
 
 # Browser and Network Dependencies (Included with pydoll-python)
 # websockets>=13.1         # WebSocket client/server (via pydoll-python)

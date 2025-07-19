@@ -14,6 +14,8 @@ import time
 import weakref
 from typing import Dict, List, Optional, Any, Union
 from pathlib import Path
+from collections import deque
+from contextlib import asynccontextmanager
 
 try:
     from pydoll.browser import Chrome, Edge
@@ -30,6 +32,39 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+class BrowserMetrics:
+    """Track browser performance metrics."""
+    
+    def __init__(self, max_history: int = 100):
+        self.max_history = max_history
+        self.navigation_times = deque(maxlen=max_history)
+        self.memory_usage = deque(maxlen=max_history)
+        self.cpu_usage = deque(maxlen=max_history)
+        self.error_count = 0
+        self.total_operations = 0
+    
+    def record_navigation(self, duration: float):
+        """Record navigation timing."""
+        self.navigation_times.append(duration)
+        self.total_operations += 1
+    
+    def get_avg_navigation_time(self) -> float:
+        """Get average navigation time."""
+        if not self.navigation_times:
+            return 0.0
+        return sum(self.navigation_times) / len(self.navigation_times)
+    
+    def record_error(self):
+        """Record an error occurrence."""
+        self.error_count += 1
+    
+    def get_error_rate(self) -> float:
+        """Get error rate as percentage."""
+        if self.total_operations == 0:
+            return 0.0
+        return (self.error_count / self.total_operations) * 100
+
+
 class BrowserInstance:
     """Represents a managed browser instance with metadata."""
     
@@ -41,6 +76,7 @@ class BrowserInstance:
         self.tabs: Dict[str, Tab] = {}
         self.is_active = True
         self.last_activity = time.time()
+        self.metrics = BrowserMetrics()
         
         # Performance metrics
         self.stats = {
@@ -61,6 +97,21 @@ class BrowserInstance:
     def get_idle_time(self) -> float:
         """Get time since last activity in seconds."""
         return time.time() - self.last_activity
+    
+    @asynccontextmanager
+    async def tab_context(self, tab_id: str):
+        """Context manager for safe tab operations."""
+        tab = self.tabs.get(tab_id)
+        if not tab:
+            raise ValueError(f"Tab {tab_id} not found")
+        
+        try:
+            yield tab
+            self.update_activity()
+        except Exception as e:
+            self.metrics.record_error()
+            logger.error(f"Error in tab operation: {e}")
+            raise
     
     async def cleanup(self):
         """Clean up browser instance and all associated resources."""
@@ -87,6 +138,48 @@ class BrowserInstance:
             logger.error(f"Error during browser cleanup: {e}")
 
 
+class BrowserPool:
+    """Pool of browser instances for improved resource management."""
+    
+    def __init__(self, max_size: int = 3):
+        self.max_size = max_size
+        self.available = deque()
+        self.in_use = set()
+        self._lock = asyncio.Lock()
+    
+    async def acquire(self) -> Optional[BrowserInstance]:
+        """Acquire a browser instance from the pool."""
+        async with self._lock:
+            if self.available:
+                instance = self.available.popleft()
+                self.in_use.add(instance)
+                return instance
+            return None
+    
+    async def release(self, instance: BrowserInstance):
+        """Release a browser instance back to the pool."""
+        async with self._lock:
+            if instance in self.in_use:
+                self.in_use.remove(instance)
+                if len(self.available) < self.max_size and instance.is_active:
+                    self.available.append(instance)
+                else:
+                    await instance.cleanup()
+    
+    async def clear(self):
+        """Clear all instances from the pool."""
+        async with self._lock:
+            # Cleanup available instances
+            while self.available:
+                instance = self.available.popleft()
+                await instance.cleanup()
+            
+            # Cleanup in-use instances
+            for instance in list(self.in_use):
+                await instance.cleanup()
+            self.in_use.clear()
+
+
 class BrowserManager:
     """Centralized browser management for PyDoll MCP Server."""
     
@@ -98,16 +191,24 @@ class BrowserManager:
         self.cleanup_interval = int(os.getenv("PYDOLL_CLEANUP_INTERVAL", "300"))  # 5 minutes
         self.idle_timeout = int(os.getenv("PYDOLL_IDLE_TIMEOUT", "1800"))  # 30 minutes
         
+        # Browser pool for better resource management
+        self.browser_pool = BrowserPool(max_size=self.max_browsers)
+        
         # Global statistics
         self.global_stats = {
             "total_browsers_created": 0,
             "total_browsers_destroyed": 0,
             "total_errors": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
         }
         
         # Cleanup task
         self._cleanup_task = None
         self._is_running = False
+        
+        # Performance optimization: Browser option cache
+        self._options_cache = {}
         
         logger.info(f"BrowserManager initialized with max_browsers={self.max_browsers}")
     
@@ -136,6 +237,7 @@ class BrowserManager:
         
         # Cleanup all browsers
         await self.cleanup_all()
+        await self.browser_pool.clear()
         logger.info("BrowserManager stopped")
     
     def _generate_browser_id(self) -> str:
@@ -148,6 +250,16 @@ class BrowserManager:
         if not ChromiumOptions:
             raise RuntimeError("PyDoll not available - ChromiumOptions not imported")
         
+        # Create cache key from kwargs
+        cache_key = hash(frozenset(kwargs.items()))
+        
+        # Check cache first
+        if cache_key in self._options_cache:
+            self.global_stats["cache_hits"] += 1
+            return self._options_cache[cache_key]
+        
+        self.global_stats["cache_misses"] += 1
+        
         options = ChromiumOptions()
         
         # Environment-based defaults
@@ -157,361 +269,262 @@ class BrowserManager:
         
         # Configure options
         if headless:
-            options.add_argument("--headless")
+            options.add_argument("--headless=new")  # Use new headless mode
         
         options.add_argument(f"--window-size={window_width},{window_height}")
         
         # Stealth and performance options (Chrome compatible)
         if os.getenv("PYDOLL_STEALTH_MODE", "true").lower() == "true":
-            # Enhanced stealth options for modern Chrome (updated in v1.4.2)
-            options.add_argument("--no-first-run")
-            options.add_argument("--no-default-browser-check")
-            options.add_argument("--disable-web-security")
-            options.add_argument("--disable-features=VizDisplayCompositor")
-            options.add_argument("--disable-extensions")
-            options.add_argument("--disable-background-timer-throttling")
-            options.add_argument("--disable-backgrounding-occluded-windows")
-            options.add_argument("--disable-renderer-backgrounding")
-            options.add_argument("--disable-ipc-flooding-protection")
+            # Enhanced stealth options for modern Chrome
+            stealth_args = [
+                "--no-first-run",
+                "--no-default-browser-check",
+                "--disable-web-security",
+                "--disable-features=VizDisplayCompositor",
+                "--disable-extensions",
+                "--disable-background-timer-throttling",
+                "--disable-backgrounding-occluded-windows",
+                "--disable-renderer-backgrounding",
+                "--disable-ipc-flooding-protection",
+                "--disable-component-extensions-with-background-pages",
+                "--disable-default-apps",
+                "--disable-sync",
+                "--disable-background-networking",
+                "--disable-client-side-phishing-detection",
+            ]
             
-            # Additional stealth enhancements for v1.4.2
-            options.add_argument("--disable-component-extensions-with-background-pages")
-            options.add_argument("--disable-default-apps")
-            options.add_argument("--disable-sync")
-            options.add_argument("--disable-background-networking")
-            options.add_argument("--disable-client-side-phishing-detection")
-            
-            # Note: Removed deprecated flags for better Chrome compatibility:
-            # - --disable-blink-features=AutomationControlled (deprecated)
-            # - --exclude-switches=enable-automation (causes warnings)
+            for arg in stealth_args:
+                options.add_argument(arg)
         
         # Additional stability options
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-gpu-sandbox")
+        stability_args = [
+            "--disable-dev-shm-usage",
+            "--no-sandbox",
+            "--disable-gpu-sandbox",
+            "--disable-setuid-sandbox",
+        ]
         
-        # Enhanced performance optimizations (v1.4.2)
+        for arg in stability_args:
+            options.add_argument(arg)
+        
+        # Enhanced performance optimizations
         if os.getenv("PYDOLL_DISABLE_IMAGES", "false").lower() == "true":
             options.add_argument("--disable-images")
         
         # Memory and CPU optimizations
-        options.add_argument("--memory-pressure-off")
-        options.add_argument("--max_old_space_size=4096")
-        options.add_argument("--aggressive-cache-discard")
+        performance_args = [
+            "--memory-pressure-off",
+            "--max_old_space_size=4096",
+            "--aggressive-cache-discard",
+            "--disable-background-mode",
+            "--disable-hang-monitor",
+            "--disable-prompt-on-repost",
+            "--disable-domain-reliability",
+        ]
         
-        # Network optimizations
-        if os.getenv("PYDOLL_OPTIMIZE_NETWORK", "true").lower() == "true":
-            options.add_argument("--disable-background-mode")
-            options.add_argument("--disable-hang-monitor")
-            options.add_argument("--disable-prompt-on-repost")
-            options.add_argument("--disable-domain-reliability")
+        for arg in performance_args:
+            options.add_argument(arg)
         
         # Proxy configuration
-        proxy_server = kwargs.get("proxy", os.getenv("PYDOLL_PROXY_SERVER"))
-        if proxy_server:
-            options.add_argument(f"--proxy-server={proxy_server}")
+        proxy = kwargs.get("proxy", os.getenv("PYDOLL_PROXY"))
+        if proxy:
+            options.add_argument(f"--proxy-server={proxy}")
         
-        # User agent
-        user_agent = kwargs.get("user_agent", os.getenv("PYDOLL_USER_AGENT"))
-        if user_agent:
-            options.add_argument(f"--user-agent={user_agent}")
+        # Custom binary path
+        binary_path = kwargs.get("binary_path", os.getenv("PYDOLL_BINARY_PATH"))
+        if binary_path:
+            options.binary_location = binary_path
         
-        # Additional arguments from kwargs
-        extra_args = kwargs.get("args", [])
-        for arg in extra_args:
+        # Custom user data directory
+        user_data_dir = kwargs.get("user_data_dir", os.getenv("PYDOLL_USER_DATA_DIR"))
+        if user_data_dir:
+            options.add_argument(f"--user-data-dir={user_data_dir}")
+        
+        # Additional custom arguments
+        custom_args = kwargs.get("custom_args", [])
+        for arg in custom_args:
             options.add_argument(arg)
+        
+        # Cache the options
+        self._options_cache[cache_key] = options
         
         return options
     
-    async def create_browser(self, browser_type: Optional[str] = None, **kwargs) -> str:
-        """Create a new browser instance.
-        
-        Args:
-            browser_type: Type of browser ("chrome" or "edge")
-            **kwargs: Additional browser configuration options
-            
-        Returns:
-            Browser instance ID
-        """
+    async def create_browser(self, browser_type: Optional[str] = None, **kwargs) -> BrowserInstance:
+        """Create a new browser instance with optimized settings."""
         if not PYDOLL_AVAILABLE:
-            raise RuntimeError("PyDoll library not available - cannot create browser")
+            raise RuntimeError("PyDoll library is not available. Please install with: pip install pydoll-python")
         
-        # Check limits
+        # Check pool first
+        pooled_instance = await self.browser_pool.acquire()
+        if pooled_instance:
+            logger.info(f"Reusing pooled browser instance {pooled_instance.instance_id}")
+            return pooled_instance
+        
+        # Check browser limit
         if len(self.browsers) >= self.max_browsers:
-            # Try to cleanup idle browsers first
+            # Try to cleanup idle browsers
             await self._cleanup_idle_browsers()
             
             if len(self.browsers) >= self.max_browsers:
-                raise RuntimeError(f"Maximum number of browsers ({self.max_browsers}) reached")
+                raise RuntimeError(f"Maximum browser limit ({self.max_browsers}) reached")
         
         browser_type = browser_type or self.default_browser_type
         browser_id = self._generate_browser_id()
         
         try:
-            logger.info(f"Creating {browser_type} browser instance {browser_id}")
+            logger.info(f"Creating new {browser_type} browser instance {browser_id}")
             
             # Get browser options
             options = self._get_browser_options(**kwargs)
             
+            # Set browser start timeout
+            start_timeout = kwargs.get("start_timeout", 30)
+            
             # Create browser based on type
-            if browser_type.lower() == "chrome":
-                browser = Chrome(options=options)
-            elif browser_type.lower() == "edge":
-                browser = Edge(options=options)
+            if browser_type == "chrome":
+                browser = Chrome(options=options, start_timeout=start_timeout)
+            elif browser_type == "edge":
+                browser = Edge(options=options, start_timeout=start_timeout)
             else:
                 raise ValueError(f"Unsupported browser type: {browser_type}")
             
             # Start browser
+            start_time = time.time()
             await browser.start()
+            startup_time = time.time() - start_time
             
-            # Create browser instance wrapper
+            # Create browser instance
             instance = BrowserInstance(browser, browser_type, browser_id)
-            self.browsers[browser_id] = instance
+            instance.metrics.record_navigation(startup_time)
             
-            # Update statistics
+            # Store instance
+            self.browsers[browser_id] = instance
             self.global_stats["total_browsers_created"] += 1
             
-            logger.info(f"Browser instance {browser_id} created successfully")
-            return browser_id
+            logger.info(f"Browser {browser_id} created successfully in {startup_time:.2f}s")
+            return instance
             
-        except ImportError as e:
-            self.global_stats["total_errors"] += 1
-            error_msg = f"PyDoll library not available: {e}"
-            logger.error(f"Failed to create browser instance {browser_id}: {error_msg}")
-            raise RuntimeError(error_msg) from e
-        except FileNotFoundError as e:
-            self.global_stats["total_errors"] += 1
-            error_msg = f"Browser executable not found: {e}"
-            logger.error(f"Failed to create browser instance {browser_id}: {error_msg}")
-            raise RuntimeError(error_msg) from e
-        except TimeoutError as e:
-            self.global_stats["total_errors"] += 1
-            error_msg = f"Browser startup timeout: {e}"
-            logger.error(f"Failed to create browser instance {browser_id}: {error_msg}")
-            raise RuntimeError(error_msg) from e
         except Exception as e:
             self.global_stats["total_errors"] += 1
-            logger.error(f"Failed to create browser instance {browser_id}: {e}")
+            logger.error(f"Failed to create browser: {e}")
             raise
     
-    async def get_browser(self, browser_id: str) -> BrowserInstance:
+    async def get_browser(self, browser_id: str) -> Optional[BrowserInstance]:
         """Get a browser instance by ID."""
-        if browser_id not in self.browsers:
-            raise ValueError(f"Browser instance {browser_id} not found")
-        
-        instance = self.browsers[browser_id]
-        if not instance.is_active:
-            raise ValueError(f"Browser instance {browser_id} is not active")
-        
-        instance.update_activity()
-        return instance
+        return self.browsers.get(browser_id)
     
-    async def close_browser(self, browser_id: str):
-        """Close a specific browser instance."""
-        if browser_id not in self.browsers:
-            logger.warning(f"Browser instance {browser_id} not found for closing")
+    async def destroy_browser(self, browser_id: str):
+        """Destroy a browser instance and cleanup resources."""
+        instance = self.browsers.get(browser_id)
+        if not instance:
+            logger.warning(f"Browser {browser_id} not found")
             return
         
-        instance = self.browsers[browser_id]
-        
         try:
-            await instance.cleanup()
+            logger.info(f"Destroying browser {browser_id}")
+            
+            # Release to pool first
+            await self.browser_pool.release(instance)
+            
+            # Remove from active browsers
             del self.browsers[browser_id]
             self.global_stats["total_browsers_destroyed"] += 1
-            logger.info(f"Browser instance {browser_id} closed successfully")
+            
+            logger.info(f"Browser {browser_id} destroyed successfully")
             
         except Exception as e:
-            logger.error(f"Error closing browser {browser_id}: {e}")
             self.global_stats["total_errors"] += 1
-    
-    async def create_tab(self, browser_id: str) -> str:
-        """Create a new tab in a browser instance."""
-        instance = await self.get_browser(browser_id)
-        
-        if len(instance.tabs) >= self.max_tabs_per_browser:
-            raise RuntimeError(f"Maximum tabs per browser ({self.max_tabs_per_browser}) reached")
-        
-        try:
-            # Create new tab
-            tab = await instance.browser.new_tab()
-            tab_id = f"tab_{len(instance.tabs)}_{int(time.time())}"
-            
-            instance.tabs[tab_id] = tab
-            instance.stats["total_tabs_created"] += 1
-            instance.update_activity()
-            
-            logger.info(f"Created tab {tab_id} in browser {browser_id}")
-            return tab_id
-            
-        except Exception as e:
-            logger.error(f"Failed to create tab in browser {browser_id}: {e}")
-            self.global_stats["total_errors"] += 1
+            logger.error(f"Failed to destroy browser {browser_id}: {e}")
             raise
     
-    async def get_tab(self, browser_id: str, tab_id: Optional[str] = None) -> Tab:
-        """Get a tab from a browser instance."""
-        instance = await self.get_browser(browser_id)
+    async def cleanup_all(self):
+        """Cleanup all browser instances."""
+        logger.info("Cleaning up all browser instances")
         
-        if tab_id is None:
-            # Return the active tab
-            if hasattr(instance.browser, 'active_tab') and instance.browser.active_tab:
-                return instance.browser.active_tab
-            elif instance.tabs:
-                # Return the first available tab
-                return next(iter(instance.tabs.values()))
-            else:
-                # Create a new tab if none exist
-                new_tab_id = await self.create_tab(browser_id)
-                return instance.tabs[new_tab_id]
+        browser_ids = list(self.browsers.keys())
+        for browser_id in browser_ids:
+            try:
+                await self.destroy_browser(browser_id)
+            except Exception as e:
+                logger.error(f"Failed to destroy browser {browser_id}: {e}")
         
-        if tab_id not in instance.tabs:
-            raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
-        
-        return instance.tabs[tab_id]
-    
-    async def ensure_tab_methods(self, tab: Tab) -> Tab:
-        """Ensure tab has all necessary methods for PyDoll operations."""
-        # Add methods that might be missing in older PyDoll versions
-        if not hasattr(tab, 'get_url'):
-            async def get_url():
-                return await tab.evaluate("window.location.href")
-            tab.get_url = get_url
-            
-        if not hasattr(tab, 'get_title'):
-            async def get_title():
-                return await tab.evaluate("document.title")
-            tab.get_title = get_title
-            
-        if not hasattr(tab, 'get_content'):
-            async def get_content():
-                return await tab.evaluate("document.documentElement.outerHTML")
-            tab.get_content = get_content
-            
-        if not hasattr(tab, 'reload'):
-            async def reload(ignore_cache=False):
-                if ignore_cache:
-                    await tab.evaluate("window.location.reload(true)")
-                else:
-                    await tab.evaluate("window.location.reload()")
-            tab.reload = reload
-            
-        if not hasattr(tab, 'go_back'):
-            async def go_back():
-                await tab.evaluate("window.history.back()")
-            tab.go_back = go_back
-            
-        if not hasattr(tab, 'wait_for_load_state'):
-            async def wait_for_load_state(state="load", timeout=30000):
-                if state == "load":
-                    await tab.evaluate("""
-                        new Promise((resolve) => {
-                            if (document.readyState === 'complete') {
-                                resolve();
-                            } else {
-                                window.addEventListener('load', resolve);
-                            }
-                        })
-                    """)
-            tab.wait_for_load_state = wait_for_load_state
-            
-        return tab
-    
-    async def close_tab(self, browser_id: str, tab_id: str):
-        """Close a specific tab."""
-        instance = await self.get_browser(browser_id)
-        
-        if tab_id not in instance.tabs:
-            logger.warning(f"Tab {tab_id} not found in browser {browser_id}")
-            return
-        
-        try:
-            tab = instance.tabs[tab_id]
-            await tab.close()
-            del instance.tabs[tab_id]
-            instance.update_activity()
-            
-            logger.info(f"Closed tab {tab_id} in browser {browser_id}")
-            
-        except Exception as e:
-            logger.error(f"Error closing tab {tab_id}: {e}")
-            self.global_stats["total_errors"] += 1
-    
-    def list_browsers(self) -> List[Dict[str, Any]]:
-        """List all browser instances with their status."""
-        browsers = []
-        
-        for browser_id, instance in self.browsers.items():
-            browsers.append({
-                "id": browser_id,
-                "type": instance.browser_type,
-                "created_at": instance.created_at,
-                "uptime": instance.get_uptime(),
-                "idle_time": instance.get_idle_time(),
-                "tabs_count": len(instance.tabs),
-                "is_active": instance.is_active,
-                "stats": instance.stats.copy(),
-            })
-        
-        return browsers
-    
-    def get_stats(self) -> Dict[str, Any]:
-        """Get comprehensive browser manager statistics."""
-        return {
-            "global_stats": self.global_stats.copy(),
-            "active_browsers": len(self.browsers),
-            "max_browsers": self.max_browsers,
-            "max_tabs_per_browser": self.max_tabs_per_browser,
-            "default_browser_type": self.default_browser_type,
-            "total_tabs": sum(len(instance.tabs) for instance in self.browsers.values()),
-        }
+        self.browsers.clear()
+        logger.info("All browser instances cleaned up")
     
     async def _cleanup_idle_browsers(self):
-        """Clean up browsers that have been idle for too long."""
+        """Cleanup browsers that have been idle for too long."""
         current_time = time.time()
-        browsers_to_close = []
+        idle_browsers = []
         
         for browser_id, instance in self.browsers.items():
-            if current_time - instance.last_activity > self.idle_timeout:
-                browsers_to_close.append(browser_id)
+            if instance.get_idle_time() > self.idle_timeout:
+                idle_browsers.append(browser_id)
         
-        for browser_id in browsers_to_close:
-            logger.info(f"Closing idle browser {browser_id}")
-            await self.close_browser(browser_id)
+        for browser_id in idle_browsers:
+            logger.info(f"Cleaning up idle browser {browser_id}")
+            try:
+                await self.destroy_browser(browser_id)
+            except Exception as e:
+                logger.error(f"Failed to cleanup idle browser {browser_id}: {e}")
     
     async def _periodic_cleanup(self):
-        """Periodic cleanup task for idle browsers and resources."""
+        """Periodically cleanup idle resources."""
         while self._is_running:
             try:
                 await asyncio.sleep(self.cleanup_interval)
-                
-                if not self._is_running:
-                    break
-                
-                logger.debug("Running periodic cleanup")
                 await self._cleanup_idle_browsers()
                 
-                # Log statistics periodically
-                stats = self.get_stats()
-                logger.debug(f"Browser manager stats: {stats}")
+                # Log statistics
+                logger.info(f"Browser stats: Active={len(self.browsers)}, "
+                          f"Created={self.global_stats['total_browsers_created']}, "
+                          f"Destroyed={self.global_stats['total_browsers_destroyed']}, "
+                          f"Errors={self.global_stats['total_errors']}")
                 
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 logger.error(f"Error in periodic cleanup: {e}")
     
-    async def cleanup_all(self):
-        """Clean up all browser instances."""
-        logger.info("Cleaning up all browser instances")
+    def get_statistics(self) -> Dict[str, Any]:
+        """Get browser manager statistics."""
+        stats = {
+            "active_browsers": len(self.browsers),
+            "max_browsers": self.max_browsers,
+            "global_stats": self.global_stats.copy(),
+            "browser_details": [],
+        }
         
-        cleanup_tasks = []
-        for browser_id, instance in list(self.browsers.items()):
-            cleanup_tasks.append(instance.cleanup())
+        for browser_id, instance in self.browsers.items():
+            stats["browser_details"].append({
+                "id": browser_id,
+                "type": instance.browser_type,
+                "uptime": instance.get_uptime(),
+                "idle_time": instance.get_idle_time(),
+                "tabs": len(instance.tabs),
+                "stats": instance.stats.copy(),
+                "avg_navigation_time": instance.metrics.get_avg_navigation_time(),
+                "error_rate": instance.metrics.get_error_rate(),
+            })
         
-        if cleanup_tasks:
-            await asyncio.gather(*cleanup_tasks, return_exceptions=True)
+        return stats
+    
+    # Backward compatibility methods
+    async def ensure_tab_methods(self, tab):
+        """Ensure tab has all required methods for compatibility."""
+        if not hasattr(tab, 'fetch_domain_commands'):
+            # Add stub method for older PyDoll versions
+            async def fetch_domain_commands_stub(domain: Optional[str] = None):
+                return {"error": "fetch_domain_commands not available in this PyDoll version"}
+            tab.fetch_domain_commands = fetch_domain_commands_stub
         
-        self.browsers.clear()
-        logger.info("All browser instances cleaned up")
+        if not hasattr(tab, 'get_parent_element'):
+            # Add stub method for older PyDoll versions
+            async def get_parent_element_stub(selector: str):
+                return {"error": "get_parent_element not available in this PyDoll version"}
+            tab.get_parent_element = get_parent_element_stub
+        
+        return tab
 
 
 # Global browser manager instance
@@ -521,24 +534,14 @@ _browser_manager: Optional[BrowserManager] = None
 def get_browser_manager() -> BrowserManager:
     """Get the global browser manager instance."""
     global _browser_manager
-    
     if _browser_manager is None:
         _browser_manager = BrowserManager()
-    
     return _browser_manager
 
 
-async def initialize_browser_manager():
-    """Initialize and start the global browser manager."""
-    manager = get_browser_manager()
-    await manager.start()
-    return manager
-
-
-async def shutdown_browser_manager():
-    """Shutdown the global browser manager."""
+async def cleanup_browser_manager():
+    """Cleanup the global browser manager."""
     global _browser_manager
-    
     if _browser_manager:
         await _browser_manager.stop()
         _browser_manager = None
