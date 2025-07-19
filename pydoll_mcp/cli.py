@@ -17,7 +17,7 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from . import __version__, health_check, print_banner
+from . import __version__, health_check, print_banner, TOOL_CATEGORIES, TOTAL_TOOLS
 from .browser_manager import get_browser_manager
 
 console = Console()
@@ -28,6 +28,147 @@ console = Console()
 def cli():
     """PyDoll MCP Server - Revolutionary Browser Automation for AI."""
     pass
+
+
+@cli.command()
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
+@click.option("--json-output", is_flag=True, help="Output in JSON format")
+@click.option("--logs", is_flag=True, help="Show recent logs")
+@click.option("--stats", is_flag=True, help="Show detailed statistics")
+def status(verbose: bool = False, json_output: bool = False, logs: bool = False, stats: bool = False):
+    """Show PyDoll MCP Server status and health information."""
+    if not json_output:
+        print_banner()
+        console.print("\n📊 PyDoll MCP Server Status Check", style="bold blue")
+        console.print("=" * 50)
+    
+    # Perform health check
+    health_info = health_check()
+    
+    if json_output:
+        status_data = {
+            "health": health_info,
+            "tool_categories": TOOL_CATEGORIES,
+            "total_tools": TOTAL_TOOLS,
+            "version": __version__,
+        }
+        click.echo(json.dumps(status_data, indent=2))
+        return
+    
+    # Main status table
+    status_table = Table(title="System Status")
+    status_table.add_column("Component", style="cyan", no_wrap=True)
+    status_table.add_column("Status", justify="center")
+    status_table.add_column("Details")
+    
+    # Overall status
+    overall_icon = "✅" if health_info["overall_status"] else "❌"
+    status_table.add_row(
+        "Overall Status",
+        overall_icon,
+        "Healthy" if health_info["overall_status"] else "Issues detected"
+    )
+    
+    # Python version
+    python_icon = "✅" if health_info["version_ok"] else "❌"
+    status_table.add_row(
+        "Python Version", 
+        python_icon,
+        health_info.get("python_version", "Unknown")
+    )
+    
+    # PyDoll version
+    pydoll_version = health_info.get("pydoll_version", "unknown")
+    pydoll_icon = "✅" if pydoll_version and pydoll_version != "unknown" else "⚠️"
+    status_table.add_row(
+        "PyDoll Version",
+        pydoll_icon,
+        f"v{pydoll_version}" if pydoll_version else "Not detected"
+    )
+    
+    # Dependencies
+    deps_icon = "✅" if health_info["dependencies_ok"] else "❌"
+    status_table.add_row(
+        "Dependencies", 
+        deps_icon,
+        "All satisfied" if health_info["dependencies_ok"] else "Missing"
+    )
+    
+    # Browser availability  
+    browser_icon = "✅" if health_info["browser_available"] else "❌"
+    status_table.add_row(
+        "Browser Support",
+        browser_icon, 
+        "Available" if health_info["browser_available"] else "Not available"
+    )
+    
+    # Tools count
+    tools_icon = "✅" if TOTAL_TOOLS > 0 else "⚠️"
+    status_table.add_row(
+        "Tools Available",
+        tools_icon,
+        str(TOTAL_TOOLS)
+    )
+    
+    console.print(status_table)
+    
+    # Show errors if any
+    if health_info["errors"]:
+        console.print("\n❌ Issues Found:", style="bold red")
+        for error in health_info["errors"]:
+            console.print(f"  • {error}", style="red")
+    
+    # Show tool categories if verbose or stats
+    if verbose or stats:
+        console.print("\n🛠️ Tool Categories:", style="bold blue")
+        
+        tools_table = Table()
+        tools_table.add_column("Category", style="cyan")
+        tools_table.add_column("Count", justify="center", style="green")
+        tools_table.add_column("Description", style="white")
+        
+        for category, info in TOOL_CATEGORIES.items():
+            if isinstance(info, dict):
+                count = info.get("count", 0)
+                description = info.get("description", "")
+            else:
+                count = info  # backward compatibility
+                description = ""
+            
+            tools_table.add_row(
+                category.replace("_", " ").title(),
+                str(count),
+                description
+            )
+        
+        console.print(tools_table)
+        console.print(f"\n✨ Total Tools Available: {TOTAL_TOOLS}", style="bold green")
+    
+    # Show system info if stats
+    if stats:
+        system_info = health_info.get("system_info", {})
+        if system_info:
+            console.print("\n💻 System Information:", style="bold blue")
+            
+            sys_table = Table()
+            sys_table.add_column("Property", style="cyan")
+            sys_table.add_column("Value", style="white")
+            
+            for key, value in system_info.items():
+                sys_table.add_row(key.title(), str(value))
+            
+            console.print(sys_table)
+    
+    # Show recent logs if requested
+    if logs:
+        console.print("\n📝 Recent Activity:", style="bold blue")
+        console.print("  (Log display not implemented yet)", style="yellow")
+    
+    # Final status message
+    if health_info["overall_status"]:
+        console.print("\n🎉 PyDoll MCP Server is ready for action!", style="bold green")
+    else:
+        console.print("\n⚠️  PyDoll MCP Server has issues. Run 'pip install --upgrade pydoll-mcp' to fix.", style="bold yellow")
 
 
 @cli.command()
@@ -54,7 +195,7 @@ def test_installation(verbose: bool = False, json_output: bool = False):
     table.add_column("Details")
     
     for check, status in health_info.items():
-        if check == "errors":
+        if check in ["errors", "system_info"]:
             continue
         elif check == "overall_status":
             table.add_row(
@@ -65,8 +206,14 @@ def test_installation(verbose: bool = False, json_output: bool = False):
         elif check == "pydoll_version":
             table.add_row(
                 "PyDoll Version",
+                "✅" if status and status != "unknown" else "⚠️",
+                f"v{status}" if status and status != "unknown" else "Not detected properly"
+            )
+        elif check == "python_version":
+            table.add_row(
+                "Python Version",
                 "✅",
-                f"v{status}" if status else "Not detected"
+                f"v{status}" if status else "Unknown"
             )
         else:
             table.add_row(
@@ -87,26 +234,28 @@ def test_installation(verbose: bool = False, json_output: bool = False):
     if verbose:
         console.print("\n📊 Detailed Information:", style="bold")
         
-        try:
-            from .tools import TOTAL_TOOLS, TOOL_CATEGORIES
+        # Show tool categories
+        tools_table = Table(title="Available Tools")
+        tools_table.add_column("Category", style="cyan")
+        tools_table.add_column("Count", style="green")
+        tools_table.add_column("Description")
+        
+        for category, info in TOOL_CATEGORIES.items():
+            if isinstance(info, dict):
+                count = info.get("count", 0)
+                description = info.get("description", "")
+            else:
+                count = info  # backward compatibility
+                description = ""
             
-            tools_table = Table(title="Available Tools")
-            tools_table.add_column("Category", style="cyan")
-            tools_table.add_column("Count", style="green")
-            tools_table.add_column("Description")
-            
-            for category, info in TOOL_CATEGORIES.items():
-                tools_table.add_row(
-                    category.replace("_", " ").title(),
-                    str(info.get("count", 0)),
-                    info.get("description", "")
-                )
-            
-            console.print(tools_table)
-            console.print(f"\n✨ Total Tools Available: {TOTAL_TOOLS}", style="bold green")
-            
-        except ImportError:
-            console.print("  Tool information not available", style="yellow")
+            tools_table.add_row(
+                category.replace("_", " ").title(),
+                str(count),
+                description
+            )
+        
+        console.print(tools_table)
+        console.print(f"\n✨ Total Tools Available: {TOTAL_TOOLS}", style="bold green")
     
     # Exit with appropriate code
     if not health_info["overall_status"]:
@@ -204,7 +353,8 @@ def test_browser(browser: str = "chrome", headless: bool = False, timeout: int =
 @cli.command()
 @click.option("--output", "-o", help="Output file path")
 @click.option("--format", "-f", type=click.Choice(["json", "yaml", "env"]), default="json", help="Output format")
-def generate_config(output: Optional[str] = None, format: str = "json"):
+@click.option("--auto-setup", is_flag=True, help="Automatically setup Claude Desktop after generating config")
+def generate_config(output: Optional[str] = None, format: str = "json", auto_setup: bool = False):
     """Generate configuration template for Claude Desktop."""
     
     config_data = {
@@ -214,7 +364,8 @@ def generate_config(output: Optional[str] = None, format: str = "json"):
                 "args": ["-m", "pydoll_mcp.server"],
                 "env": {
                     "PYDOLL_LOG_LEVEL": "INFO",
-                    "PYDOLL_DEBUG": "0"
+                    "PYDOLL_DEBUG": "0",
+                    "PYTHONIOENCODING": "utf-8"
                 }
             }
         }
@@ -252,6 +403,10 @@ def generate_config(output: Optional[str] = None, format: str = "json"):
         console.print("📂 Windows: %APPDATA%\\Claude\\claude_desktop_config.json")
         console.print("📂 macOS: ~/Library/Application Support/Claude/claude_desktop_config.json")
         console.print("📂 Linux: ~/.config/Claude/claude_desktop_config.json")
+    
+    if auto_setup:
+        console.print("\n🔧 Auto-setup is not implemented yet.", style="yellow")
+        console.print("Please manually copy the configuration to your Claude Desktop config file.", style="yellow")
 
 
 if __name__ == "__main__":
