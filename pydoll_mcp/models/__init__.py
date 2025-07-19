@@ -106,6 +106,7 @@ class BrowserConfig(BaseModel):
     block_ads: bool = Field(True, description="Block advertisement requests")
     enable_captcha_bypass: bool = Field(True, description="Enable automatic captcha bypass")
     custom_args: List[str] = Field(default_factory=list, description="Additional browser arguments")
+    start_timeout: int = Field(30, description="Browser startup timeout in seconds (PyDoll 2.3.1+)")
     
     @validator('browser_type')
     def validate_browser_type(cls, v):

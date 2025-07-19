@@ -79,6 +79,13 @@ BROWSER_TOOLS = [
                     "type": "array",
                     "items": {"type": "string"},
                     "description": "Additional browser command line arguments"
+                },
+                "start_timeout": {
+                    "type": "integer",
+                    "default": 30,
+                    "minimum": 1,
+                    "maximum": 300,
+                    "description": "Browser startup timeout in seconds (PyDoll 2.3.1+)"
                 }
             },
             "required": []
@@ -241,7 +248,8 @@ async def handle_start_browser(arguments: Dict[str, Any]) -> Sequence[TextConten
             user_agent=config.user_agent,
             disable_images=config.disable_images,
             block_ads=config.block_ads,
-            args=config.custom_args
+            args=config.custom_args,
+            start_timeout=config.start_timeout  # PyDoll 2.3.1+ feature
         )
         
         result = OperationResult(

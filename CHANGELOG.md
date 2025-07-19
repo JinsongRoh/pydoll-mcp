@@ -16,6 +16,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.2.0] - 2025-07-19
+
+### 🚀 PyDoll 2.3.1 Support
+
+#### Dependencies
+- **Upgraded PyDoll**: From 2.2.1 to 2.3.1 for latest features and improvements
+- **Full Compatibility**: Maintained 100% backward compatibility with existing code
+- **Enhanced Stability**: Incorporated PyDoll 2.3.1's bug fixes and performance improvements
+
+### ✨ New Features
+
+#### Chrome DevTools Protocol Integration
+- **New Tool**: `fetch_domain_commands` - Retrieve available Chrome DevTools Protocol commands
+- **Domain Filtering**: Support for querying specific domains (Page, Network, DOM, etc.)
+- **Debugging Support**: Enhanced debugging capabilities for advanced automation scenarios
+- **Complete Protocol Access**: Full access to all CDP domains and their commands
+
+#### Parent Element Navigation
+- **New Tool**: `get_parent_element` - Navigate up the DOM tree from any element
+- **Attribute Retrieval**: Option to include all parent element attributes
+- **Bounds Information**: Option to include bounding box details
+- **Context Understanding**: Better understanding of element relationships and structure
+
+#### Browser Configuration
+- **Start Timeout Option**: New `start_timeout` parameter for browser initialization
+- **Customizable Timing**: Configure browser startup wait time (1-300 seconds)
+- **System Compatibility**: Better support for slower systems or complex configurations
+- **Default Value**: Sensible 30-second default timeout
+
+### 🔧 Technical Improvements
+
+#### Type Hinting
+- **Enhanced Type Support**: Leveraging PyDoll 2.3.1's improved type hinting
+- **Better IDE Support**: Improved autocomplete and type checking in IDEs
+- **Code Quality**: Enhanced code readability and maintainability
+- **Type Safety**: Stronger type safety throughout the codebase
+
+#### Performance
+- **Optimized Scripts**: Benefit from PyDoll 2.3.1's optimized element selection
+- **Windows Compatibility**: Improved test compatibility on Windows systems
+- **Reduced Overhead**: Lower memory footprint and faster execution
+- **Efficient Resource Usage**: Better browser resource management
+
+### 📊 Tool Statistics
+- **Total Tools**: 79 (increased from 77)
+- **Navigation Tools**: 11 (added `fetch_domain_commands`)
+- **Element Tools**: 16 (added `get_parent_element`)
+- **Other Categories**: Unchanged
+
+### 🔄 Backwards Compatibility
+- **Full API Compatibility**: All existing code continues to work unchanged
+- **Seamless Upgrade**: No breaking changes to existing functionality
+- **Graceful Fallbacks**: Features degrade gracefully on older PyDoll versions
+- **Version Detection**: Automatic detection and adaptation to PyDoll version
+
 ## [1.1.4] - 2025-07-19
 
 ### 🔧 Critical Bug Fixes

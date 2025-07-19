@@ -175,6 +175,29 @@ NAVIGATION_TOOLS = [
             },
             "required": ["browser_id"]
         }
+    ),
+    
+    Tool(
+        name="fetch_domain_commands",
+        description="Fetch all possible commands available for the current domain from Chrome DevTools Protocol",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "browser_id": {
+                    "type": "string",
+                    "description": "Browser instance ID"
+                },
+                "tab_id": {
+                    "type": "string",
+                    "description": "Optional tab ID, uses active tab if not specified"
+                },
+                "domain": {
+                    "type": "string",
+                    "description": "Chrome DevTools Protocol domain (e.g., 'Page', 'Network', 'DOM')"
+                }
+            },
+            "required": ["browser_id"]
+        }
     )
 ]
 
@@ -297,6 +320,61 @@ async def handle_get_page_source(arguments: Dict[str, Any]) -> Sequence[TextCont
     return [TextContent(type="text", text=result.json())]
 
 
+async def handle_fetch_domain_commands(arguments: Dict[str, Any]) -> Sequence[TextContent]:
+    """Handle fetch domain commands request using PyDoll 2.3.1 feature."""
+    try:
+        browser_manager = get_browser_manager()
+        browser_id = arguments["browser_id"]
+        tab_id = arguments.get("tab_id")
+        domain = arguments.get("domain")
+        
+        # Get tab
+        tab = await browser_manager.get_tab(browser_id, tab_id)
+        
+        # Call PyDoll 2.3.1's new fetch_domain_commands method
+        if domain:
+            commands = await tab.fetch_domain_commands(domain)
+            message = f"Successfully fetched commands for domain: {domain}"
+        else:
+            # Fetch all available domains
+            commands = await tab.fetch_domain_commands()
+            message = "Successfully fetched all available domain commands"
+        
+        result = OperationResult(
+            success=True,
+            message=message,
+            data={
+                "browser_id": browser_id,
+                "tab_id": tab_id,
+                "domain": domain,
+                "commands": commands,
+                "command_count": len(commands) if isinstance(commands, list) else sum(len(cmds) for cmds in commands.values())
+            }
+        )
+        
+        logger.info(f"Domain commands fetched successfully: {domain or 'all'}")
+        return [TextContent(type="text", text=result.json())]
+        
+    except AttributeError:
+        # Fallback for PyDoll versions < 2.3.1
+        logger.warning("fetch_domain_commands not available in current PyDoll version")
+        result = OperationResult(
+            success=False,
+            error="Feature requires PyDoll 2.3.1 or higher",
+            message="Please upgrade PyDoll to use this feature"
+        )
+        return [TextContent(type="text", text=result.json())]
+        
+    except Exception as e:
+        logger.error(f"Failed to fetch domain commands: {e}")
+        result = OperationResult(
+            success=False,
+            error=str(e),
+            message="Failed to fetch domain commands"
+        )
+        return [TextContent(type="text", text=result.json())]
+
+
 # Navigation Tool Handlers Dictionary
 NAVIGATION_TOOL_HANDLERS = {
     "navigate_to": handle_navigate_to,
@@ -305,4 +383,5 @@ NAVIGATION_TOOL_HANDLERS = {
     "get_current_url": handle_get_current_url,
     "get_page_title": handle_get_page_title,
     "get_page_source": handle_get_page_source,
+    "fetch_domain_commands": handle_fetch_domain_commands,
 }

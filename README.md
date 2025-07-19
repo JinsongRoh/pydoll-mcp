@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.1.4
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.2.0
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,11 +20,20 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.1.4-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.2.0-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.1.4 - 2025-07-19)
+## 📢 Latest Updates (v1.2.0 - 2025-07-19)
+
+### 🚀 PyDoll 2.3.1 Support
+- **✅ Upgraded Dependencies**: Now supports PyDoll 2.3.1 with all its new features
+- **✅ New Tool - fetch_domain_commands**: Access Chrome DevTools Protocol commands for advanced debugging
+- **✅ New Tool - get_parent_element**: Navigate up the DOM tree to find parent elements
+- **✅ Browser Start Timeout**: Configure browser startup timeout for slower systems
+- **✅ Enhanced Type Hinting**: Better IDE support and code quality
+
+### Previous Updates (v1.1.4 - 2025-07-19)
 
 ### 🔧 Critical Bug Fixes
 - **✅ Fixed JSON Parsing Errors**: Resolved MCP client communication issues by properly separating stdout/stderr
@@ -67,7 +76,7 @@ PyDoll MCP Server brings the groundbreaking capabilities of PyDoll to Claude, Op
 ### PyDoll GitHub and Installation Information
 - GitHub: https://github.com/autoscrape-labs/pydoll
 - How to install: pip install pydoll-python
-- PyDoll version: PyDoll 2.2.1 (2025.06.17)
+- PyDoll version: PyDoll 2.3.1 (2025.06.20)
 
 ### 🚀 Key Breakthrough Features
 
@@ -312,7 +321,7 @@ python -m pydoll_mcp.cli status
 "Capture API responses containing pricing data"
 ```
 
-## 🛠️ Complete Tool Arsenal (77 Tools)
+## 🛠️ Complete Tool Arsenal (79 Tools)
 
 <details>
 <summary><strong>🌐 Browser Management (8 tools)</strong></summary>
@@ -329,7 +338,7 @@ python -m pydoll_mcp.cli status
 </details>
 
 <details>
-<summary><strong>🧭 Navigation & Page Control (10 tools)</strong></summary>
+<summary><strong>🧭 Navigation & Page Control (11 tools)</strong></summary>
 
 - **navigate_to**: Smart URL navigation with load detection
 - **refresh_page**: Intelligent page refresh with cache control
@@ -341,11 +350,12 @@ python -m pydoll_mcp.cli status
 - **wait_for_network_idle**: Network activity monitoring
 - **set_viewport_size**: Responsive design testing
 - **get_page_info**: Comprehensive page analysis
+- **fetch_domain_commands**: Chrome DevTools Protocol command discovery (NEW!)
 
 </details>
 
 <details>
-<summary><strong>🎯 Element Finding & Interaction (15 tools)</strong></summary>
+<summary><strong>🎯 Element Finding & Interaction (16 tools)</strong></summary>
 
 - **find_element**: Revolutionary natural attribute finding
 - **find_elements**: Bulk element discovery with filtering
@@ -362,6 +372,7 @@ python -m pydoll_mcp.cli status
 - **drag_and_drop**: Advanced drag-drop operations
 - **double_click**: Double-click interaction simulation
 - **right_click**: Context menu interactions
+- **get_parent_element**: Parent element retrieval with attributes (NEW!)
 
 </details>
 

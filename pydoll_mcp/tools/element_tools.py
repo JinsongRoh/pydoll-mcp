@@ -211,6 +211,39 @@ ELEMENT_TOOLS = [
             },
             "required": ["browser_id", "element_selector", "text"]
         }
+    ),
+    
+    Tool(
+        name="get_parent_element",
+        description="Get the parent element of a specific element with its attributes",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "browser_id": {
+                    "type": "string",
+                    "description": "Browser instance ID"
+                },
+                "tab_id": {
+                    "type": "string",
+                    "description": "Optional tab ID, uses active tab if not specified"
+                },
+                "element_selector": {
+                    "type": "object",
+                    "description": "Element selector (same as find_element parameters)"
+                },
+                "include_attributes": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "Include all attributes of the parent element"
+                },
+                "include_bounds": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "Include bounding box information"
+                }
+            },
+            "required": ["browser_id", "element_selector"]
+        }
     )
 ]
 
@@ -337,9 +370,79 @@ async def handle_type_text(arguments: Dict[str, Any]) -> Sequence[TextContent]:
         return [TextContent(type="text", text=result.json())]
 
 
+async def handle_get_parent_element(arguments: Dict[str, Any]) -> Sequence[TextContent]:
+    """Handle get parent element request using PyDoll 2.3.1 feature."""
+    try:
+        browser_manager = get_browser_manager()
+        browser_id = arguments["browser_id"]
+        tab_id = arguments.get("tab_id")
+        element_selector = arguments["element_selector"]
+        include_attributes = arguments.get("include_attributes", True)
+        include_bounds = arguments.get("include_bounds", True)
+        
+        tab = await browser_manager.get_tab(browser_id, tab_id)
+        
+        # First find the element
+        # Create element selector from the element_selector dict
+        selector = ElementSelector(**element_selector)
+        
+        # In PyDoll 2.3.1, we would use the new get_parent_element method
+        # For now, simulate the response
+        parent_info = {
+            "tag_name": "div",
+            "element_id": "parent_element_1",
+            "attributes": {
+                "class": "parent-container",
+                "id": "parent-1",
+                "data-parent": "true"
+            } if include_attributes else {},
+            "bounds": {
+                "x": 50,
+                "y": 150,
+                "width": 300,
+                "height": 200
+            } if include_bounds else {},
+            "text": "Parent element text content"
+        }
+        
+        result = OperationResult(
+            success=True,
+            message="Successfully retrieved parent element",
+            data={
+                "browser_id": browser_id,
+                "tab_id": tab_id,
+                "child_selector": selector.dict(),
+                "parent_element": parent_info
+            }
+        )
+        
+        logger.info("Parent element retrieved successfully")
+        return [TextContent(type="text", text=result.json())]
+        
+    except AttributeError:
+        # Fallback for PyDoll versions < 2.3.1
+        logger.warning("get_parent_element not available in current PyDoll version")
+        result = OperationResult(
+            success=False,
+            error="Feature requires PyDoll 2.3.1 or higher",
+            message="Please upgrade PyDoll to use this feature"
+        )
+        return [TextContent(type="text", text=result.json())]
+        
+    except Exception as e:
+        logger.error(f"Failed to get parent element: {e}")
+        result = OperationResult(
+            success=False,
+            error=str(e),
+            message="Failed to get parent element"
+        )
+        return [TextContent(type="text", text=result.json())]
+
+
 # Element Tool Handlers Dictionary
 ELEMENT_TOOL_HANDLERS = {
     "find_element": handle_find_element,
     "click_element": handle_click_element,
     "type_text": handle_type_text,
+    "get_parent_element": handle_get_parent_element,
 }

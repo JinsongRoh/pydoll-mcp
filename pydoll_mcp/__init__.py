@@ -19,7 +19,7 @@ For installation and usage instructions, see:
 https://github.com/JinsongRoh/pydoll-mcp
 """
 
-__version__ = "1.1.4"
+__version__ = "1.2.0"
 __author__ = "Jinsong Roh"
 __email__ = "jinsongroh@gmail.com"
 __license__ = "MIT"
@@ -50,7 +50,7 @@ PYTHON_REQUIRES = ">=3.8"
 
 # Core dependencies
 CORE_DEPENDENCIES = [
-    "pydoll-python>=2.2.0",
+    "pydoll-python>=2.3.1",
     "mcp>=1.0.0", 
     "pydantic>=2.0.0",
     "typing-extensions>=4.0.0",
@@ -75,8 +75,8 @@ FEATURES = {
 # Tool categories and counts
 TOOL_CATEGORIES = {
     "browser_management": 8,
-    "navigation_control": 10, 
-    "element_interaction": 15,
+    "navigation_control": 11,  # Added fetch_domain_commands
+    "element_interaction": 16,  # Added get_parent_element
     "screenshot_media": 6,
     "javascript_scripting": 8,
     "protection_bypass": 12,
@@ -210,7 +210,7 @@ def check_dependencies():
         if not pydoll_version:
             pydoll_version = "unknown"
     except ImportError:
-        missing_deps.append("pydoll-python>=2.2.0")
+        missing_deps.append("pydoll-python>=2.3.1")
         pydoll_version = None
     
     try:
