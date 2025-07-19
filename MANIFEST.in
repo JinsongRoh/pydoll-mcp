@@ -7,12 +7,25 @@ include INSTALLATION_GUIDE.md
 include LICENSE
 include CHANGELOG.md
 include CONTRIBUTING.md
+include SECURITY_SETUP.md
+include DEPLOYMENT_GUIDE.md
+include PYPI_DEPLOYMENT_STATUS.md
+include *.md
 
 # Include configuration files
 include pyproject.toml
 include setup.py
 include requirements.txt
 include requirements-dev.txt
+include package.json
+include smithery.json
+include docker-compose.yml
+include *.json
+include *.yml
+include *.py
+include *.deprecated
+include *.example
+include .bandit
 
 # Include package metadata
 include pydoll_mcp/py.typed
