@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pydoll-mcp"
-version = "1.1.5"
+version = "1.1.6"
 description = "Revolutionary Model Context Protocol (MCP) server for PyDoll browser automation with zero-webdriver operation and intelligent captcha bypass"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -241,8 +241,8 @@ exclude_lines = [
     "raise NotImplementedError",
     "if 0:",
     "if __name__ == .__main__.:",
-    "class .*\bProtocol\):",
-    "@(abc\.)?abstractmethod",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
 ]
 
 [tool.bandit]
@@ -290,6 +290,7 @@ deps =
     sphinx>=5.0.0
     sphinx-rtd-theme>=1.2.0
 commands = sphinx-build -W -b html docs docs/_build
+
 """
 
 [tool.semantic_release]
