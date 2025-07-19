@@ -248,8 +248,7 @@ async def handle_start_browser(arguments: Dict[str, Any]) -> Sequence[TextConten
             user_agent=config.user_agent,
             disable_images=config.disable_images,
             block_ads=config.block_ads,
-            args=config.custom_args,
-            start_timeout=config.start_timeout  # PyDoll 2.3.1+ feature
+            args=config.custom_args
         )
         
         result = OperationResult(

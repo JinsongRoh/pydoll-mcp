@@ -269,16 +269,22 @@ class BrowserManager:
         
         # Configure options
         if headless:
-            options.add_argument("--headless=new")  # Use new headless mode
+            try:
+                options.add_argument("--headless=new")  # Use new headless mode
+            except Exception:
+                pass
         
-        options.add_argument(f"--window-size={window_width},{window_height}")
+        try:
+            options.add_argument(f"--window-size={window_width},{window_height}")
+        except Exception:
+            pass
         
         # Stealth and performance options (Chrome compatible)
         if os.getenv("PYDOLL_STEALTH_MODE", "true").lower() == "true":
             # Enhanced stealth options for modern Chrome
+            # Note: --no-first-run and --no-default-browser-check are already added by PyDoll
             stealth_args = [
-                "--no-first-run",
-                "--no-default-browser-check",
+                # "--no-default-browser-check",  # Already added by PyDoll
                 "--disable-web-security",
                 "--disable-features=VizDisplayCompositor",
                 "--disable-extensions",
@@ -294,7 +300,11 @@ class BrowserManager:
             ]
             
             for arg in stealth_args:
-                options.add_argument(arg)
+                try:
+                    options.add_argument(arg)
+                except Exception:
+                    # Skip if argument already exists
+                    pass
         
         # Additional stability options
         stability_args = [
@@ -305,11 +315,18 @@ class BrowserManager:
         ]
         
         for arg in stability_args:
-            options.add_argument(arg)
+            try:
+                options.add_argument(arg)
+            except Exception:
+                # Skip if argument already exists
+                pass
         
         # Enhanced performance optimizations
         if os.getenv("PYDOLL_DISABLE_IMAGES", "false").lower() == "true":
-            options.add_argument("--disable-images")
+            try:
+                options.add_argument("--disable-images")
+            except Exception:
+                pass
         
         # Memory and CPU optimizations
         performance_args = [
@@ -323,12 +340,19 @@ class BrowserManager:
         ]
         
         for arg in performance_args:
-            options.add_argument(arg)
+            try:
+                options.add_argument(arg)
+            except Exception:
+                # Skip if argument already exists
+                pass
         
         # Proxy configuration
         proxy = kwargs.get("proxy", os.getenv("PYDOLL_PROXY"))
         if proxy:
-            options.add_argument(f"--proxy-server={proxy}")
+            try:
+                options.add_argument(f"--proxy-server={proxy}")
+            except Exception:
+                pass
         
         # Custom binary path
         binary_path = kwargs.get("binary_path", os.getenv("PYDOLL_BINARY_PATH"))
@@ -338,12 +362,19 @@ class BrowserManager:
         # Custom user data directory
         user_data_dir = kwargs.get("user_data_dir", os.getenv("PYDOLL_USER_DATA_DIR"))
         if user_data_dir:
-            options.add_argument(f"--user-data-dir={user_data_dir}")
+            try:
+                options.add_argument(f"--user-data-dir={user_data_dir}")
+            except Exception:
+                pass
         
         # Additional custom arguments
         custom_args = kwargs.get("custom_args", [])
         for arg in custom_args:
-            options.add_argument(arg)
+            try:
+                options.add_argument(arg)
+            except Exception:
+                # Skip if argument already exists
+                pass
         
         # Cache the options
         self._options_cache[cache_key] = options
@@ -378,14 +409,11 @@ class BrowserManager:
             # Get browser options
             options = self._get_browser_options(**kwargs)
             
-            # Set browser start timeout
-            start_timeout = kwargs.get("start_timeout", 30)
-            
             # Create browser based on type
             if browser_type == "chrome":
-                browser = Chrome(options=options, start_timeout=start_timeout)
+                browser = Chrome(options=options)
             elif browser_type == "edge":
-                browser = Edge(options=options, start_timeout=start_timeout)
+                browser = Edge(options=options)
             else:
                 raise ValueError(f"Unsupported browser type: {browser_type}")
             
