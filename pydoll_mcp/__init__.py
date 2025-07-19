@@ -19,7 +19,7 @@ For installation and usage instructions, see:
 https://github.com/JinsongRoh/pydoll-mcp
 """
 
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 __author__ = "Jinsong Roh"
 __email__ = "jinsongroh@gmail.com"
 __license__ = "MIT"
@@ -36,6 +36,9 @@ __all__ = [
     "__url__",
     "PyDollMCPServer",
     "get_browser_manager",
+    "get_pydoll_version",
+    "get_package_info", 
+    "health_check",
     "main",
 ]
 
@@ -94,9 +97,79 @@ except ImportError:
     main = None
     get_browser_manager = None
 
+# Enhanced PyDoll version detection with robust fallback mechanisms
+def get_pydoll_version():
+    """Get PyDoll version with multiple detection methods and robust error handling."""
+    try:
+        # Method 1: Direct pydoll import
+        import pydoll
+        if hasattr(pydoll, '__version__'):
+            version = pydoll.__version__
+            if version and version != "unknown":
+                return version
+    except ImportError:
+        pass
+    except Exception:
+        pass
+    
+    try:
+        # Method 2: Through pydoll.browser module
+        import pydoll.browser
+        if hasattr(pydoll.browser, '__version__'):
+            version = pydoll.browser.__version__
+            if version and version != "unknown":
+                return version
+    except (ImportError, AttributeError):
+        pass
+    except Exception:
+        pass
+    
+    try:
+        # Method 3: Package metadata via importlib
+        import importlib.metadata
+        try:
+            version = importlib.metadata.version('pydoll-python')
+            if version:
+                return version
+        except importlib.metadata.PackageNotFoundError:
+            pass
+    except ImportError:
+        pass
+    except Exception:
+        pass
+    
+    try:
+        # Method 4: Pkg_resources fallback
+        import pkg_resources
+        try:
+            version = pkg_resources.get_distribution('pydoll-python').version
+            if version:
+                return version
+        except pkg_resources.DistributionNotFound:
+            pass
+    except ImportError:
+        pass
+    except Exception:
+        pass
+    
+    try:
+        # Method 5: Check if we can import pydoll at all
+        import pydoll
+        # If we can import but no version, assume it's working
+        return "2.2.1+ (version detection failed)"
+    except ImportError:
+        pass
+    except Exception:
+        pass
+    
+    # If all methods fail
+    return None
+
 # Package information for debugging
 def get_package_info():
     """Get comprehensive package information for debugging."""
+    pydoll_version = get_pydoll_version()
+    
     return {
         "version": __version__,
         "version_info": VERSION_INFO,
@@ -110,6 +183,7 @@ def get_package_info():
         "features": FEATURES,
         "tool_categories": TOOL_CATEGORIES,
         "total_tools": TOTAL_TOOLS,
+        "pydoll_version": pydoll_version,
     }
 
 # Version check function
@@ -132,9 +206,8 @@ def check_dependencies():
     
     try:
         import pydoll
-        if hasattr(pydoll, '__version__'):
-            pydoll_version = pydoll.__version__
-        else:
+        pydoll_version = get_pydoll_version()
+        if not pydoll_version:
             pydoll_version = "unknown"
     except ImportError:
         missing_deps.append("pydoll-python>=2.2.0")
@@ -161,15 +234,30 @@ def check_dependencies():
         "dependencies_ok": True,
     }
 
-# Health check function
+# Enhanced health check function with system info
 def health_check():
     """Perform a comprehensive health check of the package."""
+    import platform
+    
     health_info = {
         "version_ok": False,
         "dependencies_ok": False,
         "browser_available": False,
         "errors": [],
+        "system_info": {},
     }
+    
+    # Add system information
+    try:
+        health_info["system_info"] = {
+            "system": platform.system(),
+            "platform": platform.platform(),
+            "architecture": platform.architecture()[0],
+            "python_version": platform.python_version(),
+            "processor": platform.processor() or "Unknown",
+        }
+    except Exception as e:
+        health_info["errors"].append(f"System info gathering failed: {e}")
     
     try:
         check_version()
