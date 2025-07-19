@@ -163,7 +163,7 @@ class BrowserManager:
         
         # Stealth and performance options (Chrome compatible)
         if os.getenv("PYDOLL_STEALTH_MODE", "true").lower() == "true":
-            # Safe stealth options for modern Chrome (updated in v1.4.1)
+            # Enhanced stealth options for modern Chrome (updated in v1.4.2)
             options.add_argument("--no-first-run")
             options.add_argument("--no-default-browser-check")
             options.add_argument("--disable-web-security")
@@ -173,6 +173,14 @@ class BrowserManager:
             options.add_argument("--disable-backgrounding-occluded-windows")
             options.add_argument("--disable-renderer-backgrounding")
             options.add_argument("--disable-ipc-flooding-protection")
+            
+            # Additional stealth enhancements for v1.4.2
+            options.add_argument("--disable-component-extensions-with-background-pages")
+            options.add_argument("--disable-default-apps")
+            options.add_argument("--disable-sync")
+            options.add_argument("--disable-background-networking")
+            options.add_argument("--disable-client-side-phishing-detection")
+            
             # Note: Removed deprecated flags for better Chrome compatibility:
             # - --disable-blink-features=AutomationControlled (deprecated)
             # - --exclude-switches=enable-automation (causes warnings)
@@ -182,9 +190,21 @@ class BrowserManager:
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-gpu-sandbox")
         
-        # Performance optimizations
+        # Enhanced performance optimizations (v1.4.2)
         if os.getenv("PYDOLL_DISABLE_IMAGES", "false").lower() == "true":
             options.add_argument("--disable-images")
+        
+        # Memory and CPU optimizations
+        options.add_argument("--memory-pressure-off")
+        options.add_argument("--max_old_space_size=4096")
+        options.add_argument("--aggressive-cache-discard")
+        
+        # Network optimizations
+        if os.getenv("PYDOLL_OPTIMIZE_NETWORK", "true").lower() == "true":
+            options.add_argument("--disable-background-mode")
+            options.add_argument("--disable-hang-monitor")
+            options.add_argument("--disable-prompt-on-repost")
+            options.add_argument("--disable-domain-reliability")
         
         # Proxy configuration
         proxy_server = kwargs.get("proxy", os.getenv("PYDOLL_PROXY_SERVER"))
@@ -254,6 +274,21 @@ class BrowserManager:
             logger.info(f"Browser instance {browser_id} created successfully")
             return browser_id
             
+        except ImportError as e:
+            self.global_stats["total_errors"] += 1
+            error_msg = f"PyDoll library not available: {e}"
+            logger.error(f"Failed to create browser instance {browser_id}: {error_msg}")
+            raise RuntimeError(error_msg) from e
+        except FileNotFoundError as e:
+            self.global_stats["total_errors"] += 1
+            error_msg = f"Browser executable not found: {e}"
+            logger.error(f"Failed to create browser instance {browser_id}: {error_msg}")
+            raise RuntimeError(error_msg) from e
+        except TimeoutError as e:
+            self.global_stats["total_errors"] += 1
+            error_msg = f"Browser startup timeout: {e}"
+            logger.error(f"Failed to create browser instance {browser_id}: {error_msg}")
+            raise RuntimeError(error_msg) from e
         except Exception as e:
             self.global_stats["total_errors"] += 1
             logger.error(f"Failed to create browser instance {browser_id}: {e}")

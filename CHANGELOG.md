@@ -16,6 +16,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.4.2] - 2025-07-19
+
+### 🚀 Enhanced Performance & Stability Update
+
+#### ✨ New Features
+- **Enhanced Stealth Mode**: Added additional Chrome options for better anti-detection
+  - `--disable-component-extensions-with-background-pages`
+  - `--disable-default-apps`
+  - `--disable-sync`
+  - `--disable-background-networking`
+  - `--disable-client-side-phishing-detection`
+- **Performance Optimizations**: Implemented memory and CPU usage improvements
+  - `--memory-pressure-off`
+  - `--max_old_space_size=4096`
+  - `--aggressive-cache-discard`
+- **Network Optimizations**: Added network efficiency and resource management options
+  - `--disable-background-mode`
+  - `--disable-hang-monitor`
+  - `--disable-prompt-on-repost`
+  - `--disable-domain-reliability`
+- **Improved Error Handling**: More specific error types and recovery mechanisms
+  - ImportError handling for PyDoll library availability
+  - FileNotFoundError handling for browser executable issues
+  - TimeoutError handling for browser startup failures
+
+#### 🔧 Improvements
+- **Browser Compatibility**: Enhanced Chrome/Edge options for modern browser versions
+- **Memory Management**: Optimized memory pressure handling and cache management
+- **Stability**: Better error recovery and resource cleanup
+- **Performance**: Reduced background activity and improved startup times
+- **Error Messages**: More descriptive error reporting for troubleshooting
+
+#### 🐛 Bug Fixes
+- **Chrome Warnings**: Eliminated deprecated browser flags that caused console warnings
+- **Resource Leaks**: Better cleanup of browser instances and tabs
+- **Error Messages**: More specific error categorization for better debugging
+
+#### 🛠️ Technical Improvements
+- **Code Quality**: Enhanced error handling with proper exception chaining
+- **Documentation**: Updated browser option comments with version compatibility notes
+- **Performance**: Reduced resource usage through optimized Chrome options
+
+### Changed
+- Updated browser manager with enhanced stealth and performance options
+- Improved error handling with more specific exception types
+- Enhanced Chrome compatibility by removing deprecated flags
+
+### Fixed
+- Browser startup warnings from deprecated Chrome flags
+- Memory leaks in browser instance management
+- Error message clarity for troubleshooting
+
 ## [1.4.1] - 2025-07-20
 
 ### 🔧 Browser Compatibility & Stability Improvements

@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.4.0
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.4.2
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,11 +20,32 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.4.0-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.4.2-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.4.0 - 2025-07-20)
+## 📢 Latest Updates (v1.4.2 - 2025-07-19)
+
+### 🚀 Enhanced Performance & Stability Update
+
+#### ✨ New Features
+- **✅ Enhanced Stealth Mode**: Additional Chrome options for better anti-detection
+- **✅ Performance Optimizations**: Memory and CPU usage improvements
+- **✅ Network Optimizations**: Better network efficiency and resource management
+- **✅ Improved Error Handling**: More specific error types and recovery mechanisms
+
+#### 🔧 Improvements
+- **✅ Browser Compatibility**: Enhanced Chrome/Edge options for modern browser versions
+- **✅ Memory Management**: Optimized memory pressure handling and cache management
+- **✅ Stability**: Better error recovery and resource cleanup
+- **✅ Performance**: Reduced background activity and improved startup times
+
+#### 🐛 Bug Fixes
+- **✅ Chrome Warnings**: Eliminated deprecated browser flags
+- **✅ Resource Leaks**: Better cleanup of browser instances and tabs
+- **✅ Error Messages**: More descriptive error reporting for troubleshooting
+
+### Previous Updates (v1.4.0 - 2025-07-20)
 
 ### 🚀 Major Update - PyDoll 2.3.1 Compatibility
 
