@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
-## [1.4.3] - 2025-07-19
+## [1.4.3] - 2025-07-20
 
 ### 🔧 Critical Compatibility & Security Fixes
 
