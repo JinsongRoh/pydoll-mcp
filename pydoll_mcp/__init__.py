@@ -99,56 +99,91 @@ except ImportError:
     main = None
     get_browser_manager = None
 
-# Enhanced PyDoll version detection
+# Enhanced PyDoll version detection with robust fallback mechanisms
 def get_pydoll_version():
-    """Get PyDoll version with multiple detection methods."""
+    """Get PyDoll version with multiple detection methods and robust error handling."""
     try:
         import pydoll
         
-        # Method 1: Check __version__ attribute
-        if hasattr(pydoll, '__version__') and pydoll.__version__ != "unknown":
-            return pydoll.__version__
+        # Method 1: Check __version__ attribute directly
+        if hasattr(pydoll, '__version__'):
+            version = getattr(pydoll, '__version__')
+            if version and version != "unknown" and version.strip():
+                return version.strip()
         
         # Method 2: Try importlib.metadata (Python 3.8+)
         try:
             import importlib.metadata
-            return importlib.metadata.version('pydoll-python')
+            version = importlib.metadata.version('pydoll-python')
+            if version and version.strip():
+                return version.strip()
         except Exception:
             pass
         
-        # Method 3: Try older pkg_resources
+        # Method 3: Try older pkg_resources approach
         try:
             import pkg_resources
-            return pkg_resources.get_distribution('pydoll-python').version
+            dist = pkg_resources.get_distribution('pydoll-python')
+            if dist and dist.version:
+                return dist.version.strip()
         except Exception:
             pass
         
-        # Method 4: Check version attribute
-        if hasattr(pydoll, 'version'):
-            return pydoll.version
+        # Method 4: Check alternative version attributes
+        for attr in ['version', 'VERSION', '__VERSION__']:
+            if hasattr(pydoll, attr):
+                version = getattr(pydoll, attr)
+                if version and str(version).strip() != "unknown":
+                    return str(version).strip()
         
-        # Method 5: Check VERSION attribute
-        if hasattr(pydoll, 'VERSION'):
-            return pydoll.VERSION
-        
-        # Method 6: Feature-based version detection
+        # Method 5: Feature-based version detection for PyDoll
         try:
             from pydoll.browser import Chrome
-            if hasattr(Chrome, 'create_session'):  # v2.2.1+ feature
-                return "2.2.1"
-            else:
+            
+            # Check for v2.2.1+ features
+            if hasattr(Chrome, 'create_session') and hasattr(Chrome, 'start_browser'):
+                return "2.2.1+"
+            elif hasattr(Chrome, 'start_browser'):
                 return "2.2.0+"
+            else:
+                return "2.0.0+"
+                
         except (ImportError, AttributeError):
             return "2.0.0+"
         
+        # Method 6: Check pydoll module file path for version hints
+        try:
+            import os
+            pydoll_file = pydoll.__file__
+            if pydoll_file and os.path.exists(pydoll_file):
+                # Try to extract version from file path or metadata
+                pydoll_dir = os.path.dirname(pydoll_file)
+                version_file = os.path.join(pydoll_dir, 'VERSION')
+                if os.path.exists(version_file):
+                    with open(version_file, 'r') as f:
+                        version = f.read().strip()
+                        if version:
+                            return version
+        except Exception:
+            pass
+        
+        # If all methods fail but pydoll is importable, return generic version
+        return "2.2.1"  # Best guess for current PyDoll installations
+        
     except ImportError:
         return None
-    except Exception:
+    except Exception as e:
+        # Log the error but don't crash
+        try:
+            import sys
+            print(f"Warning: PyDoll version detection failed: {e}", file=sys.stderr)
+        except:
+            pass
         return "unknown"
 
-# Package information for debugging
+# Package information for debugging and status reporting
 def get_package_info():
-    """Get comprehensive package information for debugging."""
+    """Get comprehensive package information for debugging and status display."""
     return {
         "version": __version__,
         "version_info": VERSION_INFO,
@@ -178,34 +213,57 @@ def check_version():
     
     return True
 
-# Enhanced dependency check function  
+# Enhanced dependency check function with improved error handling
 def check_dependencies():
-    """Check if all required dependencies are available."""
+    """Check if all required dependencies are available with detailed reporting."""
     missing_deps = []
+    found_deps = {}
     
+    # Check PyDoll
     pydoll_version = get_pydoll_version()
     if pydoll_version is None:
         missing_deps.append("pydoll-python>=2.2.0")
+    else:
+        found_deps["pydoll-python"] = pydoll_version
     
+    # Check MCP
     try:
         import mcp
+        if hasattr(mcp, '__version__'):
+            found_deps["mcp"] = mcp.__version__
+        else:
+            found_deps["mcp"] = "available"
     except ImportError:
         missing_deps.append("mcp>=1.0.0")
     
+    # Check Pydantic with version detection
     try:
         import pydantic
-        # Check if it's Pydantic v2
-        if hasattr(pydantic, 'VERSION'):
+        if hasattr(pydantic, '__version__'):
+            pydantic_version = pydantic.__version__
+        elif hasattr(pydantic, 'VERSION'):
             pydantic_version = pydantic.VERSION
         else:
-            # For older versions or version detection
+            # Try pkg_resources as fallback
             try:
                 import pkg_resources
                 pydantic_version = pkg_resources.get_distribution("pydantic").version
             except:
                 pydantic_version = "unknown"
+        
+        found_deps["pydantic"] = pydantic_version
     except ImportError:
         missing_deps.append("pydantic>=2.0.0")
+    
+    # Check typing-extensions
+    try:
+        import typing_extensions
+        if hasattr(typing_extensions, '__version__'):
+            found_deps["typing-extensions"] = typing_extensions.__version__
+        else:
+            found_deps["typing-extensions"] = "available"
+    except ImportError:
+        missing_deps.append("typing-extensions>=4.0.0")
     
     if missing_deps:
         raise ImportError(
@@ -216,11 +274,12 @@ def check_dependencies():
     return {
         "pydoll_version": pydoll_version,
         "dependencies_ok": True,
+        "found_dependencies": found_deps,
     }
 
-# Health check function with improved reliability
+# Comprehensive health check function with detailed system analysis
 def health_check():
-    """Perform a comprehensive health check of the package."""
+    """Perform a comprehensive health check of the package with detailed reporting."""
     health_info = {
         "version_ok": False,
         "dependencies_ok": False,
@@ -228,7 +287,9 @@ def health_check():
         "pydoll_version": "unknown",
         "python_version": None,
         "system_info": {},
+        "dependency_details": {},
         "errors": [],
+        "warnings": [],
     }
     
     # Add Python version info
@@ -242,30 +303,36 @@ def health_check():
             "system": platform.system(),
             "platform": platform.platform(),
             "architecture": platform.architecture()[0],
+            "machine": platform.machine(),
+            "processor": platform.processor(),
         }
     except Exception:
-        pass
+        health_info["warnings"].append("Could not detect system information")
     
+    # Check Python version
     try:
         check_version()
         health_info["version_ok"] = True
     except Exception as e:
         health_info["errors"].append(f"Version check failed: {e}")
     
+    # Check dependencies with detailed reporting
     try:
         dep_info = check_dependencies()
         health_info["dependencies_ok"] = dep_info["dependencies_ok"]
         health_info["pydoll_version"] = dep_info.get("pydoll_version", "unknown")
+        health_info["dependency_details"] = dep_info.get("found_dependencies", {})
     except Exception as e:
         health_info["errors"].append(f"Dependency check failed: {e}")
     
+    # Test basic browser availability
     try:
-        # Test basic browser availability
         import pydoll.browser
         health_info["browser_available"] = True
     except Exception as e:
         health_info["errors"].append(f"Browser check failed: {e}")
     
+    # Overall health status
     health_info["overall_status"] = (
         health_info["version_ok"] and 
         health_info["dependencies_ok"] and 
@@ -276,7 +343,7 @@ def health_check():
 
 # CLI entry point information
 def get_cli_info():
-    """Get information about available CLI commands."""
+    """Get information about available CLI commands and entry points."""
     return {
         "main_server": "pydoll-mcp",
         "server_alias": "pydoll-mcp-server", 
@@ -284,6 +351,8 @@ def get_cli_info():
         "module_run": "python -m pydoll_mcp.server",
         "test_module": "python -m pydoll_mcp.server --test",
         "status_check": "python -m pydoll_mcp.cli status",
+        "enhanced_status": "python -m pydoll_mcp.cli status --verbose",
+        "test_installation": "python -m pydoll_mcp.cli test-installation",
     }
 
 # Banner for CLI display
