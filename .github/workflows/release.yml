@@ -164,13 +164,34 @@ jobs:
       
     permissions:
       id-token: write
+      contents: read
       
     steps:
+    - name: Checkout code (for security verification)
+      uses: actions/checkout@v4
+      
     - name: Download build artifacts
       uses: actions/download-artifact@v3
       with:
         name: python-package-distributions
         path: dist/
+        
+    - name: Security verification
+      run: |
+        # Verify no sensitive files in distribution
+        echo "🔍 Security verification of package contents..."
+        
+        # Check for sensitive patterns in package
+        if find dist/ -name "*.tar.gz" -exec tar -tzf {} \; | grep -E "(\.env|\.secret|key|token|password)" 2>/dev/null; then
+          echo "❌ Sensitive files detected in package!"
+          exit 1
+        fi
+        
+        # Verify package integrity
+        python -m pip install --upgrade pip twine
+        twine check dist/* --strict
+        
+        echo "✅ Security verification passed"
         
     - name: Verify package contents
       run: |
@@ -178,7 +199,18 @@ jobs:
         echo "📦 Ready to publish:"
         for file in dist/*; do
           echo "  - $(basename $file)"
+          # Show package size for verification
+          echo "    Size: $(du -h "$file" | cut -f1)"
         done
+        
+    - name: Verify PyPI token is configured
+      run: |
+        if [ -z "${{ secrets.PYPI_API_TOKEN }}" ]; then
+          echo "❌ PYPI_API_TOKEN secret not configured"
+          echo "Please follow SECURITY_SETUP.md to configure secrets"
+          exit 1
+        fi
+        echo "✅ PYPI_API_TOKEN is configured"
         
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
@@ -186,6 +218,7 @@ jobs:
         password: ${{ secrets.PYPI_API_TOKEN }}
         verbose: true
         verify-metadata: true
+        skip-existing: true
         
   # Test PyPI Installation
   test-installation:
@@ -222,9 +255,30 @@ jobs:
     needs: [pypi-publish]
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      
+    - name: Verify Smithery.ai secrets
+      run: |
+        echo "🔍 Verifying Smithery.ai configuration..."
+        
+        if [ -z "${{ secrets.SMITHERY_API_KEY }}" ]; then
+          echo "❌ SMITHERY_API_KEY secret not configured"
+          echo "Please follow SECURITY_SETUP.md to configure secrets"
+          exit 1
+        fi
+        
+        if [ -z "${{ secrets.SMITHERY_PROFILE }}" ]; then
+          echo "❌ SMITHERY_PROFILE secret not configured"
+          echo "Please follow SECURITY_SETUP.md to configure secrets"
+          exit 1
+        fi
+        
+        echo "✅ Smithery.ai secrets are configured"
     
     - name: Extract version
       id: version
@@ -328,12 +382,14 @@ jobs:
         
         echo "📡 Updating Smithery.ai registry for PyDoll MCP Server v$VERSION..."
         
-        # Update Smithery.ai using the provided API endpoint
+        # Update Smithery.ai using secure API endpoint (secrets required)
         RESPONSE=$(curl -w "%{http_code}" -s -o response_body.txt -X POST \
-          "https://server.smithery.ai/@smithery-ai/github/mcp?api_key=d5b3fc68-2ac2-4403-842f-3fe77df88b75&profile=agricultural-mink-Ifhgkl" \
+          "https://server.smithery.ai/@smithery-ai/github/mcp" \
           -H "Content-Type: application/json" \
           -H "User-Agent: PyDoll-MCP-GitHub-Actions/1.0" \
           -H "Accept: application/json" \
+          -H "Authorization: Bearer ${{ secrets.SMITHERY_API_KEY }}" \
+          -H "X-Profile-ID: ${{ secrets.SMITHERY_PROFILE }}" \
           -d @smithery_payload.json)
         
         echo "HTTP Response Code: $RESPONSE"
@@ -342,15 +398,26 @@ jobs:
         
         if [[ "$RESPONSE" =~ ^2[0-9][0-9]$ ]]; then
           echo "✅ Smithery.ai registry updated successfully!"
+          echo "Registry should be updated within 5-10 minutes"
         else
           echo "❌ Smithery.ai update failed with HTTP $RESPONSE"
           echo "Response details:"
           cat response_body.txt
-          exit 1
+          
+          # Don't fail the workflow for Smithery.ai issues (optional service)
+          echo "⚠️  Smithery.ai update failed, but continuing workflow"
+          echo "You can manually update the registry later"
         fi
         
-        # Clean up
-        rm -f smithery_payload.json response_body.txt
+        # Secure cleanup - ensure sensitive data is removed
+        if [ -f smithery_payload.json ]; then
+          shred -vfz -n 3 smithery_payload.json 2>/dev/null || rm -f smithery_payload.json
+        fi
+        if [ -f response_body.txt ]; then
+          shred -vfz -n 3 response_body.txt 2>/dev/null || rm -f response_body.txt
+        fi
+        
+        echo "🧹 Cleanup completed"
 
   # Post-Release Notifications
   notify:

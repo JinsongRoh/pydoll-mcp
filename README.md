@@ -376,6 +376,33 @@ python -m pydoll_mcp.cli status
 "Capture API responses containing pricing data"
 ```
 
+## 🔐 Security & Development
+
+### 🚨 Repository Maintainers - Important Security Notice
+
+If you're contributing to this repository or setting up automated releases, please read our **[Security Setup Guide](SECURITY_SETUP.md)** to properly configure GitHub Secrets for:
+
+- 🔐 **PyPI API Tokens**: Secure package publishing
+- 🔐 **Smithery.ai API Keys**: Automated registry updates  
+- 🔐 **GitHub Actions Security**: Proper workflow permissions
+
+**⚠️ Never commit API keys or tokens to the repository!**
+
+### 🛡️ For Users
+
+PyDoll MCP Server follows security best practices:
+- ✅ No telemetry or data collection
+- ✅ Local operation only
+- ✅ Secure browser automation
+- ✅ Memory cleanup and process isolation
+
+### 🔒 Browser Security
+
+- **Sandboxed Execution**: Each browser runs in isolation
+- **No Data Persistence**: Clears cookies and cache by default  
+- **Stealth Mode**: Advanced anti-detection without compromising security
+- **Safe Automation**: Human-like interactions prevent detection
+
 ## 🛠️ Complete Tool Arsenal (79 Tools)
 
 <details>
