@@ -11,7 +11,13 @@
 
 <p align="center">
   <a href="https://github.com/JinsongRoh/pydoll-mcp">
-    <img src="https://img.shields.io/badge/GitHub-pydoll--mcp-blue?style=flat-square&logo=github" alt="GitHub"/>
+    <img src="https://img.shields.io/github/stars/JinsongRoh/pydoll-mcp?style=flat-square&logo=github" alt="GitHub Stars"/>
+  </a>
+  <a href="https://pypi.org/project/pydoll-mcp/">
+    <img src="https://img.shields.io/pypi/dm/pydoll-mcp?style=flat-square&logo=pypi" alt="PyPI Downloads"/>
+  </a>
+  <a href="https://pypi.org/project/pydoll-mcp/">
+    <img src="https://img.shields.io/badge/PyPI-v1.5.12-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
   <a href="https://github.com/autoscrape-labs/pydoll">
     <img src="https://img.shields.io/badge/Powered%20by-PyDoll-green?style=flat-square" alt="Powered by PyDoll"/>
@@ -19,8 +25,8 @@
   <a href="https://modelcontextprotocol.io/">
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
-  <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.5.12-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+  <a href="https://smithery.ai/server/@JinsongRoh/pydoll-mcp">
+    <img src="https://img.shields.io/badge/Smithery-AI%20Directory-purple?style=flat-square" alt="Smithery AI"/>
   </a>
 </p>
 
@@ -40,6 +46,11 @@
 - **Updated Tools**: All navigation and element tools now use unified tab resolution
 - **Better Logging**: Improved error messages and debugging information
 - **Performance**: Reduced error rate by 60% in multi-tab scenarios
+
+> **🚀 Upgrade Recommended**: If you're experiencing tab-related errors or connection issues, upgrade to v1.5.12 immediately:
+> ```bash
+> pip install --upgrade pydoll-mcp
+> ```
 
 ## 📢 Previous Updates (v1.5.9 - 2025-07-20)
 
@@ -301,6 +312,8 @@ PyDoll MCP Server brings the groundbreaking capabilities of PyDoll to Claude, Op
 - **🌐 Real-time Network Control**: Intercept, modify, and analyze all web traffic
 - **🔧 One-Click Setup**: Automatic Claude Desktop configuration
 - **🌍 Universal Compatibility**: Works on all systems including Korean Windows
+- **🎯 NEW v1.5.12**: Intelligent Tab Management with automatic ID detection and fallback mechanisms
+- **🔗 NEW v1.5.12**: Enhanced Connection Stability with 60% fewer errors in multi-tab scenarios
 
 ## 📋 What Can You Do?
 
@@ -335,7 +348,7 @@ PyDoll MCP Server brings the groundbreaking capabilities of PyDoll to Claude, Op
 pip install pydoll-mcp
 ```
 
-**NEW in v1.1.0**: The installation now automatically offers to configure Claude Desktop! 🎉
+**NEW in v1.5.12**: Enhanced Tab Management and Connection Stability! 🎉
 
 After installation, you'll see:
 ```
