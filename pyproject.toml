@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pydoll-mcp"
-version = "1.5.13"
+version = "1.5.14"
 description = "Revolutionary Model Context Protocol (MCP) server for PyDoll browser automation with zero-webdriver operation and intelligent captcha bypass"
 readme = "README.md"
 license = {text = "MIT"}
