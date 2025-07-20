@@ -172,6 +172,9 @@ coverage-reports/
 *.swo
 *~
 
+# Claude settings with potential secrets
+.claude/
+
 # OS specific files
 .DS_Store
 .DS_Store?

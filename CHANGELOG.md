@@ -16,6 +16,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.5.14] - 2025-07-20
+
+### Fixed
+- **Critical**: Setup automated deployment workflow for PyPI releases
+- **GitHub Actions**: Enhanced release-v2.yml workflow with comprehensive deployment automation
+- **Documentation**: Updated documentation and release notes
+
+### Enhanced
+- **Deployment Process**: Streamlined deployment with GitHub Actions integration
+- **Version Management**: Automated version synchronization across all files
+- **Release Automation**: One-click release process with automatic PyPI upload
+
+## [1.5.13] - 2025-07-20
+
+### Fixed
+- **Windows Enhancement**: Improved Windows compatibility and performance
+- **Smart Search Automation**: Enhanced intelligent search functionality
+
+### Enhanced
+- **Cross-platform Support**: Better support for Windows environments
+- **Search Performance**: Optimized search algorithms for faster results
+
+## [1.5.12] - 2025-07-20
+
+### Fixed
+- **Bug Fixes**: Various stability improvements and bug fixes
+
+## [1.5.11] - 2025-07-20
+
+### Fixed
+- **Browser Control**: Enhanced browser control mechanisms
+- **API Stability**: Improved API response handling
+
 ## [1.5.10] - 2025-07-20
 
 ### Fixed

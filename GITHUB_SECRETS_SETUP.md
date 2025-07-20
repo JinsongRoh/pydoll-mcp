@@ -1,90 +1,113 @@
-# GitHub Secrets Setup Guide
+# 🔐 GitHub Secrets Setup for PyDoll MCP Server
 
-이 가이드는 자동 배포를 위한 GitHub Secrets 설정 방법을 설명합니다.
+This guide explains how to configure GitHub Actions secrets for automated releases and deployments.
 
-## 🔐 Required Secrets
+## 🔑 PyPI Deployment (No Secrets Needed!)
 
-GitHub 저장소의 Settings > Secrets and variables > Actions에서 다음 secrets을 설정해야 합니다:
+**PyPI deployment now uses Trusted Publisher (OIDC) authentication.** No API tokens or passwords are required!
 
-### 1. PYPI_API_TOKEN
-- **Value**: `[YOUR_PYPI_TOKEN_HERE]`
-- **Description**: PyPI API token for uploading packages
-- **Permissions**: Package upload scope for all projects
-- **Format**: Starts with `pypi-` followed by the token string
+The repository is already configured with:
+- **Publisher**: GitHub
+- **Repository**: JinsongRoh/pydoll-mcp
+- **Workflow**: release.yml
+- **Environment**: pypi
 
-### 2. SMITHERY_API_KEY
-- **Value**: `[YOUR_SMITHERY_API_KEY_HERE]`
-- **Description**: Smithery.ai API key for updating the MCP server registry
-- **Format**: UUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+## 📋 Optional GitHub Secrets
 
-### 3. SMITHERY_PROFILE
-- **Value**: `[YOUR_SMITHERY_PROFILE_HERE]`
-- **Description**: Smithery.ai profile identifier
-- **Format**: Alphanumeric string with hyphens
+Configure the following secrets in your GitHub repository settings only if needed:
 
-## 📋 Setup Steps
+### Repository Secrets (Settings > Secrets and variables > Actions)
 
-1. **Navigate to Repository Settings**
-   - Go to https://github.com/JinsongRoh/pydoll-mcp/settings/secrets/actions
+| Secret Name | Description | Required For |
+|-------------|-------------|--------------|
+| `SMITHERY_AI_KEY` | Smithery.ai API key | Smithery.ai updates (optional) |
 
-2. **Add New Repository Secret**
-   - Click "New repository secret"
-   - Enter the secret name and value
-   - Click "Add secret"
+## 🔧 GitHub Environment Setup (Required)
 
-3. **Repeat for All Required Secrets**
-   - Add PYPI_API_TOKEN
-   - Add SMITHERY_API_KEY  
-   - Add SMITHERY_PROFILE
+### Create "pypi" Environment
+1. Go to your repository: https://github.com/JinsongRoh/pydoll-mcp
+2. Click on **Settings** tab
+3. In the left sidebar, find **Environments**
+4. Click **New environment**
+5. Name it exactly: `pypi` (lowercase)
+6. Click **Configure environment**
+7. No additional settings needed - just save
 
-## 🔒 Security Notes
+### Optional: Add Smithery.ai Secret
+If you want automatic Smithery.ai updates:
+1. Go to **Settings** > **Secrets and variables** > **Actions**
+2. Click **New repository secret**
+3. Name: `SMITHERY_AI_KEY`
+4. Secret: Your Smithery.ai API key
 
-- These secrets are automatically masked in GitHub Actions logs
-- Never commit these values to the repository
-- Secrets are only accessible to GitHub Actions workflows
-- Review permissions regularly and rotate tokens when needed
+## 🚀 Automated Deployment Process
 
-## 🧪 Testing the Setup
+When you create a new release tag (e.g., `v1.5.15`), the workflow will automatically:
 
-After adding the secrets, you can test the automated deployment by:
+1. **Create GitHub Release** with assets
+2. **Deploy to PyPI** using Trusted Publisher (OIDC) - no secrets needed!
+3. **Update Smithery.ai** registry
+4. **Verify deployment** and generate reports
 
-1. **Creating a new tag**:
-   ```bash
-   git tag v1.5.15-test
-   git push origin v1.5.15-test
-   ```
+### Triggering a Release
 
-2. **Manual workflow trigger**:
-   - Go to Actions tab
-   - Select "Release and Deploy PyDoll MCP Server v2"
-   - Click "Run workflow"
-   - Enter version number
+#### Option 1: Create a Git Tag
+```bash
+git tag v1.5.15
+git push origin v1.5.15
+```
+
+#### Option 2: Manual Workflow Dispatch
+1. Go to **Actions** tab
+2. Select **🚀 Release and Deploy PyDoll MCP Server**
+3. Click **Run workflow**
+4. Enter version number (e.g., `1.5.15`)
+5. Click **Run workflow**
 
 ## 🔍 Verification
 
-The workflow will:
-1. ✅ Create GitHub release with assets
-2. ✅ Deploy to PyPI (https://pypi.org/project/pydoll-mcp/)
-3. ✅ Update Smithery.ai registry (https://smithery.ai/server/@JinsongRoh/pydoll-mcp)
-4. ✅ Generate deployment report
+### Required Setup:
+1. Go to **Settings** > **Environments**
+2. Verify you have a `pypi` environment created
 
-## ⚠️ Troubleshooting
+### Optional Secrets:
+1. Go to **Settings** > **Secrets and variables** > **Actions**
+2. If configured, you should see:
+   - SMITHERY_AI_KEY (optional)
+
+## 📊 Monitoring Deployments
+
+Track deployment status:
+- **GitHub Actions**: https://github.com/JinsongRoh/pydoll-mcp/actions
+- **PyPI Package**: https://pypi.org/project/pydoll-mcp/
+- **Smithery.ai**: https://smithery.ai/server/@JinsongRoh/pydoll-mcp
+
+## 🆘 Troubleshooting
 
 ### PyPI Upload Fails
-- Check token permissions and expiration
-- Verify package version doesn't already exist
-- Review PyPI API status
+- Verify the `pypi` environment exists in GitHub repository settings
+- Check that the environment name is exactly `pypi` (lowercase)
+- Ensure the version doesn't already exist on PyPI
+- The workflow file must be named `release.yml`
 
 ### Smithery.ai Update Fails
-- Verify API key and profile are correct
+- Verify `SMITHERY_AI_KEY` is correct
 - Check Smithery.ai service status
-- Review API endpoint availability
+- The workflow continues even if Smithery update fails
 
-### GitHub Actions Errors
-- Check workflow file syntax
-- Verify all required secrets are set
-- Review GitHub Actions service status
+### GitHub Release Fails
+- Ensure the tag doesn't already exist
+- Check repository permissions
+- Verify GitHub Actions is enabled
+
+## 🔒 Security Notes
+
+- PyPI deployment now uses OIDC - no tokens to manage or rotate!
+- Never commit secrets to the repository
+- For Smithery.ai keys, rotate regularly if used
+- Monitor for unauthorized access in PyPI and GitHub logs
 
 ---
 
-**Important**: Remove this file before committing to prevent accidental exposure of sensitive information.
+**Last Updated**: 2025-07-20
+**Workflow File**: `.github/workflows/release.yml`

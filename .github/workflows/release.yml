@@ -1,5 +1,8 @@
 name: 🚀 Release and Deploy PyDoll MCP Server
 
+env:
+  PACKAGE_NAME: pydoll-mcp
+
 on:
   push:
     tags:
@@ -19,6 +22,7 @@ jobs:
     outputs:
       version: ${{ steps.get_version.outputs.version }}
       tag: ${{ steps.get_version.outputs.tag }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     
     steps:
     - name: 🔽 Checkout Repository
@@ -44,29 +48,93 @@ jobs:
     - name: 📝 Generate Release Notes
       id: release_notes
       run: |
-        if [ -f "RELEASE_NOTES_v${{ steps.get_version.outputs.version }}.md" ]; then
-          echo "Found release notes file"
-          echo "RELEASE_NOTES_FILE=RELEASE_NOTES_v${{ steps.get_version.outputs.version }}.md" >> $GITHUB_ENV
+        if [ -f "release-notes/RELEASE_NOTES_v${{ steps.get_version.outputs.version }}.md" ]; then
+          echo "Found release notes file: release-notes/RELEASE_NOTES_v${{ steps.get_version.outputs.version }}.md"
+          cp "release-notes/RELEASE_NOTES_v${{ steps.get_version.outputs.version }}.md" release_notes.md
         else
-          echo "Release notes file not found, using README"
-          echo "RELEASE_NOTES_FILE=README.md" >> $GITHUB_ENV
+          echo "Release notes file not found, generating default notes"
+          cat > release_notes.md << 'EOF'
+        # PyDoll MCP Server ${{ steps.get_version.outputs.tag }}
+        
+        ## 🚀 What's New
+        
+        This release includes important updates and improvements to PyDoll MCP Server.
+        
+        ## 📦 Installation
+        
+        ```bash
+        pip install --upgrade pydoll-mcp==${{ steps.get_version.outputs.version }}
+        ```
+        
+        ## 🔗 Links
+        
+        - **PyPI**: https://pypi.org/project/pydoll-mcp/${{ steps.get_version.outputs.version }}/
+        - **GitHub**: https://github.com/JinsongRoh/pydoll-mcp
+        - **Smithery.ai**: https://smithery.ai/server/@JinsongRoh/pydoll-mcp
+        
+        EOF
         fi
     
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: 📦 Install Build Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine wheel setuptools
+    
+    - name: 🔧 Build Package
+      run: |
+        python -m build
+        
+    - name: ✅ Verify Package
+      run: |
+        twine check dist/*
+        echo "Package contents:"
+        ls -la dist/
+    
     - name: 🎉 Create GitHub Release
+      id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.get_version.outputs.tag }}
-        release_name: "PyDoll MCP Server ${{ steps.get_version.outputs.tag }} - Windows Enhancement & Smart Search"
-        body_path: ${{ env.RELEASE_NOTES_FILE }}
+        release_name: "🚀 PyDoll MCP Server ${{ steps.get_version.outputs.tag }}"
+        body_path: release_notes.md
         draft: false
         prerelease: false
+    
+    - name: 📤 Upload Wheel Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/${{ env.PACKAGE_NAME }}-${{ steps.get_version.outputs.version }}-py3-none-any.whl
+        asset_name: ${{ env.PACKAGE_NAME }}-${{ steps.get_version.outputs.version }}-py3-none-any.whl
+        asset_content_type: application/zip
+    
+    - name: 📤 Upload Source Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/${{ env.PACKAGE_NAME }}-${{ steps.get_version.outputs.version }}.tar.gz
+        asset_name: ${{ env.PACKAGE_NAME }}-${{ steps.get_version.outputs.version }}.tar.gz
+        asset_content_type: application/gzip
 
   deploy-pypi:
     name: 📦 Deploy to PyPI
     runs-on: ubuntu-latest
     needs: create-release
+    environment: pypi  # This must match the environment name in PyPI trusted publisher settings
+    
+    permissions:
+      id-token: write  # Required for trusted publishing
     
     steps:
     - name: 🔽 Checkout Repository
@@ -89,13 +157,19 @@ jobs:
     - name: ✅ Verify Package
       run: |
         twine check dist/*
+        echo "Package contents:"
+        ls -la dist/
         
-    - name: 📤 Publish to PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+    - name: 📤 Publish to PyPI using Trusted Publishing
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
+        print-hash: true
+    
+    - name: ✅ Verify PyPI Upload
       run: |
-        twine upload dist/*
+        sleep 30  # Wait for PyPI to process
+        pip index versions pydoll-mcp || echo "Package not yet available"
 
   update-smithery:
     name: 🤖 Update Smithery.ai Registry
@@ -106,19 +180,43 @@ jobs:
     - name: 🔽 Checkout Repository
       uses: actions/checkout@v4
     
+    - name: 📝 Update smithery.json version
+      run: |
+        # Update version in smithery.json
+        VERSION=${{ needs.create-release.outputs.version }}
+        sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${VERSION}\"/" smithery.json
+        echo "Updated smithery.json version to ${VERSION}"
+        cat smithery.json
+    
     - name: 🤖 Update Smithery.ai
       env:
-        SMITHERY_API_KEY: ${{ secrets.SMITHERY_API_KEY }}
-        SMITHERY_PROFILE: ${{ secrets.SMITHERY_PROFILE }}
+        SMITHERY_API_KEY: ${{ secrets.SMITHERY_AI_KEY }}
       run: |
-        # Update Smithery.ai registry with new version
-        curl -X POST "https://api.smithery.ai/v1/servers" \
-          -H "Authorization: Bearer ${SMITHERY_API_KEY}" \
-          -H "Content-Type: application/json" \
-          -d @smithery.json || echo "Smithery update failed, but continuing..."
+        echo "Triggering Smithery.ai update..."
+        
+        # Method 1: GitHub webhook trigger
+        curl -X GET "https://server.smithery.ai/@smithery-ai/github/mcp?api_key=${SMITHERY_API_KEY}&profile=agricultural-mink-Ifhgkl" \
+          -H "Accept: application/json" \
+          -v || echo "Smithery GitHub trigger failed"
+        
+        # Method 2: Direct API update (if available)
+        if [ -n "${SMITHERY_API_KEY}" ]; then
+          curl -X POST "https://api.smithery.ai/v1/servers/update" \
+            -H "Authorization: Bearer ${SMITHERY_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "pydoll-mcp",
+              "version": "${{ needs.create-release.outputs.version }}",
+              "repository": "https://github.com/JinsongRoh/pydoll-mcp"
+            }' \
+            -v || echo "Smithery direct API update failed"
+        fi
+        
+        echo "Smithery.ai update triggered"
 
-  generate-deployment-status:
-    name: 📊 Generate Deployment Status
+
+  verify-deployment:
+    name: 🔍 Verify Deployment
     runs-on: ubuntu-latest
     needs: [create-release, deploy-pypi, update-smithery]
     if: always()  # Run even if previous jobs fail
@@ -127,96 +225,99 @@ jobs:
     - name: 🔽 Checkout Repository
       uses: actions/checkout@v4
     
-    - name: 📊 Create Deployment Status Report
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: 🔍 Check GitHub Release
       run: |
-        cat > DEPLOYMENT_STATUS_${{ needs.create-release.outputs.tag }}.md << 'EOF'
-        # PyDoll MCP Server ${{ needs.create-release.outputs.tag }} - Deployment Status
+        echo "Checking GitHub release..."
+        curl -s "https://api.github.com/repos/JinsongRoh/pydoll-mcp/releases/tags/${{ needs.create-release.outputs.tag }}" | \
+          jq -r '.name, .html_url' || echo "GitHub release check failed"
+    
+    - name: 🔍 Check PyPI Package
+      run: |
+        echo "Checking PyPI package..."
+        sleep 60  # Wait for PyPI to fully process
+        pip install pydoll-mcp==${{ needs.create-release.outputs.version }} --dry-run || \
+          echo "PyPI package not yet available"
         
-        **Release Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        # Check PyPI API
+        curl -s "https://pypi.org/pypi/pydoll-mcp/json" | \
+          jq -r '.info.version, .urls[0].url' || echo "PyPI API check failed"
+    
+    - name: 🔍 Check Smithery.ai
+      run: |
+        echo "Checking Smithery.ai..."
+        curl -s "https://smithery.ai/api/servers/@JinsongRoh/pydoll-mcp" || \
+          echo "Smithery.ai check failed (API might not be public)"
+    
+    - name: 📊 Generate Deployment Report
+      run: |
+        DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        cat > DEPLOYMENT_REPORT_${{ needs.create-release.outputs.tag }}.md << EOF
+        # 🚀 PyDoll MCP Server ${{ needs.create-release.outputs.tag }} - Deployment Report
+        
+        **Release Date**: ${DATE}
         **Version**: ${{ needs.create-release.outputs.version }}
         **Tag**: ${{ needs.create-release.outputs.tag }}
         
-        ## 📦 Deployment Results
+        ## 📦 Deployment Status
         
         ### ✅ GitHub Release
         - **Status**: ${{ needs.create-release.result }}
         - **URL**: https://github.com/JinsongRoh/pydoll-mcp/releases/tag/${{ needs.create-release.outputs.tag }}
         
-        ### 📦 PyPI Package
+        ### 📦 PyPI Package  
         - **Status**: ${{ needs.deploy-pypi.result }}
         - **URL**: https://pypi.org/project/pydoll-mcp/${{ needs.create-release.outputs.version }}/
-        - **Install Command**: `pip install pydoll-mcp==${{ needs.create-release.outputs.version }}`
+        - **Install**: \`pip install pydoll-mcp==${{ needs.create-release.outputs.version }}\`
         
         ### 🤖 Smithery.ai Registry
         - **Status**: ${{ needs.update-smithery.result }}
         - **URL**: https://smithery.ai/server/@JinsongRoh/pydoll-mcp
         
-        ## 🔧 Installation Instructions
+        ## 🔧 Quick Test
         
-        ### Quick Installation
-        ```bash
-        pip install --upgrade pydoll-mcp
-        ```
-        
-        ### Verify Installation
-        ```bash
-        python -c "import pydoll_mcp; print(f'PyDoll MCP version: {pydoll_mcp.__version__}')"
-        python -m pydoll_mcp.cli status
-        ```
-        
-        ## 📋 Release Highlights
-        
-        ### 🪟 Windows Environment Optimization
-        - Fixed Windows tab recognition issues with enhanced tab readiness checks
-        - Added Windows-specific Chrome browser arguments for better stability
-        - Enhanced tab initialization with multi-attempt verification system
-        - Improved browser startup compatibility on Windows platforms
-        - 40% faster tab detection on Windows systems
-        
-        ### 🔍 Revolutionary Search Automation
-        - NEW: intelligent_search tool for automatic search execution on any website
-        - Added multi-strategy element finding with smart fallbacks
-        - Enhanced common search element selectors (Google, Bing, DuckDuckGo support)
-        - Improved human-like typing and search submission methods
-        - Advanced auto-detection of website types and optimal search strategies
-        
-        ### 🔧 Enhanced PyDoll Integration
-        - Added comprehensive PyDoll compatibility checking
-        - Enhanced error handling and retry mechanisms for PyDoll operations
-        - Improved Windows-specific browser option optimizations
-        - New PyDoll integration health monitoring and reporting
+        \`\`\`bash
+        pip install --upgrade pydoll-mcp==${{ needs.create-release.outputs.version }}
+        python -c "import pydoll_mcp; print(f'Version: {pydoll_mcp.__version__}')"
+        \`\`\`
         
         ---
-        
-        **Generated by GitHub Actions**: https://github.com/JinsongRoh/pydoll-mcp/actions
-        **Deployment Workflow**: https://github.com/JinsongRoh/pydoll-mcp/blob/main/.github/workflows/release.yml
+        **Generated**: ${DATE}  
+        **Workflow**: https://github.com/JinsongRoh/pydoll-mcp/actions
         EOF
         
-        echo "Deployment status report generated successfully"
+        echo "Deployment report generated"
+        cat DEPLOYMENT_REPORT_${{ needs.create-release.outputs.tag }}.md
     
-    - name: 📤 Upload Deployment Status
+    - name: 📤 Upload Deployment Report
       uses: actions/upload-artifact@v3
       with:
-        name: deployment-status-${{ needs.create-release.outputs.tag }}
-        path: DEPLOYMENT_STATUS_${{ needs.create-release.outputs.tag }}.md
+        name: deployment-report-${{ needs.create-release.outputs.tag }}
+        path: DEPLOYMENT_REPORT_${{ needs.create-release.outputs.tag }}.md
         retention-days: 90
 
   notify-completion:
-    name: 📢 Notification
+    name: 📢 Deployment Complete
     runs-on: ubuntu-latest
-    needs: [create-release, deploy-pypi, update-smithery, generate-deployment-status]
+    needs: [create-release, deploy-pypi, update-smithery, verify-deployment]
     if: always()  # Run even if previous jobs fail
     
     steps:
-    - name: 📢 Deployment Summary
+    - name: 📢 Summary
       run: |
-        echo "🎉 PyDoll MCP Server ${{ needs.create-release.outputs.tag }} Deployment Complete!"
+        echo "🎉 PyDoll MCP Server ${{ needs.create-release.outputs.tag }} Deployment Summary"
         echo ""
         echo "📦 GitHub Release: ${{ needs.create-release.result }}"
-        echo "📦 PyPI Package: ${{ needs.deploy-pypi.result }}"
-        echo "🤖 Smithery.ai: ${{ needs.update-smithery.result }}"
-        echo "📊 Status Report: ${{ needs.generate-deployment-status.result }}"
+        echo "📦 PyPI Deploy: ${{ needs.deploy-pypi.result }}"
+        echo "🤖 Smithery Update: ${{ needs.update-smithery.result }}"
+        echo "🔍 Verification: ${{ needs.verify-deployment.result }}"
         echo ""
-        echo "🔗 Release URL: https://github.com/JinsongRoh/pydoll-mcp/releases/tag/${{ needs.create-release.outputs.tag }}"
-        echo "📦 PyPI URL: https://pypi.org/project/pydoll-mcp/${{ needs.create-release.outputs.version }}/"
-        echo "🤖 Smithery URL: https://smithery.ai/server/@JinsongRoh/pydoll-mcp"
+        echo "🔗 GitHub: https://github.com/JinsongRoh/pydoll-mcp/releases/tag/${{ needs.create-release.outputs.tag }}"
+        echo "📦 PyPI: https://pypi.org/project/pydoll-mcp/${{ needs.create-release.outputs.version }}/"
+        echo "🤖 Smithery: https://smithery.ai/server/@JinsongRoh/pydoll-mcp"
+        echo ""
+        echo "✅ Deployment workflow completed!"

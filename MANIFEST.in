@@ -28,6 +28,8 @@ include *.deprecated
 exclude .pypirc.example
 # Include other example files
 include *.example
+# Exclude Claude settings with potential secrets
+prune .claude
 include .bandit
 
 # Include package metadata

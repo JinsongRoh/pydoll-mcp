@@ -27,14 +27,14 @@ Create `~/.pypirc` file:
 ```ini
 [pypi]
 username = __token__
-password = pypi-AgEIcHlwaS5vcmcC...  # Your PyPI API token
+password = pypi-YOUR_API_TOKEN_HERE  # Replace with your actual PyPI API token
 ```
 
 ### Option 2: Environment Variables
 
 ```bash
 export TWINE_USERNAME=__token__
-export TWINE_PASSWORD=pypi-AgEIcHlwaS5vcmcC...  # Your PyPI API token
+export TWINE_PASSWORD=pypi-YOUR_API_TOKEN_HERE  # Replace with your actual PyPI API token
 ```
 
 ## Upload to PyPI
