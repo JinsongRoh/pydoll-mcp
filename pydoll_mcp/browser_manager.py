@@ -245,6 +245,34 @@ class BrowserManager:
         import uuid
         return f"browser_{uuid.uuid4().hex[:8]}"
     
+    async def _check_existing_chrome_processes(self):
+        """Check for existing Chrome processes and warn user."""
+        import psutil
+        chrome_processes = []
+        
+        try:
+            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                try:
+                    if proc.info['name'] and 'chrome' in proc.info['name'].lower():
+                        chrome_processes.append(proc)
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            
+            if chrome_processes:
+                logger.warning(f"Found {len(chrome_processes)} existing Chrome processes. "
+                             "This may cause conflicts. Consider closing Chrome or using a custom user data directory.")
+                # Add a unique user data directory to avoid conflicts
+                import tempfile
+                temp_dir = tempfile.mkdtemp(prefix="pydoll_chrome_")
+                logger.info(f"Using temporary user data directory: {temp_dir}")
+                return temp_dir
+        except ImportError:
+            logger.debug("psutil not available, skipping Chrome process check")
+        except Exception as e:
+            logger.debug(f"Error checking Chrome processes: {e}")
+        
+        return None
+    
     def _get_browser_options(self, **kwargs) -> ChromiumOptions:
         """Create browser options based on configuration and parameters."""
         if not ChromiumOptions:
@@ -346,6 +374,15 @@ class BrowserManager:
                 # Skip if argument already exists
                 pass
         
+        # User data directory configuration
+        user_data_dir = kwargs.get("user_data_dir")
+        if user_data_dir:
+            try:
+                options.add_argument(f"--user-data-dir={user_data_dir}")
+                logger.debug(f"Using custom user data directory: {user_data_dir}")
+            except Exception:
+                pass
+        
         # Proxy configuration
         proxy = kwargs.get("proxy", os.getenv("PYDOLL_PROXY"))
         if proxy:
@@ -406,6 +443,13 @@ class BrowserManager:
         try:
             logger.info(f"Creating new {browser_type} browser instance {browser_id}")
             
+            # Check for existing Chrome processes if user data dir is default
+            temp_user_data_dir = None
+            if browser_type == "chrome" and not kwargs.get("user_data_dir"):
+                temp_user_data_dir = await self._check_existing_chrome_processes()
+                if temp_user_data_dir:
+                    kwargs["user_data_dir"] = temp_user_data_dir
+            
             # Get browser options
             options = self._get_browser_options(**kwargs)
             
@@ -441,6 +485,18 @@ class BrowserManager:
     async def get_browser(self, browser_id: str) -> Optional[BrowserInstance]:
         """Get a browser instance by ID."""
         return self.browsers.get(browser_id)
+    
+    async def get_tab(self, browser_id: str, tab_id: str):
+        """Get a tab from a browser instance."""
+        instance = self.browsers.get(browser_id)
+        if not instance:
+            raise ValueError(f"Browser {browser_id} not found")
+        
+        tab = instance.tabs.get(tab_id)
+        if not tab:
+            raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
+        
+        return await self.ensure_tab_methods(tab)
     
     async def destroy_browser(self, browser_id: str):
         """Destroy a browser instance and cleanup resources."""

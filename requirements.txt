@@ -18,6 +18,9 @@ python-dotenv>=1.0.0      # Environment variable loading
 rich>=13.0.0              # Rich text and beautiful formatting
 click>=8.1.0              # Command line interface framework
 
+# System Dependencies
+psutil>=5.9.0             # Process and system utilities for Chrome detection
+
 # Browser and Network Dependencies (Included with pydoll-python)
 # websockets>=13.1         # WebSocket client/server (via pydoll-python)
 # aiohttp>=3.9.5          # Async HTTP client/server (via pydoll-python)

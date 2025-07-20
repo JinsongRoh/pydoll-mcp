@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.3
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.4
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,11 +20,27 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.5.3-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.5.4-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.5.3 - 2025-07-20)
+## 📢 Latest Updates (v1.5.4 - 2025-07-20)
+
+### 🐛 Chrome Browser Conflict Fix
+
+#### ✅ Fixed Chrome Process Conflicts
+- **Added**: Automatic detection of existing Chrome processes
+- **Fixed**: Browser startup failures when Chrome is already running
+- **Added**: Automatic temporary user data directory creation to avoid conflicts
+- **Fixed**: Missing `get_tab` method in BrowserManager
+- **Added**: psutil dependency for Chrome process detection
+
+#### 🔧 Technical Improvements
+- **Enhanced**: Browser options handling with user data directory support
+- **Improved**: Error handling for Chrome process conflicts
+- **Better**: Tab management and retrieval methods
+
+## 📢 Previous Updates (v1.5.3 - 2025-07-20)
 
 ### 🔧 Quality Improvements & Updates
 
