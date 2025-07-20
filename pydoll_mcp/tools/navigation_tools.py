@@ -223,24 +223,8 @@ async def handle_navigate_to(arguments: Dict[str, Any]) -> Sequence[TextContent]
         except Exception:
             raise ValueError(f"Invalid URL: {url}")
         
-        # Get browser instance
-        browser_instance = await browser_manager.get_browser(browser_id)
-        if not browser_instance:
-            raise ValueError(f"Browser {browser_id} not found")
-        
-        # Get tab - if tab_id is provided, use it; otherwise use the first available tab or browser.tab
-        if tab_id:
-            tab = browser_instance.tabs.get(tab_id)
-            if not tab:
-                raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
-        else:
-            # Use the first available tab or browser.tab
-            if browser_instance.tabs:
-                tab = next(iter(browser_instance.tabs.values()))
-            elif hasattr(browser_instance.browser, 'tab'):
-                tab = browser_instance.browser.tab
-            else:
-                raise ValueError(f"No tabs available in browser {browser_id}")
+        # Get tab with automatic fallback to active tab
+        tab, actual_tab_id = await browser_manager.get_tab_with_fallback(browser_id, tab_id)
         
         # Perform navigation using PyDoll's go_to method
         try:
@@ -275,7 +259,7 @@ async def handle_navigate_to(arguments: Dict[str, Any]) -> Sequence[TextContent]
             message=f"Successfully navigated to {final_url}",
             data={
                 "browser_id": browser_id,
-                "tab_id": tab_id,
+                "tab_id": actual_tab_id,
                 "requested_url": url,
                 "final_url": final_url,
                 "page_title": title,
@@ -306,26 +290,8 @@ async def handle_refresh_page(arguments: Dict[str, Any]) -> Sequence[TextContent
         ignore_cache = arguments.get("ignore_cache", False)
         wait_for_load = arguments.get("wait_for_load", True)
         
-        # Get browser instance
-        browser_instance = await browser_manager.get_browser(browser_id)
-        if not browser_instance:
-            raise ValueError(f"Browser {browser_id} not found")
-        
-        # Get tab - if tab_id is provided, use it; otherwise use active tab or first available
-        if tab_id:
-            tab = browser_instance.tabs.get(tab_id)
-            if not tab:
-                raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
-        else:
-            # Use active tab or first available tab
-            if browser_instance.active_tab_id and browser_instance.active_tab_id in browser_instance.tabs:
-                tab = browser_instance.tabs[browser_instance.active_tab_id]
-            elif browser_instance.tabs:
-                tab = next(iter(browser_instance.tabs.values()))
-            elif hasattr(browser_instance.browser, 'tab'):
-                tab = browser_instance.browser.tab
-            else:
-                raise ValueError(f"No tabs available in browser {browser_id}")
+        # Get tab with automatic fallback to active tab
+        tab, actual_tab_id = await browser_manager.get_tab_with_fallback(browser_id, tab_id)
         
         # Refresh page
         if ignore_cache:

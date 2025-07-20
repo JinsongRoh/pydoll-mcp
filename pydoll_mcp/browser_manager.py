@@ -542,6 +542,53 @@ class BrowserManager:
         
         return await self.ensure_tab_methods(tab)
     
+    async def get_active_tab_id(self, browser_id: str) -> Optional[str]:
+        """Get the active tab ID for a browser instance."""
+        instance = self.browsers.get(browser_id)
+        if not instance:
+            return None
+        
+        # Return cached active tab if available
+        if instance.active_tab_id and instance.active_tab_id in instance.tabs:
+            return instance.active_tab_id
+        
+        # If no active tab cached, try to find one
+        if instance.tabs:
+            # Return the first available tab
+            first_tab_id = next(iter(instance.tabs.keys()))
+            instance.active_tab_id = first_tab_id
+            return first_tab_id
+        
+        return None
+    
+    async def get_tab_with_fallback(self, browser_id: str, tab_id: Optional[str] = None):
+        """Get a tab with automatic fallback to active tab if tab_id is None."""
+        instance = self.browsers.get(browser_id)
+        if not instance:
+            raise ValueError(f"Browser {browser_id} not found")
+        
+        # If no tab_id provided, get the active tab
+        if tab_id is None:
+            tab_id = await self.get_active_tab_id(browser_id)
+            if tab_id is None:
+                raise ValueError(f"No active tab found in browser {browser_id}")
+        
+        # Get the specific tab
+        tab = instance.tabs.get(tab_id)
+        if not tab:
+            # Try to get active tab as fallback
+            active_tab_id = await self.get_active_tab_id(browser_id)
+            if active_tab_id and active_tab_id != tab_id:
+                tab = instance.tabs.get(active_tab_id)
+                if tab:
+                    logger.warning(f"Tab {tab_id} not found, using active tab {active_tab_id}")
+                    tab_id = active_tab_id
+            
+            if not tab:
+                raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
+        
+        return await self.ensure_tab_methods(tab), tab_id
+    
     async def destroy_browser(self, browser_id: str):
         """Destroy a browser instance and cleanup resources."""
         instance = self.browsers.get(browser_id)

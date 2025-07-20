@@ -258,11 +258,8 @@ async def handle_find_element(arguments: Dict[str, Any]) -> Sequence[TextContent
         browser_id = arguments["browser_id"]
         tab_id = arguments.get("tab_id")
         
-        # Get tab and ensure it has all necessary methods
-        tab = await browser_manager.get_tab(browser_id, tab_id)
-        if not tab:
-            raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
-        tab = await browser_manager.ensure_tab_methods(tab)
+        # Get tab with automatic fallback to active tab
+        tab, actual_tab_id = await browser_manager.get_tab_with_fallback(browser_id, tab_id)
         
         # Remove browser_id and tab_id from selector arguments
         selector_args = {k: v for k, v in arguments.items() 
@@ -544,9 +541,8 @@ async def handle_click_element(arguments: Dict[str, Any]) -> Sequence[TextConten
         offset_x = arguments.get("offset_x")
         offset_y = arguments.get("offset_y")
         
-        # Get tab and ensure it has all necessary methods
-        tab = await browser_manager.get_tab(browser_id, tab_id)
-        tab = await browser_manager.ensure_tab_methods(tab)
+        # Get tab with automatic fallback to active tab
+        tab, actual_tab_id = await browser_manager.get_tab_with_fallback(browser_id, tab_id)
         
         start_time = time.time()
         
@@ -674,9 +670,8 @@ async def handle_type_text(arguments: Dict[str, Any]) -> Sequence[TextContent]:
         typing_speed = arguments.get("typing_speed", "normal")
         human_like = arguments.get("human_like", True)
         
-        # Get tab and ensure it has all necessary methods
-        tab = await browser_manager.get_tab(browser_id, tab_id)
-        tab = await browser_manager.ensure_tab_methods(tab)
+        # Get tab with automatic fallback to active tab
+        tab, actual_tab_id = await browser_manager.get_tab_with_fallback(browser_id, tab_id)
         
         start_time = time.time()
         
