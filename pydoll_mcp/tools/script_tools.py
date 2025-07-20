@@ -163,26 +163,16 @@ async def handle_execute_javascript(arguments: Dict[str, Any]) -> Sequence[TextC
         
         # Execute JavaScript with proper error handling
         try:
-            if context == "isolated":
-                # Execute in isolated world (would use proper CDP method)
-                result = await tab.evaluate(script)
-            else:
-                # Execute in page context
-                result = await tab.evaluate(script)
+            # PyDoll uses execute_script, not evaluate
+            result = await tab.execute_script(script)
             
-            # Handle different result types
-            if result is None:
+            # Handle PyDoll's nested result structure
+            if result and 'result' in result and 'result' in result['result']:
+                result_value = result['result']['result'].get('value')
+                result_type = result['result']['result'].get('type', 'unknown')
+            else:
                 result_value = None
                 result_type = "null"
-            elif isinstance(result, (str, int, float, bool)):
-                result_value = result
-                result_type = type(result).__name__
-            elif isinstance(result, (dict, list)):
-                result_value = result
-                result_type = "object" if isinstance(result, dict) else "array"
-            else:
-                result_value = str(result)
-                result_type = "string"
             
             operation_result = OperationResult(
                 success=True,

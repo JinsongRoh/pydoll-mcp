@@ -260,6 +260,8 @@ async def handle_find_element(arguments: Dict[str, Any]) -> Sequence[TextContent
         
         # Get tab and ensure it has all necessary methods
         tab = await browser_manager.get_tab(browser_id, tab_id)
+        if not tab:
+            raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
         tab = await browser_manager.ensure_tab_methods(tab)
         
         # Remove browser_id and tab_id from selector arguments
@@ -312,72 +314,179 @@ async def handle_find_element(arguments: Dict[str, Any]) -> Sequence[TextContent
         
         try:
             if selector_args.get("css_selector"):
-                # Use CSS selector - PyDoll uses find_by_css_selector
+                # Use CSS selector - PyDoll doesn't have find_by_css_selector, use execute_script
                 selector = selector_args["css_selector"]
-                element = await tab.find_by_css_selector(selector, timeout=int(timeout/1000))
-                elements = [element] if element else []
+                script = f'''
+                    const elements = document.querySelectorAll('{selector}');
+                    const results = [];
+                    for (let el of elements) {{
+                        results.push({{
+                            tagName: el.tagName,
+                            text: el.textContent || '',
+                            id: el.id || '',
+                            className: el.className || '',
+                            name: el.name || '',
+                            type: el.type || '',
+                            placeholder: el.placeholder || '',
+                            value: el.value || '',
+                            visible: el.offsetWidth > 0 && el.offsetHeight > 0,
+                            enabled: !el.disabled,
+                            bounds: el.getBoundingClientRect()
+                        }});
+                        if (!{find_all}) break;
+                    }}
+                    return results;
+                '''
+                result = await tab.execute_script(script)
+                elements = []
+                if result and 'result' in result and 'result' in result['result']:
+                    elements_data = result['result']['result'].get('value', [])
+                    if elements_data:
+                        # Create mock element objects
+                        class MockElement:
+                            def __init__(self, data):
+                                self.data = data
+                                self.tag_name = data.get('tagName', 'unknown').lower()
+                                self.text = data.get('text', '')
+                                self.id = data.get('id', '')
+                                self.class_name = data.get('className', '')
+                        elements = [MockElement(data) for data in elements_data]
             elif selector_args.get("xpath"):
-                # Use XPath - PyDoll uses find_by_xpath
+                # Use XPath - PyDoll doesn't have find_by_xpath, use execute_script
                 xpath = selector_args["xpath"]
-                element = await tab.find_by_xpath(xpath, timeout=int(timeout/1000))
-                elements = [element] if element else []
+                script = f'''
+                    const results = [];
+                    const xpathResult = document.evaluate('{xpath}', document, null, 
+                        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                    for (let i = 0; i < xpathResult.snapshotLength; i++) {{
+                        const el = xpathResult.snapshotItem(i);
+                        results.push({{
+                            tagName: el.tagName,
+                            text: el.textContent || '',
+                            id: el.id || '',
+                            className: el.className || '',
+                            name: el.name || '',
+                            type: el.type || '',
+                            placeholder: el.placeholder || '',
+                            value: el.value || '',
+                            visible: el.offsetWidth > 0 && el.offsetHeight > 0,
+                            enabled: !el.disabled,
+                            bounds: el.getBoundingClientRect()
+                        }});
+                        if (!{find_all}) break;
+                    }}
+                    return results;
+                '''
+                result = await tab.execute_script(script)
+                elements = []
+                if result and 'result' in result and 'result' in result['result']:
+                    elements_data = result['result']['result'].get('value', [])
+                    if elements_data:
+                        # Create mock element objects
+                        class MockElement:
+                            def __init__(self, data):
+                                self.data = data
+                                self.tag_name = data.get('tagName', 'unknown').lower()
+                                self.text = data.get('text', '')
+                                self.id = data.get('id', '')
+                                self.class_name = data.get('className', '')
+                        elements = [MockElement(data) for data in elements_data]
             elif search_params:
-                # Use PyDoll's natural attribute finding
-                element = await tab.find(
-                    timeout=int(timeout/1000),
-                    find_all=find_all,
-                    raise_exc=True,
-                    **search_params
-                )
-                if find_all:
-                    elements = element if isinstance(element, list) else [element]
-                else:
-                    elements = [element] if element else []
+                # PyDoll doesn't have a find method, use execute_script with attribute search
+                conditions = []
+                for key, value in search_params.items():
+                    if key == 'tag_name':
+                        conditions.append(f"el.tagName.toLowerCase() === '{value.lower()}'")
+                    elif key == 'text':
+                        conditions.append(f"el.textContent.includes('{value}')")
+                    elif key == 'id':
+                        conditions.append(f"el.id === '{value}'")
+                    elif key == 'class_name':
+                        conditions.append(f"el.className.includes('{value}')")
+                    elif key == 'name':
+                        conditions.append(f"el.name === '{value}'")
+                    elif key == 'type':
+                        conditions.append(f"el.type === '{value}'")
+                    elif key == 'placeholder':
+                        conditions.append(f"el.placeholder === '{value}'")
+                    elif key == 'value':
+                        conditions.append(f"el.value === '{value}'")
+                    elif key.startswith('data-'):
+                        conditions.append(f"el.getAttribute('{key}') === '{value}'")
+                    elif key.startswith('aria-') or key == 'role':
+                        conditions.append(f"el.getAttribute('{key}') === '{value}'")
+                
+                condition_str = ' && '.join(conditions) if conditions else 'true'
+                script = f'''
+                    const allElements = document.querySelectorAll('*');
+                    const results = [];
+                    for (let el of allElements) {{
+                        if ({condition_str}) {{
+                            results.push({{
+                                tagName: el.tagName,
+                                text: el.textContent || '',
+                                id: el.id || '',
+                                className: el.className || '',
+                                name: el.name || '',
+                                type: el.type || '',
+                                placeholder: el.placeholder || '',
+                                value: el.value || '',
+                                visible: el.offsetWidth > 0 && el.offsetHeight > 0,
+                                enabled: !el.disabled,
+                                bounds: el.getBoundingClientRect()
+                            }});
+                            if (!{find_all}) break;
+                        }}
+                    }}
+                    return results;
+                '''
+                result = await tab.execute_script(script)
+                elements = []
+                if result and 'result' in result and 'result' in result['result']:
+                    elements_data = result['result']['result'].get('value', [])
+                    if elements_data:
+                        # Create mock element objects
+                        class MockElement:
+                            def __init__(self, data):
+                                self.data = data
+                                self.tag_name = data.get('tagName', 'unknown').lower()
+                                self.text = data.get('text', '')
+                                self.id = data.get('id', '')
+                                self.class_name = data.get('className', '')
+                        elements = [MockElement(data) for data in elements_data]
             else:
                 raise ValueError("No valid selector provided")
             
             # Extract element information
             for i, element in enumerate(elements):
                 try:
-                    # Get element properties using PyDoll API
-                    # PyDoll WebElement has tag_name as a direct property
-                    tag_name = element.tag_name if hasattr(element, 'tag_name') else 'unknown'
-                    
-                    # Get text content using text property
-                    text_content = element.text if hasattr(element, 'text') else ''
-                    
-                    # PyDoll doesn't have is_visible/is_enabled methods, assume visible/enabled
-                    is_visible = True
-                    is_enabled = True
-                    
-                    # Get bounding box - PyDoll uses get_bounding_box()
-                    try:
-                        if hasattr(element, 'get_bounding_box'):
-                            bounds = await element.get_bounding_box()
-                        else:
-                            bounds = None
-                    except:
-                        bounds = None
-                    
-                    element_info = {
-                        "element_id": f"element_{i}",
-                        "tag_name": tag_name.lower() if tag_name else None,
-                        "text": text_content.strip() if text_content else "",
-                        "is_visible": is_visible,
-                        "is_enabled": is_enabled,
-                        "bounds": bounds or {"x": 0, "y": 0, "width": 0, "height": 0}
-                    }
-                    
-                    # Add additional attributes using get_attribute
-                    try:
-                        element_info["id"] = element.get_attribute("id") if hasattr(element, 'get_attribute') else None
-                        element_info["class"] = element.get_attribute("class") if hasattr(element, 'get_attribute') else None
-                        element_info["name"] = element.get_attribute("name") if hasattr(element, 'get_attribute') else None
-                        element_info["type"] = element.get_attribute("type") if hasattr(element, 'get_attribute') else None
-                        element_info["placeholder"] = element.get_attribute("placeholder") if hasattr(element, 'get_attribute') else None
-                        element_info["value"] = element.get_attribute("value") if hasattr(element, 'get_attribute') else None
-                    except:
-                        pass  # Some attributes might not be available
+                    # For MockElement objects created from execute_script
+                    if hasattr(element, 'data'):
+                        data = element.data
+                        element_info = {
+                            "element_id": f"element_{i}",
+                            "tag_name": data.get('tagName', 'unknown').lower(),
+                            "text": data.get('text', '').strip(),
+                            "is_visible": data.get('visible', True),
+                            "is_enabled": data.get('enabled', True),
+                            "bounds": data.get('bounds', {"x": 0, "y": 0, "width": 0, "height": 0}),
+                            "id": data.get('id'),
+                            "class": data.get('className'),
+                            "name": data.get('name'),
+                            "type": data.get('type'),
+                            "placeholder": data.get('placeholder'),
+                            "value": data.get('value')
+                        }
+                    else:
+                        # Fallback for actual PyDoll elements if they exist
+                        element_info = {
+                            "element_id": f"element_{i}",
+                            "tag_name": getattr(element, 'tag_name', 'unknown').lower(),
+                            "text": getattr(element, 'text', '').strip(),
+                            "is_visible": True,
+                            "is_enabled": True,
+                            "bounds": {"x": 0, "y": 0, "width": 0, "height": 0}
+                        }
                     
                     elements_info.append(element_info)
                     
@@ -403,7 +512,7 @@ async def handle_find_element(arguments: Dict[str, Any]) -> Sequence[TextContent
             data={
                 "browser_id": browser_id,
                 "tab_id": tab_id,
-                "selector": selector.dict(),
+                "selector": selector_args,
                 "elements": elements_info,
                 "count": len(elements_info)
             }
