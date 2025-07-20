@@ -18,11 +18,12 @@ jobs:
   create-release:
     name: 📦 Create GitHub Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for creating releases
     
     outputs:
       version: ${{ steps.get_version.outputs.version }}
       tag: ${{ steps.get_version.outputs.tag }}
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
     
     steps:
     - name: 🔽 Checkout Repository
@@ -48,9 +49,9 @@ jobs:
     - name: 📝 Generate Release Notes
       id: release_notes
       run: |
-        if [ -f "release-notes/RELEASE_NOTES_v${{ steps.get_version.outputs.version }}.md" ]; then
-          echo "Found release notes file: release-notes/RELEASE_NOTES_v${{ steps.get_version.outputs.version }}.md"
-          cp "release-notes/RELEASE_NOTES_v${{ steps.get_version.outputs.version }}.md" release_notes.md
+        if [ -f "release-notes/v${{ steps.get_version.outputs.version }}.md" ]; then
+          echo "Found release notes file: release-notes/v${{ steps.get_version.outputs.version }}.md"
+          cp "release-notes/v${{ steps.get_version.outputs.version }}.md" release_notes.md
         else
           echo "Release notes file not found, generating default notes"
           cat > release_notes.md << 'EOF'
@@ -97,35 +98,20 @@ jobs:
     
     - name: 🎉 Create GitHub Release
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.get_version.outputs.tag }}
-        release_name: "🚀 PyDoll MCP Server ${{ steps.get_version.outputs.tag }}"
+        name: "🚀 PyDoll MCP Server ${{ steps.get_version.outputs.tag }}"
         body_path: release_notes.md
         draft: false
         prerelease: false
-    
-    - name: 📤 Upload Wheel Asset
-      uses: actions/upload-release-asset@v1
+        files: |
+          dist/*.whl
+          dist/*.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dist/${{ env.PACKAGE_NAME }}-${{ steps.get_version.outputs.version }}-py3-none-any.whl
-        asset_name: ${{ env.PACKAGE_NAME }}-${{ steps.get_version.outputs.version }}-py3-none-any.whl
-        asset_content_type: application/zip
     
-    - name: 📤 Upload Source Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dist/${{ env.PACKAGE_NAME }}-${{ steps.get_version.outputs.version }}.tar.gz
-        asset_name: ${{ env.PACKAGE_NAME }}-${{ steps.get_version.outputs.version }}.tar.gz
-        asset_content_type: application/gzip
+    # Release assets are now handled by softprops/action-gh-release above
 
   deploy-pypi:
     name: 📦 Deploy to PyPI
@@ -294,7 +280,7 @@ jobs:
         cat DEPLOYMENT_REPORT_${{ needs.create-release.outputs.tag }}.md
     
     - name: 📤 Upload Deployment Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: deployment-report-${{ needs.create-release.outputs.tag }}
         path: DEPLOYMENT_REPORT_${{ needs.create-release.outputs.tag }}.md
