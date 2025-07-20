@@ -352,6 +352,20 @@ class PyDollMCPServer:
                 }
                 
                 return [TextContent(type="text", text=str(error_result))]
+        
+        # Register resources/list handler (required by MCP protocol)
+        @self.server.list_resources()
+        async def handle_list_resources() -> list:
+            """List available resources (currently empty)."""
+            logger.debug("Listing resources (none available)")
+            return []
+        
+        # Register prompts/list handler (required by MCP protocol)
+        @self.server.list_prompts()
+        async def handle_list_prompts() -> list:
+            """List available prompts (currently empty)."""
+            logger.debug("Listing prompts (none available)")
+            return []
     
     def _collect_all_tools(self) -> list[Tool]:
         """Collect all available tools from different categories."""

@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.8
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.9
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,11 +20,32 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.5.8-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.5.9-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.5.8 - 2025-07-20)
+## 📢 Latest Updates (v1.5.9 - 2025-07-20)
+
+### 🐛 Critical Bug Fixes
+
+#### ✅ Fixed Browser Initial Tab Detection
+- **Fixed**: Browser's initial "New Tab" was not detected, causing `list_tabs` to return empty array
+- **Enhanced**: Automatic detection and registration of initial tabs when browser starts
+- **Added**: Default tab is now properly tracked in `browser_instance.tabs` dictionary
+- **Improved**: First tab is automatically set as active tab on browser startup
+
+#### 🔧 Fixed Missing MCP Protocol Methods
+- **Fixed**: "Method not found" errors for required MCP protocol methods
+- **Added**: `resources/list` handler (returns empty list)
+- **Added**: `prompts/list` handler (returns empty list)
+- **Enhanced**: Full MCP protocol compliance
+
+#### 📊 Enhanced Browser Management
+- **Added**: `active_tab_id` property to BrowserInstance class for better tab tracking
+- **Improved**: Tab lifecycle management from browser creation to destruction
+- **Enhanced**: Logging now shows initial tab count on browser startup
+
+## 📢 Previous Updates (v1.5.8 - 2025-07-20)
 
 ### 🔧 Critical Tab Management Fix
 
@@ -34,17 +55,6 @@
 - **Fixed**: "Tab not found" errors by implementing actual tab management instead of hardcoded responses
 - **Improved**: Navigation tools to properly access tabs from browser instances
 - **Added**: Active tab tracking with fallback to first available tab
-
-#### 🚀 Browser-Tab Integration Improvements
-- **Fixed**: Tab creation, closing, listing, and activation now work with real browser instances
-- **Enhanced**: Navigation functions (`navigate_to`, `refresh_page`, `go_back`) now properly access tracked tabs
-- **Improved**: Tab ID generation and mapping for consistent browser-tab relationships
-- **Added**: Compatibility layer for different PyDoll API versions
-
-#### 📊 Stability Enhancements
-- **Fixed**: All tab management functions now return proper results instead of dummy responses
-- **Enhanced**: Error handling for tab operations with detailed error messages
-- **Improved**: Browser instance cleanup and resource management
 
 ## 📢 Previous Updates (v1.5.7 - 2025-07-20)
 

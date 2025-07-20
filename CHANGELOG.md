@@ -16,6 +16,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.5.9] - 2025-07-20
+
+### Fixed
+- **Critical**: Fixed browser initial tab detection - Browser's initial "New Tab" was not detected, causing `list_tabs` to return empty array
+- **Critical**: Fixed missing MCP protocol methods - Added required `resources/list` and `prompts/list` handlers
+- Fixed "No tabs available in browser" errors when navigating immediately after browser start
+- Fixed "Method not found" errors for MCP protocol compliance
+
+### Enhanced
+- Added `active_tab_id` property to BrowserInstance class for better tab tracking
+- Automatic detection and registration of initial tabs when browser starts
+- Default tab is now properly tracked in `browser_instance.tabs` dictionary
+- First tab is automatically set as active tab on browser startup
+- Tab lifecycle management from browser creation to destruction
+
+### Added
+- `_generate_tab_id()` method for unique tab ID generation
+- Logging now shows initial tab count on browser startup
+- Full MCP protocol compliance with empty resource and prompt handlers
+
 ## [1.5.8] - 2025-07-20
 
 ### Fixed

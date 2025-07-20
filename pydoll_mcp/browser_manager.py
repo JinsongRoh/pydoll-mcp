@@ -75,6 +75,7 @@ class BrowserInstance:
         self.instance_id = instance_id
         self.created_at = datetime.now()
         self.tabs: Dict[str, Tab] = {}
+        self.active_tab_id: Optional[str] = None
         self.is_active = True
         self.last_activity = time.time()
         self.metrics = BrowserMetrics()
@@ -261,6 +262,11 @@ class BrowserManager:
         """Generate a unique browser instance ID."""
         import uuid
         return f"browser_{uuid.uuid4().hex[:8]}"
+    
+    def _generate_tab_id(self) -> str:
+        """Generate a unique tab ID."""
+        import uuid
+        return f"tab_{uuid.uuid4().hex[:8]}"
     
     async def _check_existing_chrome_processes(self):
         """Check for existing Chrome processes and warn user."""
@@ -494,11 +500,31 @@ class BrowserManager:
             instance = BrowserInstance(browser, browser_type, browser_id)
             instance.metrics.record_navigation(startup_time)
             
+            # Check for initial tab created by browser
+            try:
+                # Get the default tab that's created when browser starts
+                if hasattr(browser, 'tab') and browser.tab:
+                    # Add the default tab to our tracking
+                    default_tab_id = self._generate_tab_id()
+                    instance.tabs[default_tab_id] = browser.tab
+                    instance.active_tab_id = default_tab_id
+                    logger.info(f"Detected and registered default tab: {default_tab_id}")
+                elif hasattr(browser, 'tabs') and browser.tabs:
+                    # Some browsers might have a tabs collection
+                    for idx, tab in enumerate(browser.tabs):
+                        tab_id = self._generate_tab_id()
+                        instance.tabs[tab_id] = tab
+                        if idx == 0:  # Set first tab as active
+                            instance.active_tab_id = tab_id
+                        logger.info(f"Detected and registered tab: {tab_id}")
+            except Exception as e:
+                logger.warning(f"Could not detect initial tabs: {e}")
+            
             # Store instance
             self.browsers[browser_id] = instance
             self.global_stats["total_browsers_created"] += 1
             
-            logger.info(f"Browser {browser_id} created successfully in {startup_time:.2f}s")
+            logger.info(f"Browser {browser_id} created successfully in {startup_time:.2f}s with {len(instance.tabs)} initial tab(s)")
             return instance
             
         except Exception as e:
