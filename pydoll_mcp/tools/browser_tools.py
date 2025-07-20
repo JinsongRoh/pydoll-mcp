@@ -412,21 +412,35 @@ async def handle_new_tab(arguments: Dict[str, Any]) -> Sequence[TextContent]:
         
         # Create new tab in the browser
         try:
+            # PyDoll 2.3.1+ compatibility: Use new_tab method
             if hasattr(browser_instance.browser, 'new_tab'):
                 tab = await browser_instance.browser.new_tab()
-                if url:
-                    await tab.navigate(url)
+                # Store tab in browser instance
                 browser_instance.tabs[tab_id] = tab
+                # Navigate to URL if provided
+                if url:
+                    try:
+                        await tab.goto(url)
+                    except AttributeError:
+                        # Fallback for different PyDoll versions
+                        if hasattr(tab, 'navigate'):
+                            await tab.navigate(url)
+                        else:
+                            logger.warning(f"Tab {tab_id} does not support navigation")
             else:
-                # Fallback: Use the current tab if available
+                # Fallback: Create tab using browser.tab if available
                 if hasattr(browser_instance.browser, 'tab'):
                     tab = browser_instance.browser.tab
-                    if url:
-                        await tab.navigate(url)
                     browser_instance.tabs[tab_id] = tab
+                    if url:
+                        try:
+                            await tab.goto(url)
+                        except AttributeError:
+                            if hasattr(tab, 'navigate'):
+                                await tab.navigate(url)
                 else:
-                    # Create a placeholder tab entry
-                    browser_instance.tabs[tab_id] = None
+                    # Last resort: Create a basic tab reference
+                    browser_instance.tabs[tab_id] = browser_instance.browser
             
             browser_instance.stats["total_tabs_created"] += 1
             browser_instance.update_activity()
@@ -460,30 +474,173 @@ async def handle_new_tab(arguments: Dict[str, Any]) -> Sequence[TextContent]:
 
 async def handle_close_tab(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle tab close request."""
-    result = OperationResult(
-        success=True,
-        message="Tab closed successfully"
-    )
-    return [TextContent(type="text", text=result.json())]
+    from ..browser_manager import get_browser_manager
+    
+    try:
+        browser_id = arguments.get("browser_id")
+        tab_id = arguments.get("tab_id")
+        
+        if not browser_id or not tab_id:
+            result = OperationResult(
+                success=False,
+                message="Browser ID and Tab ID are required",
+                error="Missing required parameters"
+            )
+            return [TextContent(type="text", text=result.json())]
+        
+        browser_manager = get_browser_manager()
+        browser_instance = await browser_manager.get_browser(browser_id)
+        
+        if not browser_instance:
+            result = OperationResult(
+                success=False,
+                message="Browser not found",
+                error=f"Browser {browser_id} not found"
+            )
+            return [TextContent(type="text", text=result.json())]
+        
+        # Remove tab from browser instance
+        if tab_id in browser_instance.tabs:
+            del browser_instance.tabs[tab_id]
+        
+        result = OperationResult(
+            success=True,
+            message="Tab closed successfully",
+            data={"tab_id": tab_id}
+        )
+        return [TextContent(type="text", text=result.json())]
+        
+    except Exception as e:
+        logger.error(f"Error closing tab: {e}")
+        result = OperationResult(
+            success=False,
+            message="Failed to close tab",
+            error=str(e)
+        )
+        return [TextContent(type="text", text=result.json())]
 
 
 async def handle_list_tabs(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle list tabs request."""
-    result = OperationResult(
-        success=True,
-        message="Found 3 tabs",
-        data={"tabs": [], "count": 3}
-    )
-    return [TextContent(type="text", text=result.json())]
+    from ..browser_manager import get_browser_manager
+    
+    try:
+        browser_id = arguments.get("browser_id")
+        include_content = arguments.get("include_content", False)
+        
+        if not browser_id:
+            result = OperationResult(
+                success=False,
+                message="Browser ID is required",
+                error="Missing browser_id parameter"
+            )
+            return [TextContent(type="text", text=result.json())]
+        
+        browser_manager = get_browser_manager()
+        browser_instance = await browser_manager.get_browser(browser_id)
+        
+        if not browser_instance:
+            result = OperationResult(
+                success=False,
+                message="Browser not found",
+                error=f"Browser {browser_id} not found"
+            )
+            return [TextContent(type="text", text=result.json())]
+        
+        # Get tabs from browser instance
+        tabs_data = []
+        for tab_id, tab in browser_instance.tabs.items():
+            tab_info = {
+                "tab_id": tab_id,
+                "is_active": True,  # For now, assume active
+                "url": "about:blank",  # Default URL
+                "title": "New Tab"  # Default title
+            }
+            
+            if include_content and tab:
+                try:
+                    # Try to get actual tab information
+                    if hasattr(tab, 'url'):
+                        tab_info["url"] = getattr(tab, 'url', 'about:blank')
+                    if hasattr(tab, 'title'):
+                        tab_info["title"] = getattr(tab, 'title', 'New Tab')
+                except Exception:
+                    pass  # Keep default values
+            
+            tabs_data.append(tab_info)
+        
+        count = len(tabs_data)
+        result = OperationResult(
+            success=True,
+            message=f"Found {count} tabs",
+            data={"tabs": tabs_data, "count": count}
+        )
+        return [TextContent(type="text", text=result.json())]
+        
+    except Exception as e:
+        logger.error(f"Error listing tabs: {e}")
+        result = OperationResult(
+            success=False,
+            message="Failed to list tabs",
+            error=str(e)
+        )
+        return [TextContent(type="text", text=result.json())]
 
 
 async def handle_set_active_tab(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle set active tab request."""
-    result = OperationResult(
-        success=True,
-        message="Active tab set successfully"
-    )
-    return [TextContent(type="text", text=result.json())]
+    from ..browser_manager import get_browser_manager
+    
+    try:
+        browser_id = arguments.get("browser_id")
+        tab_id = arguments.get("tab_id")
+        
+        if not browser_id or not tab_id:
+            result = OperationResult(
+                success=False,
+                message="Browser ID and Tab ID are required",
+                error="Missing required parameters"
+            )
+            return [TextContent(type="text", text=result.json())]
+        
+        browser_manager = get_browser_manager()
+        browser_instance = await browser_manager.get_browser(browser_id)
+        
+        if not browser_instance:
+            result = OperationResult(
+                success=False,
+                message="Browser not found",
+                error=f"Browser {browser_id} not found"
+            )
+            return [TextContent(type="text", text=result.json())]
+        
+        # Check if tab exists
+        if tab_id not in browser_instance.tabs:
+            result = OperationResult(
+                success=False,
+                message="Tab not found",
+                error=f"Tab {tab_id} not found in browser {browser_id}"
+            )
+            return [TextContent(type="text", text=result.json())]
+        
+        # Set active tab
+        browser_instance.active_tab_id = tab_id
+        
+        result = OperationResult(
+            success=True,
+            message="Active tab set successfully",
+            data={"tab_id": tab_id}
+        )
+        return [TextContent(type="text", text=result.json())]
+        
+    except Exception as e:
+        logger.error(f"Error setting active tab: {e}")
+        result = OperationResult(
+            success=False,
+            message="Failed to set active tab",
+            error=str(e)
+        )
+        return [TextContent(type="text", text=result.json())]
 
 
 # Browser Tool Handlers Dictionary

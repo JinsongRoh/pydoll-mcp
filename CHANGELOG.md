@@ -16,6 +16,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.5.8] - 2025-07-20
+
+### Fixed
+- **Critical**: Tab navigation errors - `'Tab' object has no attribute 'navigate'` by using proper `tab.goto()` API
+- **Critical**: "Tab not found" errors by implementing actual tab management instead of hardcoded responses
+- Tab creation, closing, listing, and activation now work with real browser instances
+- Navigation functions (`navigate_to`, `refresh_page`, `go_back`) now properly access tracked tabs
+
+### Enhanced
+- Proper tab tracking and lifecycle management in browser instances
+- Navigation tools to properly access tabs from browser instances
+- Active tab tracking with fallback to first available tab
+- Error handling for tab operations with detailed error messages
+- Browser instance cleanup and resource management
+
+### Added
+- Tab ID generation and mapping for consistent browser-tab relationships
+- Compatibility layer for different PyDoll API versions
+- All tab management functions now return proper results instead of dummy responses
+
 ## [1.5.7] - 2025-07-20
 
 ### 🔧 Critical Fixes

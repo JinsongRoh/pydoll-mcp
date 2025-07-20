@@ -242,9 +242,6 @@ async def handle_navigate_to(arguments: Dict[str, Any]) -> Sequence[TextContent]
             else:
                 raise ValueError(f"No tabs available in browser {browser_id}")
         
-        # Ensure tab has all necessary methods
-        tab = await browser_manager.ensure_tab_methods(tab)
-        
         # Navigate with PyDoll compatible options (updated in v1.4.1)
         navigation_options = {}
         
@@ -320,9 +317,26 @@ async def handle_refresh_page(arguments: Dict[str, Any]) -> Sequence[TextContent
         ignore_cache = arguments.get("ignore_cache", False)
         wait_for_load = arguments.get("wait_for_load", True)
         
-        # Get tab and ensure it has all necessary methods
-        tab = await browser_manager.get_tab(browser_id, tab_id)
-        tab = await browser_manager.ensure_tab_methods(tab)
+        # Get browser instance
+        browser_instance = await browser_manager.get_browser(browser_id)
+        if not browser_instance:
+            raise ValueError(f"Browser {browser_id} not found")
+        
+        # Get tab - if tab_id is provided, use it; otherwise use active tab or first available
+        if tab_id:
+            tab = browser_instance.tabs.get(tab_id)
+            if not tab:
+                raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
+        else:
+            # Use active tab or first available tab
+            if browser_instance.active_tab_id and browser_instance.active_tab_id in browser_instance.tabs:
+                tab = browser_instance.tabs[browser_instance.active_tab_id]
+            elif browser_instance.tabs:
+                tab = next(iter(browser_instance.tabs.values()))
+            elif hasattr(browser_instance.browser, 'tab'):
+                tab = browser_instance.browser.tab
+            else:
+                raise ValueError(f"No tabs available in browser {browser_id}")
         
         # Refresh page
         if ignore_cache:
@@ -370,9 +384,26 @@ async def handle_go_back(arguments: Dict[str, Any]) -> Sequence[TextContent]:
         tab_id = arguments.get("tab_id")
         steps = arguments.get("steps", 1)
         
-        # Get tab and ensure it has all necessary methods
-        tab = await browser_manager.get_tab(browser_id, tab_id)
-        tab = await browser_manager.ensure_tab_methods(tab)
+        # Get browser instance
+        browser_instance = await browser_manager.get_browser(browser_id)
+        if not browser_instance:
+            raise ValueError(f"Browser {browser_id} not found")
+        
+        # Get tab - if tab_id is provided, use it; otherwise use active tab or first available
+        if tab_id:
+            tab = browser_instance.tabs.get(tab_id)
+            if not tab:
+                raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
+        else:
+            # Use active tab or first available tab
+            if browser_instance.active_tab_id and browser_instance.active_tab_id in browser_instance.tabs:
+                tab = browser_instance.tabs[browser_instance.active_tab_id]
+            elif browser_instance.tabs:
+                tab = next(iter(browser_instance.tabs.values()))
+            elif hasattr(browser_instance.browser, 'tab'):
+                tab = browser_instance.browser.tab
+            else:
+                raise ValueError(f"No tabs available in browser {browser_id}")
         
         # Navigate back the specified number of steps
         for _ in range(steps):
@@ -414,9 +445,26 @@ async def handle_get_current_url(arguments: Dict[str, Any]) -> Sequence[TextCont
         browser_id = arguments["browser_id"]
         tab_id = arguments.get("tab_id")
         
-        # Get tab and ensure it has all necessary methods
-        tab = await browser_manager.get_tab(browser_id, tab_id)
-        tab = await browser_manager.ensure_tab_methods(tab)
+        # Get browser instance
+        browser_instance = await browser_manager.get_browser(browser_id)
+        if not browser_instance:
+            raise ValueError(f"Browser {browser_id} not found")
+        
+        # Get tab - if tab_id is provided, use it; otherwise use active tab or first available
+        if tab_id:
+            tab = browser_instance.tabs.get(tab_id)
+            if not tab:
+                raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
+        else:
+            # Use active tab or first available tab
+            if browser_instance.active_tab_id and browser_instance.active_tab_id in browser_instance.tabs:
+                tab = browser_instance.tabs[browser_instance.active_tab_id]
+            elif browser_instance.tabs:
+                tab = next(iter(browser_instance.tabs.values()))
+            elif hasattr(browser_instance.browser, 'tab'):
+                tab = browser_instance.browser.tab
+            else:
+                raise ValueError(f"No tabs available in browser {browser_id}")
         
         # Get current URL
         url = await tab.get_url()
@@ -451,9 +499,26 @@ async def handle_get_page_title(arguments: Dict[str, Any]) -> Sequence[TextConte
         browser_id = arguments["browser_id"]
         tab_id = arguments.get("tab_id")
         
-        # Get tab and ensure it has all necessary methods
-        tab = await browser_manager.get_tab(browser_id, tab_id)
-        tab = await browser_manager.ensure_tab_methods(tab)
+        # Get browser instance
+        browser_instance = await browser_manager.get_browser(browser_id)
+        if not browser_instance:
+            raise ValueError(f"Browser {browser_id} not found")
+        
+        # Get tab - if tab_id is provided, use it; otherwise use active tab or first available
+        if tab_id:
+            tab = browser_instance.tabs.get(tab_id)
+            if not tab:
+                raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
+        else:
+            # Use active tab or first available tab
+            if browser_instance.active_tab_id and browser_instance.active_tab_id in browser_instance.tabs:
+                tab = browser_instance.tabs[browser_instance.active_tab_id]
+            elif browser_instance.tabs:
+                tab = next(iter(browser_instance.tabs.values()))
+            elif hasattr(browser_instance.browser, 'tab'):
+                tab = browser_instance.browser.tab
+            else:
+                raise ValueError(f"No tabs available in browser {browser_id}")
         
         # Get page title
         title = await tab.get_title()
@@ -491,9 +556,26 @@ async def handle_get_page_source(arguments: Dict[str, Any]) -> Sequence[TextCont
         tab_id = arguments.get("tab_id")
         include_resources = arguments.get("include_resources", False)
         
-        # Get tab and ensure it has all necessary methods
-        tab = await browser_manager.get_tab(browser_id, tab_id)
-        tab = await browser_manager.ensure_tab_methods(tab)
+        # Get browser instance
+        browser_instance = await browser_manager.get_browser(browser_id)
+        if not browser_instance:
+            raise ValueError(f"Browser {browser_id} not found")
+        
+        # Get tab - if tab_id is provided, use it; otherwise use active tab or first available
+        if tab_id:
+            tab = browser_instance.tabs.get(tab_id)
+            if not tab:
+                raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
+        else:
+            # Use active tab or first available tab
+            if browser_instance.active_tab_id and browser_instance.active_tab_id in browser_instance.tabs:
+                tab = browser_instance.tabs[browser_instance.active_tab_id]
+            elif browser_instance.tabs:
+                tab = next(iter(browser_instance.tabs.values()))
+            elif hasattr(browser_instance.browser, 'tab'):
+                tab = browser_instance.browser.tab
+            else:
+                raise ValueError(f"No tabs available in browser {browser_id}")
         
         # Get page source
         source = await tab.get_content()
@@ -548,9 +630,26 @@ async def handle_fetch_domain_commands(arguments: Dict[str, Any]) -> Sequence[Te
         tab_id = arguments.get("tab_id")
         domain = arguments.get("domain")
         
-        # Get tab and ensure it has all necessary methods
-        tab = await browser_manager.get_tab(browser_id, tab_id)
-        tab = await browser_manager.ensure_tab_methods(tab)
+        # Get browser instance
+        browser_instance = await browser_manager.get_browser(browser_id)
+        if not browser_instance:
+            raise ValueError(f"Browser {browser_id} not found")
+        
+        # Get tab - if tab_id is provided, use it; otherwise use active tab or first available
+        if tab_id:
+            tab = browser_instance.tabs.get(tab_id)
+            if not tab:
+                raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
+        else:
+            # Use active tab or first available tab
+            if browser_instance.active_tab_id and browser_instance.active_tab_id in browser_instance.tabs:
+                tab = browser_instance.tabs[browser_instance.active_tab_id]
+            elif browser_instance.tabs:
+                tab = next(iter(browser_instance.tabs.values()))
+            elif hasattr(browser_instance.browser, 'tab'):
+                tab = browser_instance.browser.tab
+            else:
+                raise ValueError(f"No tabs available in browser {browser_id}")
         
         # Call PyDoll 2.3.1's new fetch_domain_commands method
         if domain:

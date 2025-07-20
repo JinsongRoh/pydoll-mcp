@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.7
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.8
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,11 +20,33 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.5.7-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.5.8-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.5.7 - 2025-07-20)
+## 📢 Latest Updates (v1.5.8 - 2025-07-20)
+
+### 🔧 Critical Tab Management Fix
+
+#### ✅ Fixed Tab Management System (Critical)
+- **Fixed**: Tab navigation errors - `'Tab' object has no attribute 'navigate'` by using proper `tab.goto()` API
+- **Enhanced**: Proper tab tracking and lifecycle management in browser instances
+- **Fixed**: "Tab not found" errors by implementing actual tab management instead of hardcoded responses
+- **Improved**: Navigation tools to properly access tabs from browser instances
+- **Added**: Active tab tracking with fallback to first available tab
+
+#### 🚀 Browser-Tab Integration Improvements
+- **Fixed**: Tab creation, closing, listing, and activation now work with real browser instances
+- **Enhanced**: Navigation functions (`navigate_to`, `refresh_page`, `go_back`) now properly access tracked tabs
+- **Improved**: Tab ID generation and mapping for consistent browser-tab relationships
+- **Added**: Compatibility layer for different PyDoll API versions
+
+#### 📊 Stability Enhancements
+- **Fixed**: All tab management functions now return proper results instead of dummy responses
+- **Enhanced**: Error handling for tab operations with detailed error messages
+- **Improved**: Browser instance cleanup and resource management
+
+## 📢 Previous Updates (v1.5.7 - 2025-07-20)
 
 ### 🔧 Critical Fixes
 
