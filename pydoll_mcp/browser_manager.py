@@ -69,10 +69,11 @@ class BrowserInstance:
     """Represents a managed browser instance with metadata."""
     
     def __init__(self, browser, browser_type: str, instance_id: str):
+        from datetime import datetime
         self.browser = browser
         self.browser_type = browser_type
         self.instance_id = instance_id
-        self.created_at = time.time()
+        self.created_at = datetime.now()
         self.tabs: Dict[str, Tab] = {}
         self.is_active = True
         self.last_activity = time.time()
@@ -92,11 +93,27 @@ class BrowserInstance:
     
     def get_uptime(self) -> float:
         """Get browser instance uptime in seconds."""
-        return time.time() - self.created_at
+        from datetime import datetime
+        return (datetime.now() - self.created_at).total_seconds()
     
     def get_idle_time(self) -> float:
         """Get time since last activity in seconds."""
         return time.time() - self.last_activity
+    
+    def to_dict(self) -> dict:
+        """Convert browser instance to serializable dictionary."""
+        return {
+            "instance_id": self.instance_id,
+            "browser_type": self.browser_type,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat(),
+            "uptime": self.get_uptime(),
+            "idle_time": self.get_idle_time(),
+            "tabs_count": len(self.tabs),
+            "stats": self.stats,
+            "error_rate": self.metrics.get_error_rate(),
+            "avg_navigation_time": self.metrics.get_avg_navigation_time()
+        }
     
     @asynccontextmanager
     async def tab_context(self, tab_id: str):
@@ -342,11 +359,10 @@ class BrowserManager:
                     # Skip if argument already exists
                     pass
         
-        # Additional stability options
+        # Additional stability options (removed --disable-gpu-sandbox for security)
         stability_args = [
             "--disable-dev-shm-usage",
             "--no-sandbox",
-            "--disable-gpu-sandbox",
             "--disable-setuid-sandbox",
         ]
         
@@ -637,3 +653,7 @@ async def cleanup_browser_manager():
     if _browser_manager:
         await _browser_manager.stop()
         _browser_manager = None
+
+
+# Create global browser manager instance for easy access
+browser_manager = get_browser_manager()

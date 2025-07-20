@@ -284,7 +284,7 @@ async def handle_stop_browser(arguments: Dict[str, Any]) -> Sequence[TextContent
         # Check if browser has open tabs (unless force stop)
         if not force:
             instance = await browser_manager.get_browser(browser_id)
-            if len(instance.tabs) > 0:
+            if instance and len(instance.tabs) > 0:
                 result = OperationResult(
                     success=False,
                     message=f"Browser has {len(instance.tabs)} open tabs. Use force=true to stop anyway.",
@@ -321,15 +321,7 @@ async def handle_list_browsers(arguments: Dict[str, Any]) -> Sequence[TextConten
     try:
         browsers_info = []
         for browser_id, instance in browser_manager.browsers.items():
-            browser_info = {
-                "id": browser_id,
-                "type": instance.browser_type,
-                "active": instance.browser is not None,
-                "tabs": len(instance.tabs),
-                "created_at": instance.created_at.isoformat(),
-                "stats": instance.stats
-            }
-            browsers_info.append(browser_info)
+            browsers_info.append(instance.to_dict())
         
         result = OperationResult(
             success=True,
@@ -373,23 +365,10 @@ async def handle_get_browser_status(arguments: Dict[str, Any]) -> Sequence[TextC
                 message="Browser not found"
             )
         else:
-            from datetime import datetime
-            uptime = datetime.now() - instance.created_at
-            uptime_str = f"{int(uptime.total_seconds() // 60)}m"
-            
             result = OperationResult(
                 success=True,
                 message="Browser status retrieved",
-                data={
-                    "id": browser_id,
-                    "type": instance.browser_type,
-                    "status": "active" if instance.browser else "inactive",
-                    "uptime": uptime_str,
-                    "tabs": len(instance.tabs),
-                    "active_tab": instance.active_tab,
-                    "created_at": instance.created_at.isoformat(),
-                    "stats": instance.stats
-                }
+                data=instance.to_dict()
             )
     except Exception as e:
         logger.error(f"Failed to get browser status: {e}", exc_info=True)
