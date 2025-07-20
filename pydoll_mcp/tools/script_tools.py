@@ -159,7 +159,8 @@ async def handle_execute_javascript(arguments: Dict[str, Any]) -> Sequence[TextC
         timeout = arguments.get("timeout", 30)
         context = arguments.get("context", "page")
         
-        tab = await browser_manager.get_tab(browser_id, tab_id)
+        # Get tab with automatic fallback to active tab
+        tab, actual_tab_id = await browser_manager.get_tab_with_fallback(browser_id, tab_id)
         
         # Execute JavaScript with proper error handling
         try:
@@ -179,7 +180,7 @@ async def handle_execute_javascript(arguments: Dict[str, Any]) -> Sequence[TextC
                 message="JavaScript executed successfully",
                 data={
                     "browser_id": browser_id,
-                    "tab_id": tab_id,
+                    "tab_id": actual_tab_id,
                     "script": script[:100] + "..." if len(script) > 100 else script,
                     "result": result_value,
                     "result_type": result_type,
@@ -199,7 +200,7 @@ async def handle_execute_javascript(arguments: Dict[str, Any]) -> Sequence[TextC
                 message="JavaScript execution failed",
                 data={
                     "browser_id": browser_id,
-                    "tab_id": tab_id,
+                    "tab_id": actual_tab_id,
                     "script": script[:100] + "..." if len(script) > 100 else script,
                     "error_type": type(js_error).__name__,
                     "execution_context": context

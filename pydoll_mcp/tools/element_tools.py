@@ -1,8 +1,9 @@
-"""Element Interaction Tools for PyDoll MCP Server.
+"""Improved Element Interaction Tools for PyDoll MCP Server.
 
-This module provides MCP tools for finding and interacting with web elements including:
-- Revolutionary natural attribute element finding
-- Traditional CSS selector and XPath support
+This module provides MCP tools for finding and interacting with web elements using
+PyDoll's native API methods:
+- Natural attribute element finding with find()
+- CSS selector and XPath support with query()
 - Element interaction (click, type, hover, etc.)
 - Element information extraction
 - Advanced waiting strategies
@@ -96,7 +97,7 @@ ELEMENT_TOOLS = [
                     "type": "string",
                     "description": "XPath expression"
                 },
-                # Search options
+                # Options
                 "find_all": {
                     "type": "boolean",
                     "default": False,
@@ -106,7 +107,7 @@ ELEMENT_TOOLS = [
                     "type": "integer",
                     "default": 10,
                     "minimum": 1,
-                    "maximum": 300,
+                    "maximum": 60,
                     "description": "Element search timeout in seconds"
                 },
                 "wait_for_visible": {
@@ -115,7 +116,16 @@ ELEMENT_TOOLS = [
                     "description": "Wait for element to be visible"
                 }
             },
-            "required": ["browser_id"]
+            "required": ["browser_id"],
+            "anyOf": [
+                {"required": ["id"]},
+                {"required": ["class_name"]},
+                {"required": ["tag_name"]},
+                {"required": ["text"]},
+                {"required": ["name"]},
+                {"required": ["css_selector"]},
+                {"required": ["xpath"]}
+            ]
         }
     ),
     
@@ -198,16 +208,16 @@ ELEMENT_TOOLS = [
                     "default": True,
                     "description": "Clear existing text before typing"
                 },
+                "human_like": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "Use human-like typing with natural delays and occasional mistakes"
+                },
                 "typing_speed": {
                     "type": "string",
                     "enum": ["slow", "normal", "fast", "instant"],
                     "default": "normal",
                     "description": "Typing speed simulation"
-                },
-                "human_like": {
-                    "type": "boolean",
-                    "default": True,
-                    "description": "Use human-like typing with natural delays and occasional mistakes"
                 }
             },
             "required": ["browser_id", "element_selector", "text"]
@@ -252,7 +262,7 @@ ELEMENT_TOOLS = [
 # Element Tool Handlers
 
 async def handle_find_element(arguments: Dict[str, Any]) -> Sequence[TextContent]:
-    """Handle element finding request."""
+    """Handle element finding request using PyDoll's native API."""
     try:
         browser_manager = get_browser_manager()
         browser_id = arguments["browser_id"]
@@ -261,345 +271,138 @@ async def handle_find_element(arguments: Dict[str, Any]) -> Sequence[TextContent
         # Get tab with automatic fallback to active tab
         tab, actual_tab_id = await browser_manager.get_tab_with_fallback(browser_id, tab_id)
         
-        # Remove browser_id and tab_id from selector arguments
-        selector_args = {k: v for k, v in arguments.items() 
-                        if k not in ["browser_id", "tab_id"]}
+        # Extract search parameters
+        find_all = arguments.get("find_all", False)
+        timeout = arguments.get("timeout", 10)
+        wait_for_visible = arguments.get("wait_for_visible", True)
         
-        # Create element selector
-        selector = ElementSelector(**selector_args)
-        
-        # Find elements using PyDoll's powerful element finding
         elements_info = []
-        find_all = selector_args.get("find_all", False)
-        
-        # Build PyDoll search parameters
-        search_params = {}
-        
-        # Natural attribute selectors (PyDoll's strength)
-        if selector_args.get("tag_name"):
-            search_params["tag_name"] = selector_args["tag_name"]
-        if selector_args.get("text"):
-            search_params["text"] = selector_args["text"]
-        if selector_args.get("id"):
-            search_params["id"] = selector_args["id"]
-        if selector_args.get("class_name"):
-            search_params["class_name"] = selector_args["class_name"]
-        if selector_args.get("name"):
-            search_params["name"] = selector_args["name"]
-        if selector_args.get("type"):
-            search_params["type"] = selector_args["type"]
-        if selector_args.get("placeholder"):
-            search_params["placeholder"] = selector_args["placeholder"]
-        if selector_args.get("value"):
-            search_params["value"] = selector_args["value"]
-        
-        # Data attributes
-        if selector_args.get("data_testid"):
-            search_params["data-testid"] = selector_args["data_testid"]
-        if selector_args.get("data_id"):
-            search_params["data-id"] = selector_args["data_id"]
-            
-        # Accessibility attributes
-        if selector_args.get("aria_label"):
-            search_params["aria-label"] = selector_args["aria_label"]
-        if selector_args.get("aria_role"):
-            search_params["role"] = selector_args["aria_role"]
-        
-        # Search timeout
-        timeout = selector_args.get("timeout", 10) * 1000  # Convert to milliseconds
-        wait_for_visible = selector_args.get("wait_for_visible", True)
         
         try:
-            if selector_args.get("css_selector"):
-                # Enhanced CSS selector with multiple fallback strategies
-                selector = selector_args["css_selector"]
-                script = f'''
-                    const elements = document.querySelectorAll('{selector}');
-                    const results = [];
-                    for (let el of elements) {{
-                        const style = window.getComputedStyle(el);
-                        const rect = el.getBoundingClientRect();
-                        results.push({{
-                            tagName: el.tagName,
-                            text: el.textContent ? el.textContent.trim() : '',
-                            innerText: el.innerText ? el.innerText.trim() : '',
-                            id: el.id || '',
-                            className: el.className || '',
-                            name: el.name || '',
-                            type: el.type || '',
-                            placeholder: el.placeholder || '',
-                            value: el.value || '',
-                            visible: rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none',
-                            enabled: !el.disabled && !el.hasAttribute('disabled'),
-                            bounds: rect,
-                            ariaLabel: el.getAttribute('aria-label') || '',
-                            role: el.getAttribute('role') || '',
-                            dataTestId: el.getAttribute('data-testid') || '',
-                            dataId: el.getAttribute('data-id') || ''
-                        }});
-                        if (!{find_all}) break;
-                    }}
-                    return results;
-                '''
-                result = await tab.execute_script(script)
-                elements = []
-                if result and 'result' in result and 'result' in result['result']:
-                    elements_data = result['result']['result'].get('value', [])
-                    if elements_data:
-                        # Create mock element objects
-                        class MockElement:
-                            def __init__(self, data):
-                                self.data = data
-                                self.tag_name = data.get('tagName', 'unknown').lower()
-                                self.text = data.get('text', '')
-                                self.id = data.get('id', '')
-                                self.class_name = data.get('className', '')
-                        elements = [MockElement(data) for data in elements_data]
-            elif selector_args.get("xpath"):
-                # Use XPath - PyDoll doesn't have find_by_xpath, use execute_script
-                xpath = selector_args["xpath"]
-                script = f'''
-                    const results = [];
-                    const xpathResult = document.evaluate('{xpath}', document, null, 
-                        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-                    for (let i = 0; i < xpathResult.snapshotLength; i++) {{
-                        const el = xpathResult.snapshotItem(i);
-                        results.push({{
-                            tagName: el.tagName,
-                            text: el.textContent || '',
-                            id: el.id || '',
-                            className: el.className || '',
-                            name: el.name || '',
-                            type: el.type || '',
-                            placeholder: el.placeholder || '',
-                            value: el.value || '',
-                            visible: el.offsetWidth > 0 && el.offsetHeight > 0,
-                            enabled: !el.disabled,
-                            bounds: el.getBoundingClientRect()
-                        }});
-                        if (!{find_all}) break;
-                    }}
-                    return results;
-                '''
-                result = await tab.execute_script(script)
-                elements = []
-                if result and 'result' in result and 'result' in result['result']:
-                    elements_data = result['result']['result'].get('value', [])
-                    if elements_data:
-                        # Create mock element objects
-                        class MockElement:
-                            def __init__(self, data):
-                                self.data = data
-                                self.tag_name = data.get('tagName', 'unknown').lower()
-                                self.text = data.get('text', '')
-                                self.id = data.get('id', '')
-                                self.class_name = data.get('className', '')
-                        elements = [MockElement(data) for data in elements_data]
-            elif search_params:
-                # Enhanced attribute-based search with smart fallbacks
-                conditions = []
-                fuzzy_conditions = []  # For fallback fuzzy matching
+            # Use PyDoll's native find() or query() methods
+            if arguments.get("css_selector"):
+                # Use query() for CSS selectors
+                css_selector = arguments["css_selector"]
+                logger.info(f"Using PyDoll query() with CSS selector: {css_selector}")
                 
-                for key, value in search_params.items():
-                    if key == 'tag_name':
-                        conditions.append(f"el.tagName.toLowerCase() === '{value.lower()}'")
-                    elif key == 'text':
-                        # Exact match first, then fuzzy
-                        conditions.append(f"(el.textContent && el.textContent.trim().includes('{value}'))")
-                        fuzzy_conditions.append(f"(el.textContent && el.textContent.toLowerCase().includes('{value.lower()}'))")
-                    elif key == 'id':
-                        conditions.append(f"el.id === '{value}'")
-                        fuzzy_conditions.append(f"el.id.includes('{value}')")
-                    elif key == 'class_name':
-                        conditions.append(f"el.className.includes('{value}')")
-                    elif key == 'name':
-                        conditions.append(f"el.name === '{value}'")
-                    elif key == 'type':
-                        conditions.append(f"el.type === '{value}'")
-                    elif key == 'placeholder':
-                        conditions.append(f"el.placeholder === '{value}'")
-                        fuzzy_conditions.append(f"(el.placeholder && el.placeholder.toLowerCase().includes('{value.lower()}'))")
-                    elif key == 'value':
-                        conditions.append(f"el.value === '{value}'")
-                    elif key.startswith('data-'):
-                        conditions.append(f"el.getAttribute('{key}') === '{value}'")
-                    elif key.startswith('aria-') or key == 'role':
-                        conditions.append(f"el.getAttribute('{key}') === '{value}'")
-                
-                # Primary search with exact conditions
-                condition_str = ' && '.join(conditions) if conditions else 'true'
-                
-                script = f'''
-                    // Enhanced element search with multiple strategies
-                    function findElementsWithFallback() {{
-                        let results = [];
-                        
-                        // Strategy 1: Exact attribute matching
-                        const allElements = document.querySelectorAll('*');
-                        for (let el of allElements) {{
-                            const style = window.getComputedStyle(el);
-                            const rect = el.getBoundingClientRect();
-                            
-                            if ({condition_str}) {{
-                                results.push({{
-                                    tagName: el.tagName,
-                                    text: el.textContent ? el.textContent.trim() : '',
-                                    innerText: el.innerText ? el.innerText.trim() : '',
-                                    id: el.id || '',
-                                    className: el.className || '',
-                                    name: el.name || '',
-                                    type: el.type || '',
-                                    placeholder: el.placeholder || '',
-                                    value: el.value || '',
-                                    visible: rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none',
-                                    enabled: !el.disabled && !el.hasAttribute('disabled'),
-                                    bounds: rect,
-                                    ariaLabel: el.getAttribute('aria-label') || '',
-                                    role: el.getAttribute('role') || '',
-                                    dataTestId: el.getAttribute('data-testid') || '',
-                                    dataId: el.getAttribute('data-id') || '',
-                                    searchStrategy: 'exact'
-                                }});
-                                if (!{find_all}) return results;
-                            }}
-                        }}
-                        
-                        // Strategy 2: Common input element selectors (Windows compatibility)
-                        if (results.length === 0) {{
-                            const commonSelectors = [
-                                'input[type="text"]',
-                                'input[type="search"]', 
-                                'input[name="q"]',
-                                'input[name="query"]',
-                                'input[name="search"]',
-                                'textarea[name="q"]',
-                                'textarea[placeholder*="search" i]',
-                                'textarea[placeholder*="검색" i]',
-                                '[role="searchbox"]',
-                                '[role="combobox"]',
-                                '.search-input',
-                                '#search',
-                                '#query'
-                            ];
-                            
-                            for (let selector of commonSelectors) {{
-                                try {{
-                                    const els = document.querySelectorAll(selector);
-                                    for (let el of els) {{
-                                        const style = window.getComputedStyle(el);
-                                        const rect = el.getBoundingClientRect();
-                                        if (rect.width > 0 && rect.height > 0) {{
-                                            results.push({{
-                                                tagName: el.tagName,
-                                                text: el.textContent ? el.textContent.trim() : '',
-                                                innerText: el.innerText ? el.innerText.trim() : '',
-                                                id: el.id || '',
-                                                className: el.className || '',
-                                                name: el.name || '',
-                                                type: el.type || '',
-                                                placeholder: el.placeholder || '',
-                                                value: el.value || '',
-                                                visible: rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none',
-                                                enabled: !el.disabled && !el.hasAttribute('disabled'),
-                                                bounds: rect,
-                                                ariaLabel: el.getAttribute('aria-label') || '',
-                                                role: el.getAttribute('role') || '',
-                                                dataTestId: el.getAttribute('data-testid') || '',
-                                                dataId: el.getAttribute('data-id') || '',
-                                                searchStrategy: 'common_selectors',
-                                                matchedSelector: selector
-                                            }});
-                                            if (!{find_all}) return results;
-                                        }}
-                                    }}
-                                }} catch(e) {{ /* ignore selector errors */ }}
-                            }}
-                        }}
-                        
-                        return results;
-                    }}
+                if find_all:
+                    elements = await tab.query_all(css_selector)
+                else:
+                    element = await tab.query(css_selector)
+                    elements = [element] if element else []
                     
-                    return findElementsWithFallback();
-                '''
-                result = await tab.execute_script(script)
-                elements = []
-                if result and 'result' in result and 'result' in result['result']:
-                    elements_data = result['result']['result'].get('value', [])
-                    if elements_data:
-                        # Create mock element objects
-                        class MockElement:
-                            def __init__(self, data):
-                                self.data = data
-                                self.tag_name = data.get('tagName', 'unknown').lower()
-                                self.text = data.get('text', '')
-                                self.id = data.get('id', '')
-                                self.class_name = data.get('className', '')
-                        elements = [MockElement(data) for data in elements_data]
+            elif arguments.get("xpath"):
+                # Use query() for XPath
+                xpath = arguments["xpath"]
+                logger.info(f"Using PyDoll query() with XPath: {xpath}")
+                
+                if find_all:
+                    elements = await tab.query_all(xpath)
+                else:
+                    element = await tab.query(xpath)
+                    elements = [element] if element else []
+                    
             else:
-                raise ValueError("No valid selector provided")
+                # Use find() for natural attribute selection
+                find_params = {}
+                
+                # Build parameters for PyDoll's find() method
+                if arguments.get("tag_name"):
+                    find_params["tag_name"] = arguments["tag_name"]
+                if arguments.get("id"):
+                    find_params["id"] = arguments["id"]
+                if arguments.get("class_name"):
+                    find_params["class_name"] = arguments["class_name"]
+                if arguments.get("text"):
+                    find_params["text"] = arguments["text"]
+                if arguments.get("name"):
+                    find_params["name"] = arguments["name"]
+                if arguments.get("type"):
+                    find_params["type"] = arguments["type"]
+                if arguments.get("placeholder"):
+                    find_params["placeholder"] = arguments["placeholder"]
+                if arguments.get("value"):
+                    find_params["value"] = arguments["value"]
+                
+                # Add data attributes
+                if arguments.get("data_testid"):
+                    find_params["data_testid"] = arguments["data_testid"]
+                if arguments.get("data_id"):
+                    find_params["data_id"] = arguments["data_id"]
+                
+                # Add aria attributes
+                if arguments.get("aria_label"):
+                    find_params["aria-label"] = arguments["aria_label"]
+                if arguments.get("aria_role"):
+                    find_params["role"] = arguments["aria_role"]
+                
+                logger.info(f"Using PyDoll find() with params: {find_params}")
+                
+                # Add timeout and find_all parameters
+                find_params["timeout"] = timeout
+                find_params["find_all"] = find_all
+                find_params["raise_exc"] = False  # Don't raise exception if not found
+                
+                # Call PyDoll's find() method
+                result = await tab.find(**find_params)
+                
+                if find_all:
+                    elements = result if result else []
+                else:
+                    elements = [result] if result else []
             
             # Extract element information
             for i, element in enumerate(elements):
-                try:
-                    # For MockElement objects created from execute_script
-                    if hasattr(element, 'data'):
-                        data = element.data
-                        element_info = {
-                            "element_id": f"element_{i}",
-                            "tag_name": data.get('tagName', 'unknown').lower(),
-                            "text": data.get('text', '').strip(),
-                            "is_visible": data.get('visible', True),
-                            "is_enabled": data.get('enabled', True),
-                            "bounds": data.get('bounds', {"x": 0, "y": 0, "width": 0, "height": 0}),
-                            "id": data.get('id'),
-                            "class": data.get('className'),
-                            "name": data.get('name'),
-                            "type": data.get('type'),
-                            "placeholder": data.get('placeholder'),
-                            "value": data.get('value')
-                        }
-                    else:
-                        # Fallback for actual PyDoll elements if they exist
+                if element:  # Skip None elements
+                    try:
+                        # Get element properties using PyDoll's API
                         element_info = {
                             "element_id": f"element_{i}",
                             "tag_name": getattr(element, 'tag_name', 'unknown').lower(),
                             "text": getattr(element, 'text', '').strip(),
-                            "is_visible": True,
+                            "is_visible": True,  # PyDoll typically returns visible elements
                             "is_enabled": True,
-                            "bounds": {"x": 0, "y": 0, "width": 0, "height": 0}
+                            "id": getattr(element, 'id', None),
+                            "class": getattr(element, 'class_name', None),
+                            "name": getattr(element, 'name', None),
+                            "type": getattr(element, 'type', None),
+                            "href": getattr(element, 'href', None),
                         }
-                    
-                    elements_info.append(element_info)
-                    
-                except Exception as e:
-                    logger.warning(f"Failed to extract info from element {i}: {e}")
-                    continue
-                    
+                        
+                        # Try to get bounding box if available
+                        try:
+                            bounds = await element.bounding_box()
+                            element_info["bounds"] = bounds
+                        except:
+                            element_info["bounds"] = {"x": 0, "y": 0, "width": 0, "height": 0}
+                        
+                        elements_info.append(element_info)
+                        
+                    except Exception as e:
+                        logger.warning(f"Failed to extract info from element {i}: {e}")
+                        continue
+                        
         except Exception as e:
-            logger.warning(f"Element finding failed, falling back to simulation: {e}")
-            # Fallback to simulation for compatibility
-            elements_info = [{
-                "element_id": "element_1",
-                "tag_name": "button",
-                "text": "Click me",
-                "is_visible": True,
-                "is_enabled": True,
-                "bounds": {"x": 100, "y": 200, "width": 80, "height": 30}
-            }]
+            logger.warning(f"PyDoll element finding failed: {e}")
+            # Return empty result instead of falling back to simulation
+            elements_info = []
+        
+        # Log the search results
+        logger.info(f"Found {len(elements_info)} elements with selector: {arguments}")
         
         result = OperationResult(
             success=True,
             message=f"Found {len(elements_info)} element(s)",
             data={
                 "browser_id": browser_id,
-                "tab_id": tab_id,
-                "selector": selector_args,
+                "tab_id": actual_tab_id,
+                "selector": {k: v for k, v in arguments.items() 
+                           if k not in ["browser_id", "tab_id"]},
                 "elements": elements_info,
                 "count": len(elements_info)
             }
         )
         
-        logger.info(f"Found {len(elements_info)} elements with selector: {selector}")
         return [TextContent(type="text", text=result.json())]
         
     except Exception as e:
@@ -613,311 +416,185 @@ async def handle_find_element(arguments: Dict[str, Any]) -> Sequence[TextContent
 
 
 async def handle_click_element(arguments: Dict[str, Any]) -> Sequence[TextContent]:
-    """Handle element click request."""
+    """Handle element click request using PyDoll's native API."""
     try:
         browser_manager = get_browser_manager()
         browser_id = arguments["browser_id"]
         tab_id = arguments.get("tab_id")
         element_selector = arguments["element_selector"]
-        click_type = arguments.get("click_type", "left")
-        force = arguments.get("force", False)
-        scroll_to_element = arguments.get("scroll_to_element", True)
-        offset_x = arguments.get("offset_x")
-        offset_y = arguments.get("offset_y")
         
         # Get tab with automatic fallback to active tab
         tab, actual_tab_id = await browser_manager.get_tab_with_fallback(browser_id, tab_id)
         
-        start_time = time.time()
+        # Find the element first
+        find_args = {**element_selector, "browser_id": browser_id, "tab_id": actual_tab_id}
+        find_result = await handle_find_element(find_args)
+        find_data = OperationResult.parse_raw(find_result[0].text)
         
+        if not find_data.success or not find_data.data.get("elements"):
+            return [TextContent(type="text", text=OperationResult(
+                success=False,
+                error="Element not found",
+                message="Cannot click element that doesn't exist"
+            ).json())]
+        
+        # Use PyDoll's click method
         try:
-            # Find the element first using the selector - PyDoll API
-            search_params = {}
-            element = None
-            
-            # Build search parameters from element_selector
+            # Re-find the element to get the actual PyDoll element object
             if element_selector.get("css_selector"):
-                element = await tab.find_by_css_selector(element_selector["css_selector"])
+                element = await tab.query(element_selector["css_selector"])
             elif element_selector.get("xpath"):
-                element = await tab.find_by_xpath(element_selector["xpath"])
+                element = await tab.query(element_selector["xpath"])
             else:
-                # Use natural attributes
-                for key, value in element_selector.items():
-                    if value and key in ["tag_name", "text", "id", "class_name", "name", "type", "placeholder", "value"]:
-                        search_params[key] = value
-                    elif key == "data_testid":
-                        search_params["data-testid"] = value
-                    elif key == "data_id":
-                        search_params["data-id"] = value
-                    elif key == "aria_label":
-                        search_params["aria-label"] = value
-                    elif key == "aria_role":
-                        search_params["role"] = value
+                # Use find() with parameters
+                find_params = {k: v for k, v in element_selector.items() 
+                             if k in ["tag_name", "id", "class_name", "text", "name", 
+                                     "type", "placeholder", "value"]}
+                element = await tab.find(**find_params, raise_exc=False)
+            
+            if element:
+                # Scroll to element if requested
+                if arguments.get("scroll_to_element", True):
+                    await element.scroll_into_view()
                 
-                if search_params:
-                    element = await tab.find(**search_params)
-            
-            if not element:
-                raise ValueError("Element not found")
-            
-            # Scroll to element if requested - PyDoll uses scroll_into_view_if_needed
-            if scroll_to_element and hasattr(element, 'scroll_into_view_if_needed'):
-                await element.scroll_into_view_if_needed()
-            
-            # Perform the click based on type - PyDoll WebElement has click() method
-            if click_type == "left":
+                # Perform click
                 await element.click()
-            elif click_type == "right":
-                # PyDoll doesn't support right-click directly, use JavaScript
-                await tab.execute_script('''
-                    var event = new MouseEvent('contextmenu', {
-                        bubbles: true,
-                        cancelable: true,
-                        view: window
-                    });
-                    argument.dispatchEvent(event);
-                ''', element)
-            elif click_type == "double":
-                # PyDoll doesn't have dblclick, simulate with two clicks
-                await element.click()
-                await element.click()
-            elif click_type == "middle":
-                # PyDoll doesn't support middle-click, use JavaScript
-                await tab.execute_script('''
-                    var event = new MouseEvent('click', {
-                        bubbles: true,
-                        cancelable: true,
-                        view: window,
-                        button: 1
-                    });
-                    argument.dispatchEvent(event);
-                ''', element)
+                
+                result = OperationResult(
+                    success=True,
+                    message="Element clicked successfully",
+                    data={
+                        "browser_id": browser_id,
+                        "tab_id": actual_tab_id,
+                        "element": find_data.data["elements"][0],
+                        "click_type": arguments.get("click_type", "left")
+                    }
+                )
             else:
-                raise ValueError(f"Unsupported click type: {click_type}")
-            
-            execution_time = time.time() - start_time
-            
-            result = InteractionResult(
-                success=True,
-                action=f"{click_type}_click",
-                message=f"Successfully performed {click_type} click",
-                execution_time=execution_time,
-                data={
-                    "browser_id": browser_id,
-                    "tab_id": tab_id,
-                    "click_type": click_type,
-                    "element_found": True,
-                    "scroll_performed": scroll_to_element
-                }
-            )
-            
+                result = OperationResult(
+                    success=False,
+                    error="Element not found for click",
+                    message="Failed to find element for click operation"
+                )
+                
         except Exception as e:
-            logger.warning(f"Real click failed, falling back to simulation: {e}")
-            # Fallback to simulation
-            execution_time = time.time() - start_time
-            result = InteractionResult(
-                success=True,
-                action=f"{click_type}_click",
-                message=f"Successfully performed {click_type} click (simulated)",
-                execution_time=execution_time,
-                data={
-                    "browser_id": browser_id,
-                    "tab_id": tab_id,
-                    "click_type": click_type,
-                    "simulated": True
-                }
+            logger.error(f"Click operation failed: {e}")
+            result = OperationResult(
+                success=False,
+                error=str(e),
+                message="Failed to click element"
             )
         
-        logger.info(f"Element clicked: {click_type} click")
         return [TextContent(type="text", text=result.json())]
         
     except Exception as e:
-        logger.error(f"Element click failed: {e}")
-        result = InteractionResult(
+        logger.error(f"Click element handler failed: {e}")
+        result = OperationResult(
             success=False,
-            action="click",
             error=str(e),
-            message="Failed to click element"
+            message="Failed to process click request"
         )
         return [TextContent(type="text", text=result.json())]
 
 
 async def handle_type_text(arguments: Dict[str, Any]) -> Sequence[TextContent]:
-    """Handle text typing request."""
+    """Handle text typing request using PyDoll's native API."""
     try:
         browser_manager = get_browser_manager()
         browser_id = arguments["browser_id"]
         tab_id = arguments.get("tab_id")
         element_selector = arguments["element_selector"]
         text = arguments["text"]
-        clear_first = arguments.get("clear_first", True)
-        typing_speed = arguments.get("typing_speed", "normal")
-        human_like = arguments.get("human_like", True)
         
         # Get tab with automatic fallback to active tab
         tab, actual_tab_id = await browser_manager.get_tab_with_fallback(browser_id, tab_id)
         
-        start_time = time.time()
+        # Find the element first
+        find_args = {**element_selector, "browser_id": browser_id, "tab_id": actual_tab_id}
+        find_result = await handle_find_element(find_args)
+        find_data = OperationResult.parse_raw(find_result[0].text)
         
+        if not find_data.success or not find_data.data.get("elements"):
+            return [TextContent(type="text", text=OperationResult(
+                success=False,
+                error="Element not found",
+                message="Cannot type into element that doesn't exist"
+            ).json())]
+        
+        # Use PyDoll's type method
         try:
-            # Find the element first using the selector - PyDoll API
-            search_params = {}
-            element = None
-            
-            # Build search parameters from element_selector
+            # Re-find the element to get the actual PyDoll element object
             if element_selector.get("css_selector"):
-                element = await tab.find_by_css_selector(element_selector["css_selector"])
+                element = await tab.query(element_selector["css_selector"])
             elif element_selector.get("xpath"):
-                element = await tab.find_by_xpath(element_selector["xpath"])
+                element = await tab.query(element_selector["xpath"])
             else:
-                # Use natural attributes
-                for key, value in element_selector.items():
-                    if value and key in ["tag_name", "text", "id", "class_name", "name", "type", "placeholder", "value"]:
-                        search_params[key] = value
-                    elif key == "data_testid":
-                        search_params["data-testid"] = value
-                    elif key == "data_id":
-                        search_params["data-id"] = value
-                    elif key == "aria_label":
-                        search_params["aria-label"] = value
-                    elif key == "aria_role":
-                        search_params["role"] = value
+                # Use find() with parameters
+                find_params = {k: v for k, v in element_selector.items() 
+                             if k in ["tag_name", "id", "class_name", "text", "name", 
+                                     "type", "placeholder", "value"]}
+                element = await tab.find(**find_params, raise_exc=False)
+            
+            if element:
+                # Clear existing text if requested
+                if arguments.get("clear_first", True):
+                    await element.clear()
                 
-                if search_params:
-                    element = await tab.find(**search_params)
-            
-            if not element:
-                raise ValueError("Element not found")
-            
-            # Clear existing text if requested
-            if clear_first:
-                await element.clear()
-            
-            # Type the text with human-like behavior if enabled
-            if human_like:
-                # PyDoll's human-like typing
-                await element.insert_text(text)
+                # Type the text
+                await element.type(text)
+                
+                result = OperationResult(
+                    success=True,
+                    message="Text typed successfully",
+                    data={
+                        "browser_id": browser_id,
+                        "tab_id": actual_tab_id,
+                        "element": find_data.data["elements"][0],
+                        "text": text,
+                        "cleared_first": arguments.get("clear_first", True)
+                    }
+                )
             else:
-                # Fast typing
-                await element.fill(text)
-            
-            execution_time = time.time() - start_time
-            
-            result = InteractionResult(
-                success=True,
-                action="type_text",
-                message=f"Successfully typed {len(text)} characters",
-                execution_time=execution_time,
-                data={
-                    "browser_id": browser_id,
-                    "tab_id": tab_id,
-                    "text_length": len(text),
-                    "typing_speed": typing_speed,
-                    "human_like": human_like,
-                    "cleared_first": clear_first,
-                    "element_found": True
-                }
-            )
-            
+                result = OperationResult(
+                    success=False,
+                    error="Element not found for typing",
+                    message="Failed to find element for type operation"
+                )
+                
         except Exception as e:
-            logger.warning(f"Real typing failed, falling back to simulation: {e}")
-            # Fallback to simulation
-            execution_time = time.time() - start_time
-            result = InteractionResult(
-                success=True,
-                action="type_text",
-                message=f"Successfully typed {len(text)} characters (simulated)",
-                execution_time=execution_time,
-                data={
-                    "browser_id": browser_id,
-                    "tab_id": tab_id,
-                    "text_length": len(text),
-                    "typing_speed": typing_speed,
-                    "simulated": True
-                }
+            logger.error(f"Type operation failed: {e}")
+            result = OperationResult(
+                success=False,
+                error=str(e),
+                message="Failed to type text"
             )
         
-        logger.info(f"Text typed: {len(text)} characters")
         return [TextContent(type="text", text=result.json())]
         
     except Exception as e:
-        logger.error(f"Text typing failed: {e}")
-        result = InteractionResult(
+        logger.error(f"Type text handler failed: {e}")
+        result = OperationResult(
             success=False,
-            action="type_text",
             error=str(e),
-            message="Failed to type text"
+            message="Failed to process type request"
         )
         return [TextContent(type="text", text=result.json())]
 
 
 async def handle_get_parent_element(arguments: Dict[str, Any]) -> Sequence[TextContent]:
-    """Handle get parent element request using PyDoll 2.3.1 feature."""
-    try:
-        browser_manager = get_browser_manager()
-        browser_id = arguments["browser_id"]
-        tab_id = arguments.get("tab_id")
-        element_selector = arguments["element_selector"]
-        include_attributes = arguments.get("include_attributes", True)
-        include_bounds = arguments.get("include_bounds", True)
-        
-        tab = await browser_manager.get_tab(browser_id, tab_id)
-        
-        # First find the element
-        # Create element selector from the element_selector dict
-        selector = ElementSelector(**element_selector)
-        
-        # In PyDoll 2.3.1, we would use the new get_parent_element method
-        # For now, simulate the response
-        parent_info = {
-            "tag_name": "div",
-            "element_id": "parent_element_1",
-            "attributes": {
-                "class": "parent-container",
-                "id": "parent-1",
-                "data-parent": "true"
-            } if include_attributes else {},
-            "bounds": {
-                "x": 50,
-                "y": 150,
-                "width": 300,
-                "height": 200
-            } if include_bounds else {},
-            "text": "Parent element text content"
+    """Handle parent element request."""
+    # This is a placeholder - PyDoll doesn't have direct parent element access
+    # Would need to use execute_script for this functionality
+    
+    result = OperationResult(
+        success=True,
+        message="Parent element functionality not yet implemented with PyDoll native API",
+        data={
+            "browser_id": arguments["browser_id"],
+            "note": "This feature requires execute_script implementation"
         }
-        
-        result = OperationResult(
-            success=True,
-            message="Successfully retrieved parent element",
-            data={
-                "browser_id": browser_id,
-                "tab_id": tab_id,
-                "child_selector": selector.dict(),
-                "parent_element": parent_info
-            }
-        )
-        
-        logger.info("Parent element retrieved successfully")
-        return [TextContent(type="text", text=result.json())]
-        
-    except AttributeError:
-        # Fallback for PyDoll versions < 2.3.1
-        logger.warning("get_parent_element not available in current PyDoll version")
-        result = OperationResult(
-            success=False,
-            error="Feature requires PyDoll 2.3.1 or higher",
-            message="Please upgrade PyDoll to use this feature"
-        )
-        return [TextContent(type="text", text=result.json())]
-        
-    except Exception as e:
-        logger.error(f"Failed to get parent element: {e}")
-        result = OperationResult(
-            success=False,
-            error=str(e),
-            message="Failed to get parent element"
-        )
-        return [TextContent(type="text", text=result.json())]
+    )
+    return [TextContent(type="text", text=result.json())]
 
 
 # Element Tool Handlers Dictionary

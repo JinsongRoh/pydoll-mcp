@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.15
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.16
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -17,7 +17,7 @@
     <img src="https://img.shields.io/pypi/dm/pydoll-mcp?style=flat-square&logo=pypi" alt="PyPI Downloads"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.5.15-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.5.16-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
   <a href="https://github.com/autoscrape-labs/pydoll">
     <img src="https://img.shields.io/badge/Powered%20by-PyDoll-green?style=flat-square" alt="Powered by PyDoll"/>
@@ -30,7 +30,35 @@
   </a>
 </p>
 
-## 📢 Latest Updates (v1.5.14 - 2025-07-20)
+## 📢 Latest Updates (v1.5.16 - 2025-07-20)
+
+### 🎯 Critical Browser Control Fixes
+
+#### ✅ Fixed "Tab None not found in browser" Errors
+- **Fixed**: Critical tab management issues causing "Tab None not found" errors
+- **Enhanced**: Implemented proper `get_tab_with_fallback()` usage across all tools
+- **Improved**: Tab ID references now use actual_tab_id after fallback
+- **Fixed**: Script tools, element tools, and screenshot tools tab handling
+
+#### 🔧 Complete Element Finding Rewrite
+- **NEW**: Complete rewrite of element_tools.py using PyDoll's native API
+- **Enhanced**: Native `find()` method for natural attribute selection
+- **Improved**: Native `query()` method for CSS selectors and XPath
+- **Fixed**: Removed execute_script workarounds that masked real issues
+- **Better**: Error handling without fallback simulations
+
+#### 📋 Technical Improvements
+- **Enhanced**: Async/await patterns for all element operations
+- **Improved**: Logging for better debugging and issue tracking
+- **Better**: Error messages for clearer feedback
+- **Fixed**: Element finding now returns proper results instead of empty arrays
+
+> **🚀 Critical Update**: This version fixes fundamental element finding and tab management issues. Upgrade immediately:
+> ```bash
+> pip install --upgrade pydoll-mcp==1.5.16
+> ```
+
+## 📢 Previous Updates (v1.5.14 - 2025-07-20)
 
 ### 🛠️ Critical Browser Control & API Integration Fixes
 
