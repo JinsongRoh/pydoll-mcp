@@ -278,8 +278,16 @@ class BrowserManager:
         if not ChromiumOptions:
             raise RuntimeError("PyDoll not available - ChromiumOptions not imported")
         
-        # Create cache key from kwargs
-        cache_key = hash(frozenset(kwargs.items()))
+        # Create cache key from kwargs (convert lists to tuples for hashability)
+        def make_hashable(obj):
+            if isinstance(obj, list):
+                return tuple(obj)
+            elif isinstance(obj, dict):
+                return tuple(sorted((k, make_hashable(v)) for k, v in obj.items()))
+            return obj
+        
+        hashable_kwargs = {k: make_hashable(v) for k, v in kwargs.items()}
+        cache_key = hash(frozenset(hashable_kwargs.items()))
         
         # Check cache first
         if cache_key in self._options_cache:

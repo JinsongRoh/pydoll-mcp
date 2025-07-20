@@ -316,21 +316,89 @@ async def handle_stop_browser(arguments: Dict[str, Any]) -> Sequence[TextContent
 # Placeholder handlers for remaining browser tools
 async def handle_list_browsers(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle list browsers request."""
-    result = OperationResult(
-        success=True,
-        message="Found 2 active browsers",
-        data={"browsers": [], "count": 2}
-    )
+    from pydoll_mcp.browser_manager import browser_manager
+    
+    try:
+        browsers_info = []
+        for browser_id, instance in browser_manager.browsers.items():
+            browser_info = {
+                "id": browser_id,
+                "type": instance.browser_type,
+                "active": instance.browser is not None,
+                "tabs": len(instance.tabs),
+                "created_at": instance.created_at.isoformat(),
+                "stats": instance.stats
+            }
+            browsers_info.append(browser_info)
+        
+        result = OperationResult(
+            success=True,
+            message=f"Found {len(browsers_info)} active browsers",
+            data={
+                "browsers": browsers_info,
+                "count": len(browsers_info),
+                "global_stats": browser_manager.global_stats if arguments.get("include_stats", True) else None
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to list browsers: {e}", exc_info=True)
+        result = OperationResult(
+            success=False,
+            error=str(e),
+            message="Failed to list browsers"
+        )
+    
     return [TextContent(type="text", text=result.json())]
 
 
 async def handle_get_browser_status(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle get browser status request."""
-    result = OperationResult(
-        success=True,
-        message="Browser status retrieved",
-        data={"status": "active", "uptime": "15m"}
-    )
+    from pydoll_mcp.browser_manager import browser_manager
+    
+    browser_id = arguments.get("browser_id")
+    if not browser_id:
+        result = OperationResult(
+            success=False,
+            error="browser_id is required",
+            message="Missing required parameter"
+        )
+        return [TextContent(type="text", text=result.json())]
+    
+    try:
+        instance = browser_manager.browsers.get(browser_id)
+        if not instance:
+            result = OperationResult(
+                success=False,
+                error=f"Browser {browser_id} not found",
+                message="Browser not found"
+            )
+        else:
+            from datetime import datetime
+            uptime = datetime.now() - instance.created_at
+            uptime_str = f"{int(uptime.total_seconds() // 60)}m"
+            
+            result = OperationResult(
+                success=True,
+                message="Browser status retrieved",
+                data={
+                    "id": browser_id,
+                    "type": instance.browser_type,
+                    "status": "active" if instance.browser else "inactive",
+                    "uptime": uptime_str,
+                    "tabs": len(instance.tabs),
+                    "active_tab": instance.active_tab,
+                    "created_at": instance.created_at.isoformat(),
+                    "stats": instance.stats
+                }
+            )
+    except Exception as e:
+        logger.error(f"Failed to get browser status: {e}", exc_info=True)
+        result = OperationResult(
+            success=False,
+            error=str(e),
+            message="Failed to get browser status"
+        )
+    
     return [TextContent(type="text", text=result.json())]
 
 
