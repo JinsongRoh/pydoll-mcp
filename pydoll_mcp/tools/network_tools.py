@@ -335,7 +335,7 @@ async def handle_intercept_network_requests(arguments: Dict[str, Any]) -> Sequen
             message="Failed to manage network interception"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_get_network_logs(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle network logs retrieval."""
@@ -383,7 +383,7 @@ async def handle_get_network_logs(arguments: Dict[str, Any]) -> Sequence[TextCon
             message="Failed to retrieve network logs"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_block_requests(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle request blocking."""
@@ -412,7 +412,7 @@ async def handle_block_requests(arguments: Dict[str, Any]) -> Sequence[TextConte
             message="Failed to block requests"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_modify_request_headers(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle request header modification."""
@@ -438,7 +438,7 @@ async def handle_modify_request_headers(arguments: Dict[str, Any]) -> Sequence[T
             message="Failed to modify headers"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_extract_api_responses(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle API response extraction."""
@@ -474,7 +474,7 @@ async def handle_extract_api_responses(arguments: Dict[str, Any]) -> Sequence[Te
             message="Failed to extract API responses"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_monitor_websockets(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle WebSocket monitoring."""
@@ -511,7 +511,7 @@ async def handle_monitor_websockets(arguments: Dict[str, Any]) -> Sequence[TextC
             message="Failed to monitor WebSockets"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_analyze_performance(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle performance analysis - duplicate from advanced_tools for completeness."""
@@ -547,7 +547,7 @@ async def handle_analyze_performance(arguments: Dict[str, Any]) -> Sequence[Text
             message="Failed to analyze performance"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_throttle_network(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle network throttling."""
@@ -582,7 +582,7 @@ async def handle_throttle_network(arguments: Dict[str, Any]) -> Sequence[TextCon
             message="Failed to throttle network"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_clear_cache(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle cache clearing."""
@@ -610,7 +610,7 @@ async def handle_clear_cache(arguments: Dict[str, Any]) -> Sequence[TextContent]
             message="Failed to clear cache"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_save_har(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle HAR file saving."""
@@ -646,7 +646,7 @@ async def handle_save_har(arguments: Dict[str, Any]) -> Sequence[TextContent]:
             message="Failed to save HAR file"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 # Tool Handlers Registry
 NETWORK_TOOL_HANDLERS = {

@@ -265,7 +265,7 @@ async def handle_upload_file(arguments: Dict[str, Any]) -> Sequence[TextContent]
             message="Failed to upload file"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_download_file(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle file download."""
@@ -296,7 +296,7 @@ async def handle_download_file(arguments: Dict[str, Any]) -> Sequence[TextConten
             message="Failed to download file"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_manage_downloads(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle download management."""
@@ -342,7 +342,7 @@ async def handle_manage_downloads(arguments: Dict[str, Any]) -> Sequence[TextCon
             message=f"Failed to {action} downloads"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_extract_data(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle data extraction."""
@@ -379,7 +379,7 @@ async def handle_extract_data(arguments: Dict[str, Any]) -> Sequence[TextContent
             message="Failed to extract data"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_export_to_csv(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle CSV export."""
@@ -414,7 +414,7 @@ async def handle_export_to_csv(arguments: Dict[str, Any]) -> Sequence[TextConten
             message="Failed to export to CSV"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_export_to_json(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle JSON export."""
@@ -448,7 +448,7 @@ async def handle_export_to_json(arguments: Dict[str, Any]) -> Sequence[TextConte
             message="Failed to export to JSON"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_save_session(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle session saving."""
@@ -483,7 +483,7 @@ async def handle_save_session(arguments: Dict[str, Any]) -> Sequence[TextContent
             message="Failed to save session"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_load_session(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle session loading."""
@@ -516,7 +516,7 @@ async def handle_load_session(arguments: Dict[str, Any]) -> Sequence[TextContent
             message="Failed to load session"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 # Tool Handlers Registry
 FILE_TOOL_HANDLERS = {

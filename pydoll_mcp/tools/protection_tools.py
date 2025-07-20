@@ -320,7 +320,7 @@ async def handle_enable_stealth_mode(arguments: Dict[str, Any]) -> Sequence[Text
             message="Failed to enable stealth mode"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_bypass_cloudflare(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle Cloudflare bypass attempts."""
@@ -349,7 +349,7 @@ async def handle_bypass_cloudflare(arguments: Dict[str, Any]) -> Sequence[TextCo
             message="Failed to bypass Cloudflare protection"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_bypass_recaptcha(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle reCAPTCHA bypass attempts."""
@@ -377,7 +377,7 @@ async def handle_bypass_recaptcha(arguments: Dict[str, Any]) -> Sequence[TextCon
             message="Failed to bypass reCAPTCHA"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_simulate_human_behavior(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle human behavior simulation."""
@@ -409,7 +409,7 @@ async def handle_simulate_human_behavior(arguments: Dict[str, Any]) -> Sequence[
             message="Failed to simulate human behavior"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_randomize_fingerprint(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle fingerprint randomization."""
@@ -435,7 +435,7 @@ async def handle_randomize_fingerprint(arguments: Dict[str, Any]) -> Sequence[Te
             message="Failed to randomize fingerprint"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_set_user_agent(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle user agent setting."""
@@ -467,7 +467,7 @@ async def handle_set_user_agent(arguments: Dict[str, Any]) -> Sequence[TextConte
             message="Failed to set user agent"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_bot_detection(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle bot detection challenges."""
@@ -493,7 +493,7 @@ async def handle_bot_detection(arguments: Dict[str, Any]) -> Sequence[TextConten
             message="Failed to handle bot detection"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_evade_detection(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle detection evasion."""
@@ -523,7 +523,7 @@ async def handle_evade_detection(arguments: Dict[str, Any]) -> Sequence[TextCont
             message="Failed to evade detection"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_rotate_proxy(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle proxy rotation."""
@@ -553,7 +553,7 @@ async def handle_rotate_proxy(arguments: Dict[str, Any]) -> Sequence[TextContent
             message="Failed to rotate proxy"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_check_protection_status(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle protection status check."""
@@ -583,7 +583,7 @@ async def handle_check_protection_status(arguments: Dict[str, Any]) -> Sequence[
             message="Failed to check protection status"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_spoof_headers(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle header spoofing."""
@@ -614,7 +614,7 @@ async def handle_spoof_headers(arguments: Dict[str, Any]) -> Sequence[TextConten
             message="Failed to spoof headers"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 async def handle_randomize_timing(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle timing randomization."""
@@ -644,7 +644,7 @@ async def handle_randomize_timing(arguments: Dict[str, Any]) -> Sequence[TextCon
             message="Failed to randomize timing"
         )
     
-    return [TextContent(type="text", text=json.dumps(result.to_dict()))]
+    return [TextContent(type="text", text=json.dumps(result.dict()))]
 
 # Tool Handlers Registry
 PROTECTION_TOOL_HANDLERS = {

@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.13
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.15
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -17,7 +17,7 @@
     <img src="https://img.shields.io/pypi/dm/pydoll-mcp?style=flat-square&logo=pypi" alt="PyPI Downloads"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.5.13-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.5.15-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
   <a href="https://github.com/autoscrape-labs/pydoll">
     <img src="https://img.shields.io/badge/Powered%20by-PyDoll-green?style=flat-square" alt="Powered by PyDoll"/>
@@ -30,7 +30,40 @@
   </a>
 </p>
 
-## 📢 Latest Updates (v1.5.13 - 2025-07-20)
+## 📢 Latest Updates (v1.5.14 - 2025-07-20)
+
+### 🛠️ Critical Browser Control & API Integration Fixes
+
+#### ✅ Fixed Tab Management Issues (Critical)
+- **Fixed**: Tab closing operations now actually close browser tabs instead of just reporting success
+- **Enhanced**: Added real PyDoll API integration for `close_tab()` with `await tab.close()` calls
+- **Improved**: Tab state synchronization between API responses and actual browser state
+- **Fixed**: Tab management disconnect that caused commands to report success without browser changes
+
+#### 🔄 Enhanced Page Refresh Functionality
+- **Fixed**: `'Tab' object has no attribute 'reload'` error in refresh operations
+- **Added**: PyDoll API compatibility checks with multiple fallback methods
+- **Enhanced**: Uses correct PyDoll methods: `tab.refresh()`, `tab.reload()`, or JavaScript fallbacks
+- **Improved**: Robust error handling and graceful degradation for refresh operations
+
+#### 🎯 Real Browser Control Integration
+- **Enhanced**: Direct PyDoll-python API calls instead of simulation responses
+- **Added**: Proper browser-API state synchronization for all tab operations
+- **Improved**: Error logging and debugging for browser control operations
+- **Fixed**: Disconnection between MCP responses and actual browser behavior
+
+#### 🚀 Deployment & Automation Improvements
+- **Added**: Comprehensive GitHub Actions workflow for automated releases
+- **Enhanced**: PyPI deployment automation with security best practices
+- **New**: Smithery.ai registry auto-update functionality
+- **Improved**: Release notes generation and deployment verification
+
+> **🚀 Critical Update**: This version fixes fundamental browser control issues. Upgrade immediately:
+> ```bash
+> pip install --upgrade pydoll-mcp
+> ```
+
+## 📢 Previous Updates (v1.5.13 - 2025-07-20)
 
 ### 🪟 Windows Compatibility & Enhanced Search Automation
 
@@ -59,11 +92,6 @@
 - **Enhanced**: Automated testing for element finding and search automation
 - **Improved**: Cross-platform compatibility verification
 - **New**: Performance benchmarking and regression testing
-
-> **🚀 Major Upgrade**: Windows users and search automation enthusiasts should upgrade immediately:
-> ```bash
-> pip install --upgrade pydoll-mcp
-> ```
 
 ## 📢 Previous Updates (v1.5.9 - 2025-07-20)
 
@@ -361,7 +389,7 @@ PyDoll MCP Server brings the groundbreaking capabilities of PyDoll to Claude, Op
 pip install pydoll-mcp
 ```
 
-**NEW in v1.5.12**: Enhanced Tab Management and Connection Stability! 🎉
+**NEW in v1.5.14**: Critical Browser Control Fixes - Real Tab Management! 🎉
 
 After installation, you'll see:
 ```

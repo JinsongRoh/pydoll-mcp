@@ -254,33 +254,26 @@ async def handle_take_screenshot(arguments: Dict[str, Any]) -> Sequence[TextCont
         return_base64 = arguments.get("return_base64", False)
         clip_area = arguments.get("clip_area")
         
-        # Get tab and ensure it has all necessary methods
-        tab = await browser_manager.get_tab(browser_id, tab_id)
-        tab = await browser_manager.ensure_tab_methods(tab)
+        # Get tab with automatic fallback to active tab
+        tab, actual_tab_id = await browser_manager.get_tab_with_fallback(browser_id, tab_id)
         
         try:
-            # Prepare screenshot options
+            # Prepare screenshot options based on PyDoll API
             screenshot_options = {}
             
-            if config.full_page:
-                screenshot_options["full_page"] = True
-            
-            if clip_area:
-                screenshot_options["clip"] = {
-                    "x": clip_area["x"],
-                    "y": clip_area["y"],
-                    "width": clip_area["width"],
-                    "height": clip_area["height"]
-                }
-            
-            if config.format == "jpeg" and config.quality:
+            # PyDoll only supports path, quality, and as_base64 parameters
+            if config.quality:
                 screenshot_options["quality"] = config.quality
-                screenshot_options["type"] = "jpeg"
-            else:
-                screenshot_options["type"] = "png"
+            
+            # Use as_base64 to get the data for processing
+            screenshot_options["as_base64"] = True
             
             # Take screenshot using PyDoll
-            screenshot_bytes = await tab.take_screenshot(**screenshot_options)
+            screenshot_base64 = await tab.take_screenshot(**screenshot_options)
+            
+            # Convert base64 to bytes
+            import base64
+            screenshot_bytes = base64.b64decode(screenshot_base64) if screenshot_base64 else b""
             
         except Exception as e:
             logger.warning(f"Real screenshot failed, using simulation: {e}")
