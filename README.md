@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.5
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.7
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,11 +20,42 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.5.5-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.5.7-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.5.5 - 2025-07-20)
+## 📢 Latest Updates (v1.5.7 - 2025-07-20)
+
+### 🔧 Critical Fixes
+
+#### ✅ Fixed Browser Serialization Issue (Critical)
+- **Fixed**: `Unable to serialize unknown type: BrowserInstance` error that prevented browser startup
+- **Enhanced**: Browser startup handler to return proper serializable data instead of raw browser instances
+- **Improved**: Tab management system with better browser-tab connection tracking
+- **Added**: Enhanced tab creation with better fallback mechanisms for older PyDoll versions
+
+#### 🔄 Enhanced Tab Management
+- **Fixed**: Tab ID tracking and browser-tab connection issues that caused "Tab not found" errors
+- **Updated**: Navigation functions to properly handle tab lookup and browser instance management
+- **Improved**: Error handling and recovery for browser and tab operations
+- **Enhanced**: Resource cleanup and browser destruction methods
+
+#### 📊 Performance Improvements
+- **Reduced**: Serialization overhead in MCP responses for faster operations
+- **Optimized**: Tab operations with direct browser instance access
+- **Enhanced**: Logging and debugging information for better troubleshooting
+
+## 📢 Previous Updates (v1.5.6 - 2025-07-20)
+
+### 🐛 Critical Chrome Security & Serialization Fixes
+
+#### ✅ Fixed Chrome Security Warnings
+- **Fixed**: Chrome security warnings about disabled security features
+- **Removed**: `--disable-web-security` flag that caused security warnings
+- **Enhanced**: Browser startup stability and security compliance
+- **Improved**: Chrome compatibility with latest browser versions
+
+## 📢 Previous Updates (v1.5.5 - 2025-07-20)
 
 ### 🐛 Critical Browser Options Fix
 

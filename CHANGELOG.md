@@ -16,6 +16,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.5.7] - 2025-07-20
+
+### 🔧 Critical Fixes
+
+#### 🐛 Bug Fixes
+- **Fixed Browser Serialization Issue**: Resolved `Unable to serialize unknown type: BrowserInstance` error that prevented browser startup
+- **Fixed Tab Management**: Corrected tab ID tracking and browser-tab connection issues
+- **Enhanced Tab Creation**: Improved new tab creation with better fallback mechanisms for older PyDoll versions
+- **Fixed Navigation Tools**: Updated navigation functions to properly handle tab lookup and browser instance management
+- **Improved Error Handling**: Better error reporting and recovery for browser and tab operations
+
+#### 🔄 Internal Improvements
+- **Browser Instance Management**: Updated `handle_start_browser` to return proper serializable data instead of raw browser instances
+- **Tab Resolution**: Enhanced tab finding logic to support both explicit tab IDs and automatic tab selection
+- **Backward Compatibility**: Maintained compatibility with existing PyDoll installations while fixing core issues
+- **Resource Cleanup**: Improved browser destruction methods for better resource management
+
+#### 📊 Performance
+- **Reduced Serialization Overhead**: Eliminated unnecessary object serialization in MCP responses
+- **Faster Tab Operations**: Optimized tab creation and navigation with direct browser instance access
+- **Enhanced Logging**: Better error tracking and debugging information for troubleshooting
+
+This release specifically addresses the critical browser startup and tab management issues identified in v1.5.6.
+
 ## [1.5.0] - 2025-07-20
 
 ### 🚀 Major Performance and Quality Update

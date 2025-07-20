@@ -223,8 +223,26 @@ async def handle_navigate_to(arguments: Dict[str, Any]) -> Sequence[TextContent]
         except Exception:
             raise ValueError(f"Invalid URL: {url}")
         
-        # Get tab and ensure it has all necessary methods
-        tab = await browser_manager.get_tab(browser_id, tab_id)
+        # Get browser instance
+        browser_instance = await browser_manager.get_browser(browser_id)
+        if not browser_instance:
+            raise ValueError(f"Browser {browser_id} not found")
+        
+        # Get tab - if tab_id is provided, use it; otherwise use the first available tab or browser.tab
+        if tab_id:
+            tab = browser_instance.tabs.get(tab_id)
+            if not tab:
+                raise ValueError(f"Tab {tab_id} not found in browser {browser_id}")
+        else:
+            # Use the first available tab or browser.tab
+            if browser_instance.tabs:
+                tab = next(iter(browser_instance.tabs.values()))
+            elif hasattr(browser_instance.browser, 'tab'):
+                tab = browser_instance.browser.tab
+            else:
+                raise ValueError(f"No tabs available in browser {browser_id}")
+        
+        # Ensure tab has all necessary methods
         tab = await browser_manager.ensure_tab_methods(tab)
         
         # Navigate with PyDoll compatible options (updated in v1.4.1)

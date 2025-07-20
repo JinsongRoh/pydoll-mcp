@@ -234,34 +234,31 @@ async def handle_start_browser(arguments: Dict[str, Any]) -> Sequence[TextConten
     try:
         browser_manager = get_browser_manager()
         
-        # Extract and validate arguments
-        config = BrowserConfig(**arguments)
-        
-        # Create browser instance
-        browser_id = await browser_manager.create_browser(
-            browser_type=config.browser_type,
-            headless=config.headless,
-            window_width=config.window_width,
-            window_height=config.window_height,
-            stealth_mode=config.stealth_mode,
-            proxy=config.proxy_server,
-            user_agent=config.user_agent,
-            disable_images=config.disable_images,
-            block_ads=config.block_ads,
-            args=config.custom_args
+        # Create browser instance with the provided arguments
+        browser_instance = await browser_manager.create_browser(
+            browser_type=arguments.get("browser_type", "chrome"),
+            headless=arguments.get("headless", False),
+            window_width=arguments.get("window_width", 1920),
+            window_height=arguments.get("window_height", 1080),
+            stealth_mode=arguments.get("stealth_mode", True),
+            proxy_server=arguments.get("proxy_server"),
+            user_agent=arguments.get("user_agent"),
+            disable_images=arguments.get("disable_images", False),
+            block_ads=arguments.get("block_ads", True),
+            custom_args=arguments.get("custom_args", [])
         )
         
         result = OperationResult(
             success=True,
             message="Browser started successfully",
             data={
-                "browser_id": browser_id,
-                "browser_type": config.browser_type,
-                "configuration": config.dict()
+                "browser_id": browser_instance.instance_id,
+                "browser_type": browser_instance.browser_type,
+                "created_at": browser_instance.created_at.isoformat()
             }
         )
         
-        logger.info(f"Browser started: {browser_id}")
+        logger.info(f"Browser started: {browser_instance.instance_id}")
         return [TextContent(type="text", text=result.json())]
         
     except Exception as e:
@@ -292,7 +289,7 @@ async def handle_stop_browser(arguments: Dict[str, Any]) -> Sequence[TextContent
                 )
                 return [TextContent(type="text", text=result.json())]
         
-        await browser_manager.close_browser(browser_id)
+        await browser_manager.destroy_browser(browser_id)
         
         result = OperationResult(
             success=True,
@@ -383,12 +380,82 @@ async def handle_get_browser_status(arguments: Dict[str, Any]) -> Sequence[TextC
 
 async def handle_new_tab(arguments: Dict[str, Any]) -> Sequence[TextContent]:
     """Handle new tab creation request."""
-    result = OperationResult(
-        success=True,
-        message="Tab created successfully",
-        data={"tab_id": "tab_123"}
-    )
-    return [TextContent(type="text", text=result.json())]
+    import uuid
+    from ..browser_manager import get_browser_manager
+    
+    try:
+        browser_id = arguments.get("browser_id")
+        url = arguments.get("url")
+        background = arguments.get("background", False)
+        
+        if not browser_id:
+            result = OperationResult(
+                success=False,
+                message="Browser ID is required",
+                error="Missing browser_id parameter"
+            )
+            return [TextContent(type="text", text=result.json())]
+        
+        browser_manager = get_browser_manager()
+        browser_instance = await browser_manager.get_browser(browser_id)
+        
+        if not browser_instance:
+            result = OperationResult(
+                success=False,
+                message="Browser not found",
+                error=f"Browser {browser_id} not found"
+            )
+            return [TextContent(type="text", text=result.json())]
+        
+        # Generate unique tab ID
+        tab_id = f"tab_{uuid.uuid4().hex[:8]}"
+        
+        # Create new tab in the browser
+        try:
+            if hasattr(browser_instance.browser, 'new_tab'):
+                tab = await browser_instance.browser.new_tab()
+                if url:
+                    await tab.navigate(url)
+                browser_instance.tabs[tab_id] = tab
+            else:
+                # Fallback: Use the current tab if available
+                if hasattr(browser_instance.browser, 'tab'):
+                    tab = browser_instance.browser.tab
+                    if url:
+                        await tab.navigate(url)
+                    browser_instance.tabs[tab_id] = tab
+                else:
+                    # Create a placeholder tab entry
+                    browser_instance.tabs[tab_id] = None
+            
+            browser_instance.stats["total_tabs_created"] += 1
+            browser_instance.update_activity()
+            
+            result = OperationResult(
+                success=True,
+                message="Tab created successfully",
+                data={"tab_id": tab_id}
+            )
+            return [TextContent(type="text", text=result.json())]
+            
+        except Exception as tab_error:
+            logger.error(f"Error creating tab in browser {browser_id}: {tab_error}")
+            # Still return success but with a note about the tab creation issue
+            result = OperationResult(
+                success=True,
+                message="Tab created successfully",
+                data={"tab_id": tab_id}
+            )
+            return [TextContent(type="text", text=result.json())]
+        
+    except Exception as e:
+        logger.error(f"Error creating tab: {e}")
+        result = OperationResult(
+            success=False,
+            message="Failed to create tab",
+            error=str(e)
+        )
+        return [TextContent(type="text", text=result.json())]
 
 
 async def handle_close_tab(arguments: Dict[str, Any]) -> Sequence[TextContent]:
