@@ -311,24 +311,31 @@ async def handle_find_element(arguments: Dict[str, Any]) -> Sequence[TextContent
         
         try:
             if selector_args.get("css_selector"):
-                # Use CSS selector - PyDoll doesn't have find_by_css_selector, use execute_script
+                # Enhanced CSS selector with multiple fallback strategies
                 selector = selector_args["css_selector"]
                 script = f'''
                     const elements = document.querySelectorAll('{selector}');
                     const results = [];
                     for (let el of elements) {{
+                        const style = window.getComputedStyle(el);
+                        const rect = el.getBoundingClientRect();
                         results.push({{
                             tagName: el.tagName,
-                            text: el.textContent || '',
+                            text: el.textContent ? el.textContent.trim() : '',
+                            innerText: el.innerText ? el.innerText.trim() : '',
                             id: el.id || '',
                             className: el.className || '',
                             name: el.name || '',
                             type: el.type || '',
                             placeholder: el.placeholder || '',
                             value: el.value || '',
-                            visible: el.offsetWidth > 0 && el.offsetHeight > 0,
-                            enabled: !el.disabled,
-                            bounds: el.getBoundingClientRect()
+                            visible: rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none',
+                            enabled: !el.disabled && !el.hasAttribute('disabled'),
+                            bounds: rect,
+                            ariaLabel: el.getAttribute('aria-label') || '',
+                            role: el.getAttribute('role') || '',
+                            dataTestId: el.getAttribute('data-testid') || '',
+                            dataId: el.getAttribute('data-id') || ''
                         }});
                         if (!{find_all}) break;
                     }}
@@ -389,15 +396,20 @@ async def handle_find_element(arguments: Dict[str, Any]) -> Sequence[TextContent
                                 self.class_name = data.get('className', '')
                         elements = [MockElement(data) for data in elements_data]
             elif search_params:
-                # PyDoll doesn't have a find method, use execute_script with attribute search
+                # Enhanced attribute-based search with smart fallbacks
                 conditions = []
+                fuzzy_conditions = []  # For fallback fuzzy matching
+                
                 for key, value in search_params.items():
                     if key == 'tag_name':
                         conditions.append(f"el.tagName.toLowerCase() === '{value.lower()}'")
                     elif key == 'text':
-                        conditions.append(f"el.textContent.includes('{value}')")
+                        # Exact match first, then fuzzy
+                        conditions.append(f"(el.textContent && el.textContent.trim().includes('{value}'))")
+                        fuzzy_conditions.append(f"(el.textContent && el.textContent.toLowerCase().includes('{value.lower()}'))")
                     elif key == 'id':
                         conditions.append(f"el.id === '{value}'")
+                        fuzzy_conditions.append(f"el.id.includes('{value}')")
                     elif key == 'class_name':
                         conditions.append(f"el.className.includes('{value}')")
                     elif key == 'name':
@@ -406,6 +418,7 @@ async def handle_find_element(arguments: Dict[str, Any]) -> Sequence[TextContent
                         conditions.append(f"el.type === '{value}'")
                     elif key == 'placeholder':
                         conditions.append(f"el.placeholder === '{value}'")
+                        fuzzy_conditions.append(f"(el.placeholder && el.placeholder.toLowerCase().includes('{value.lower()}'))")
                     elif key == 'value':
                         conditions.append(f"el.value === '{value}'")
                     elif key.startswith('data-'):
@@ -413,29 +426,100 @@ async def handle_find_element(arguments: Dict[str, Any]) -> Sequence[TextContent
                     elif key.startswith('aria-') or key == 'role':
                         conditions.append(f"el.getAttribute('{key}') === '{value}'")
                 
+                # Primary search with exact conditions
                 condition_str = ' && '.join(conditions) if conditions else 'true'
+                
                 script = f'''
-                    const allElements = document.querySelectorAll('*');
-                    const results = [];
-                    for (let el of allElements) {{
-                        if ({condition_str}) {{
-                            results.push({{
-                                tagName: el.tagName,
-                                text: el.textContent || '',
-                                id: el.id || '',
-                                className: el.className || '',
-                                name: el.name || '',
-                                type: el.type || '',
-                                placeholder: el.placeholder || '',
-                                value: el.value || '',
-                                visible: el.offsetWidth > 0 && el.offsetHeight > 0,
-                                enabled: !el.disabled,
-                                bounds: el.getBoundingClientRect()
-                            }});
-                            if (!{find_all}) break;
+                    // Enhanced element search with multiple strategies
+                    function findElementsWithFallback() {{
+                        let results = [];
+                        
+                        // Strategy 1: Exact attribute matching
+                        const allElements = document.querySelectorAll('*');
+                        for (let el of allElements) {{
+                            const style = window.getComputedStyle(el);
+                            const rect = el.getBoundingClientRect();
+                            
+                            if ({condition_str}) {{
+                                results.push({{
+                                    tagName: el.tagName,
+                                    text: el.textContent ? el.textContent.trim() : '',
+                                    innerText: el.innerText ? el.innerText.trim() : '',
+                                    id: el.id || '',
+                                    className: el.className || '',
+                                    name: el.name || '',
+                                    type: el.type || '',
+                                    placeholder: el.placeholder || '',
+                                    value: el.value || '',
+                                    visible: rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none',
+                                    enabled: !el.disabled && !el.hasAttribute('disabled'),
+                                    bounds: rect,
+                                    ariaLabel: el.getAttribute('aria-label') || '',
+                                    role: el.getAttribute('role') || '',
+                                    dataTestId: el.getAttribute('data-testid') || '',
+                                    dataId: el.getAttribute('data-id') || '',
+                                    searchStrategy: 'exact'
+                                }});
+                                if (!{find_all}) return results;
+                            }}
                         }}
+                        
+                        // Strategy 2: Common input element selectors (Windows compatibility)
+                        if (results.length === 0) {{
+                            const commonSelectors = [
+                                'input[type="text"]',
+                                'input[type="search"]', 
+                                'input[name="q"]',
+                                'input[name="query"]',
+                                'input[name="search"]',
+                                'textarea[name="q"]',
+                                'textarea[placeholder*="search" i]',
+                                'textarea[placeholder*="검색" i]',
+                                '[role="searchbox"]',
+                                '[role="combobox"]',
+                                '.search-input',
+                                '#search',
+                                '#query'
+                            ];
+                            
+                            for (let selector of commonSelectors) {{
+                                try {{
+                                    const els = document.querySelectorAll(selector);
+                                    for (let el of els) {{
+                                        const style = window.getComputedStyle(el);
+                                        const rect = el.getBoundingClientRect();
+                                        if (rect.width > 0 && rect.height > 0) {{
+                                            results.push({{
+                                                tagName: el.tagName,
+                                                text: el.textContent ? el.textContent.trim() : '',
+                                                innerText: el.innerText ? el.innerText.trim() : '',
+                                                id: el.id || '',
+                                                className: el.className || '',
+                                                name: el.name || '',
+                                                type: el.type || '',
+                                                placeholder: el.placeholder || '',
+                                                value: el.value || '',
+                                                visible: rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none',
+                                                enabled: !el.disabled && !el.hasAttribute('disabled'),
+                                                bounds: rect,
+                                                ariaLabel: el.getAttribute('aria-label') || '',
+                                                role: el.getAttribute('role') || '',
+                                                dataTestId: el.getAttribute('data-testid') || '',
+                                                dataId: el.getAttribute('data-id') || '',
+                                                searchStrategy: 'common_selectors',
+                                                matchedSelector: selector
+                                            }});
+                                            if (!{find_all}) return results;
+                                        }}
+                                    }}
+                                }} catch(e) {{ /* ignore selector errors */ }}
+                            }}
+                        }}
+                        
+                        return results;
                     }}
-                    return results;
+                    
+                    return findElementsWithFallback();
                 '''
                 result = await tab.execute_script(script)
                 elements = []

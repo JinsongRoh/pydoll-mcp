@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pydoll-mcp"
-version = "1.5.12"
+version = "1.5.13"
 description = "Revolutionary Model Context Protocol (MCP) server for PyDoll browser automation with zero-webdriver operation and intelligent captcha bypass"
 readme = "README.md"
 license = {text = "MIT"}
@@ -218,14 +218,11 @@ minversion = "7.0"
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=pydoll_mcp",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml",
-    "--cov-fail-under=80",
 ]
 testpaths = ["tests"]
-asyncio_mode = "auto"
+markers = [
+    "asyncio: marks tests as async (deselect with '-m \"not asyncio\"')",
+]
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",

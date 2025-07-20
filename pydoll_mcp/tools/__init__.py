@@ -18,6 +18,7 @@ from .advanced_tools import ADVANCED_TOOLS, ADVANCED_TOOL_HANDLERS
 from .protection_tools import PROTECTION_TOOLS, PROTECTION_TOOL_HANDLERS
 from .network_tools import NETWORK_TOOLS, NETWORK_TOOL_HANDLERS
 from .file_tools import FILE_TOOLS, FILE_TOOL_HANDLERS
+from .search_automation import SEARCH_AUTOMATION_TOOLS, SEARCH_AUTOMATION_TOOL_HANDLERS
 
 # Combine all tools and handlers
 ALL_TOOLS = (
@@ -29,7 +30,8 @@ ALL_TOOLS = (
     ADVANCED_TOOLS +
     PROTECTION_TOOLS +
     NETWORK_TOOLS +
-    FILE_TOOLS
+    FILE_TOOLS +
+    SEARCH_AUTOMATION_TOOLS
 )
 
 ALL_TOOL_HANDLERS = {
@@ -42,6 +44,7 @@ ALL_TOOL_HANDLERS = {
     **PROTECTION_TOOL_HANDLERS,
     **NETWORK_TOOL_HANDLERS,
     **FILE_TOOL_HANDLERS,
+    **SEARCH_AUTOMATION_TOOL_HANDLERS,
 }
 
 # Tool categories for organization

@@ -386,6 +386,17 @@ class BrowserManager:
             except Exception:
                 pass
         
+        # Windows-specific optimizations for better compatibility
+        if os.name == 'nt':  # Windows
+            try:
+                # Windows-specific Chrome arguments for better stability
+                options.add_argument("--disable-features=VizDisplayCompositor,VizHitTestSurfaceLayer")
+                options.add_argument("--disable-backgrounding-occluded-windows")
+                options.add_argument("--disable-renderer-backgrounding")
+                options.add_argument("--force-device-scale-factor=1")
+            except Exception:
+                pass
+        
         # Memory and CPU optimizations
         performance_args = [
             "--memory-pressure-off",
@@ -509,6 +520,14 @@ class BrowserManager:
                 # Store the tab reference in browser object for compatibility
                 instance.browser.tab = initial_tab
                 logger.info(f"Registered initial tab from browser.start(): {default_tab_id}")
+                
+                # Enhanced Windows compatibility: Wait for tab to be fully ready
+                try:
+                    await asyncio.sleep(1)  # Give tab time to initialize
+                    # Try to get tab title to ensure it's ready
+                    await self._ensure_tab_ready(initial_tab, default_tab_id)
+                except Exception as e:
+                    logger.warning(f"Tab initialization check failed: {e}")
             else:
                 # This should never happen with PyDoll
                 logger.error("CRITICAL: No initial tab returned from browser.start() - this is unexpected!")
@@ -684,6 +703,36 @@ class BrowserManager:
         
         return stats
     
+    async def _ensure_tab_ready(self, tab, tab_id: str):
+        """Enhanced tab readiness check for Windows compatibility."""
+        try:
+            # Try multiple methods to ensure tab is ready
+            max_attempts = 5
+            for attempt in range(max_attempts):
+                try:
+                    # Check if tab has basic properties
+                    if hasattr(tab, 'page_title'):
+                        title = await tab.page_title()
+                        logger.debug(f"Tab {tab_id} title: {title}")
+                        break
+                    elif hasattr(tab, 'execute_script'):
+                        # Try to execute a simple script to verify tab is ready
+                        result = await tab.execute_script('return document.readyState;')
+                        if result:
+                            logger.debug(f"Tab {tab_id} ready state check passed")
+                            break
+                    else:
+                        # Basic existence check
+                        logger.debug(f"Tab {tab_id} basic existence check passed")
+                        break
+                except Exception as e:
+                    if attempt == max_attempts - 1:
+                        logger.warning(f"Tab readiness check failed after {max_attempts} attempts: {e}")
+                    else:
+                        await asyncio.sleep(0.5)  # Wait before retry
+        except Exception as e:
+            logger.warning(f"Tab readiness check error: {e}")
+
     # Backward compatibility methods
     async def ensure_tab_methods(self, tab):
         """Ensure tab has all required methods for compatibility."""
