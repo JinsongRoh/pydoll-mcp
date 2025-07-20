@@ -242,44 +242,33 @@ async def handle_navigate_to(arguments: Dict[str, Any]) -> Sequence[TextContent]
             else:
                 raise ValueError(f"No tabs available in browser {browser_id}")
         
-        # Navigate with PyDoll compatible options (updated in v1.4.1)
-        navigation_options = {}
-        
-        # Only add supported parameters - check PyDoll API compatibility
-        if referrer:
-            navigation_options["referer"] = referrer
-        
+        # Perform navigation using PyDoll's go_to method
         try:
-            # Perform navigation - PyDoll doesn't support waitUntil parameter
-            await tab.go_to(url, **navigation_options)
+            # PyDoll's go_to method accepts url and timeout parameters
+            await tab.go_to(url, timeout=timeout)
             
-            # Wait for load state if requested - with fallback for older PyDoll versions
-            if wait_for_load:
-                try:
-                    await tab.wait_for_load_state("load", timeout * 1000)
-                except (AttributeError, TypeError):
-                    # Fallback for older PyDoll versions without wait_for_load_state
-                    import asyncio
-                    await asyncio.sleep(2)  # Basic wait for page load
+            # Note: PyDoll's go_to already waits for page load by default
+            # No need for additional wait_for_load_state
                     
         except Exception as nav_error:
-            # Enhanced error handling for PyDoll API compatibility
-            error_msg = str(nav_error)
-            if "waitUntil" in error_msg or "unexpected keyword argument" in error_msg:
-                # Retry with minimal parameters for older PyDoll versions
-                try:
-                    await tab.go_to(url)
-                    if wait_for_load:
-                        import asyncio
-                        await asyncio.sleep(2)
-                except Exception as retry_error:
-                    raise Exception(f"Navigation failed: {retry_error}")
-            else:
-                raise nav_error
+            logger.error(f"Navigation error: {nav_error}")
+            raise Exception(f"Navigation failed: {nav_error}")
         
-        # Get final URL (in case of redirects)
-        final_url = await tab.get_url()
-        title = await tab.get_title()
+        # Get final URL and title using PyDoll properties
+        try:
+            # PyDoll uses 'current_url' property, not get_url()
+            final_url = await tab.current_url
+            
+            # Get title by executing JavaScript
+            title_result = await tab.execute_script('document.title')
+            if title_result and 'result' in title_result and 'result' in title_result['result']:
+                title = title_result['result']['result'].get('value', 'Untitled')
+            else:
+                title = "Untitled"
+        except Exception as info_error:
+            logger.warning(f"Could not get page info: {info_error}")
+            final_url = url
+            title = "Unknown"
         
         result = OperationResult(
             success=True,
@@ -348,8 +337,10 @@ async def handle_refresh_page(arguments: Dict[str, Any]) -> Sequence[TextContent
             await tab.wait_for_load_state("load")
         
         # Get current URL and title after refresh
-        url = await tab.get_url()
-        title = await tab.get_title()
+        url_result = await tab.execute_script("return window.location.href")
+        url = url_result.get('result', {}).get('result', {}).get('value', '')
+        title_result = await tab.execute_script("return document.title")
+        title = title_result.get('result', {}).get('result', {}).get('value', '')
         
         result = OperationResult(
             success=True,
@@ -410,8 +401,10 @@ async def handle_go_back(arguments: Dict[str, Any]) -> Sequence[TextContent]:
             await tab.go_back()
             
         # Get current URL after navigation
-        url = await tab.get_url()
-        title = await tab.get_title()
+        url_result = await tab.execute_script("return window.location.href")
+        url = url_result.get('result', {}).get('result', {}).get('value', '')
+        title_result = await tab.execute_script("return document.title")
+        title = title_result.get('result', {}).get('result', {}).get('value', '')
         
         result = OperationResult(
             success=True,
@@ -466,8 +459,9 @@ async def handle_get_current_url(arguments: Dict[str, Any]) -> Sequence[TextCont
             else:
                 raise ValueError(f"No tabs available in browser {browser_id}")
         
-        # Get current URL
-        url = await tab.get_url()
+        # Get current URL using JavaScript
+        url_result = await tab.execute_script("return window.location.href")
+        url = url_result.get('result', {}).get('result', {}).get('value', '')
         
         result = OperationResult(
             success=True,
@@ -521,8 +515,10 @@ async def handle_get_page_title(arguments: Dict[str, Any]) -> Sequence[TextConte
                 raise ValueError(f"No tabs available in browser {browser_id}")
         
         # Get page title
-        title = await tab.get_title()
-        url = await tab.get_url()
+        title_result = await tab.execute_script("return document.title")
+        title = title_result.get('result', {}).get('result', {}).get('value', '')
+        url_result = await tab.execute_script("return window.location.href")
+        url = url_result.get('result', {}).get('result', {}).get('value', '')
         
         result = OperationResult(
             success=True,
@@ -578,9 +574,12 @@ async def handle_get_page_source(arguments: Dict[str, Any]) -> Sequence[TextCont
                 raise ValueError(f"No tabs available in browser {browser_id}")
         
         # Get page source
-        source = await tab.get_content()
-        url = await tab.get_url()
-        title = await tab.get_title()
+        source_result = await tab.execute_script("return document.documentElement.outerHTML")
+        source = source_result.get('result', {}).get('result', {}).get('value', '')
+        url_result = await tab.execute_script("return window.location.href")
+        url = url_result.get('result', {}).get('result', {}).get('value', '')
+        title_result = await tab.execute_script("return document.title")
+        title = title_result.get('result', {}).get('result', {}).get('value', '')
         
         data = {
             "browser_id": browser_id,

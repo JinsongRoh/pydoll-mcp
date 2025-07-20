@@ -410,37 +410,17 @@ async def handle_new_tab(arguments: Dict[str, Any]) -> Sequence[TextContent]:
         # Generate unique tab ID
         tab_id = f"tab_{uuid.uuid4().hex[:8]}"
         
-        # Create new tab in the browser
+        # Create new tab in the browser using PyDoll API
         try:
-            # PyDoll 2.3.1+ compatibility: Use new_tab method
-            if hasattr(browser_instance.browser, 'new_tab'):
-                tab = await browser_instance.browser.new_tab()
-                # Store tab in browser instance
-                browser_instance.tabs[tab_id] = tab
-                # Navigate to URL if provided
-                if url:
-                    try:
-                        await tab.goto(url)
-                    except AttributeError:
-                        # Fallback for different PyDoll versions
-                        if hasattr(tab, 'navigate'):
-                            await tab.navigate(url)
-                        else:
-                            logger.warning(f"Tab {tab_id} does not support navigation")
-            else:
-                # Fallback: Create tab using browser.tab if available
-                if hasattr(browser_instance.browser, 'tab'):
-                    tab = browser_instance.browser.tab
-                    browser_instance.tabs[tab_id] = tab
-                    if url:
-                        try:
-                            await tab.goto(url)
-                        except AttributeError:
-                            if hasattr(tab, 'navigate'):
-                                await tab.navigate(url)
-                else:
-                    # Last resort: Create a basic tab reference
-                    browser_instance.tabs[tab_id] = browser_instance.browser
+            # PyDoll uses new_tab() method to create tabs
+            tab = await browser_instance.browser.new_tab(url=url or "about:blank")
+            
+            # Store tab in browser instance
+            browser_instance.tabs[tab_id] = tab
+            
+            # Set as active tab if not in background
+            if not background:
+                browser_instance.active_tab_id = tab_id
             
             browser_instance.stats["total_tabs_created"] += 1
             browser_instance.update_activity()
@@ -552,20 +532,30 @@ async def handle_list_tabs(arguments: Dict[str, Any]) -> Sequence[TextContent]:
         for tab_id, tab in browser_instance.tabs.items():
             tab_info = {
                 "tab_id": tab_id,
-                "is_active": True,  # For now, assume active
+                "is_active": tab_id == browser_instance.active_tab_id,
                 "url": "about:blank",  # Default URL
                 "title": "New Tab"  # Default title
             }
             
-            if include_content and tab:
+            if tab:
                 try:
-                    # Try to get actual tab information
-                    if hasattr(tab, 'url'):
-                        tab_info["url"] = getattr(tab, 'url', 'about:blank')
-                    if hasattr(tab, 'title'):
-                        tab_info["title"] = getattr(tab, 'title', 'New Tab')
-                except Exception:
-                    pass  # Keep default values
+                    # Get actual tab information using PyDoll API
+                    # Get URL and title using JavaScript
+                    if hasattr(tab, 'execute_script'):
+                        try:
+                            # Get URL
+                            url_result = await tab.execute_script('return window.location.href')
+                            if url_result and 'result' in url_result and 'result' in url_result['result']:
+                                tab_info["url"] = url_result['result']['result'].get('value', 'about:blank')
+                            
+                            # Get title
+                            title_result = await tab.execute_script('return document.title')
+                            if title_result and 'result' in title_result and 'result' in title_result['result']:
+                                tab_info["title"] = title_result['result']['result'].get('value', 'New Tab')
+                        except Exception as e:
+                            logger.debug(f"Could not get tab info via JS for {tab_id}: {e}")
+                except Exception as e:
+                    logger.debug(f"Could not get tab info for {tab_id}: {e}")
             
             tabs_data.append(tab_info)
         

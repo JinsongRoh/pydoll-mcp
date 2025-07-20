@@ -16,6 +16,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced form recognition
 - GUI setup tool
 
+## [1.5.10] - 2025-07-20
+
+### Fixed
+- **Critical**: Fixed PyDoll API compatibility - Replaced non-existent methods with actual PyDoll API calls
+- All navigation tools now use `execute_script()` for URL, title, and content retrieval
+- Fixed result parsing from PyDoll's nested response structure
+- Tab information in `list_tabs` now shows actual URLs and titles
+
+### Enhanced
+- Browser manager now stores initial tab reference in `browser.tab` for compatibility
+- Better error handling and logging for PyDoll operations
+- Improved JavaScript execution result parsing
+
+### Technical Details
+- Replaced `get_url()`, `get_title()`, `get_content()` with JavaScript execution
+- Updated all navigation handlers to use PyDoll's actual API
+- Fixed browser_tools.py to retrieve tab info via JavaScript
+
 ## [1.5.9] - 2025-07-20
 
 ### Fixed

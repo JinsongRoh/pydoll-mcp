@@ -491,34 +491,28 @@ class BrowserManager:
             else:
                 raise ValueError(f"Unsupported browser type: {browser_type}")
             
-            # Start browser
+            # Start browser - browser.start() returns the initial Tab
             start_time = time.time()
-            await browser.start()
+            initial_tab = await browser.start()
             startup_time = time.time() - start_time
             
             # Create browser instance
             instance = BrowserInstance(browser, browser_type, browser_id)
             instance.metrics.record_navigation(startup_time)
             
-            # Check for initial tab created by browser
-            try:
-                # Get the default tab that's created when browser starts
-                if hasattr(browser, 'tab') and browser.tab:
-                    # Add the default tab to our tracking
-                    default_tab_id = self._generate_tab_id()
-                    instance.tabs[default_tab_id] = browser.tab
-                    instance.active_tab_id = default_tab_id
-                    logger.info(f"Detected and registered default tab: {default_tab_id}")
-                elif hasattr(browser, 'tabs') and browser.tabs:
-                    # Some browsers might have a tabs collection
-                    for idx, tab in enumerate(browser.tabs):
-                        tab_id = self._generate_tab_id()
-                        instance.tabs[tab_id] = tab
-                        if idx == 0:  # Set first tab as active
-                            instance.active_tab_id = tab_id
-                        logger.info(f"Detected and registered tab: {tab_id}")
-            except Exception as e:
-                logger.warning(f"Could not detect initial tabs: {e}")
+            # IMPORTANT: PyDoll's browser.start() ALWAYS returns the initial Tab object
+            # We must register this tab immediately
+            if initial_tab:
+                default_tab_id = self._generate_tab_id()
+                instance.tabs[default_tab_id] = initial_tab
+                instance.active_tab_id = default_tab_id
+                # Store the tab reference in browser object for compatibility
+                instance.browser.tab = initial_tab
+                logger.info(f"Registered initial tab from browser.start(): {default_tab_id}")
+            else:
+                # This should never happen with PyDoll
+                logger.error("CRITICAL: No initial tab returned from browser.start() - this is unexpected!")
+                raise RuntimeError("PyDoll browser.start() did not return a tab")
             
             # Store instance
             self.browsers[browser_id] = instance
