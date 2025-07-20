@@ -1,4 +1,4 @@
-# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.10
+# 🤖 PyDoll MCP Server(pydoll-mcp) v1.5.11
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/219f2dbc-37ed-4aea-a289-ba39cdbb335d" alt="PyDoll Logo" width="200"/>
@@ -20,25 +20,25 @@
     <img src="https://img.shields.io/badge/Protocol-MCP-orange?style=flat-square" alt="MCP Protocol"/>
   </a>
   <a href="https://pypi.org/project/pydoll-mcp/">
-    <img src="https://img.shields.io/badge/PyPI-v1.5.10-blue?style=flat-square&logo=pypi" alt="PyPI"/>
+    <img src="https://img.shields.io/badge/PyPI-v1.5.11-blue?style=flat-square&logo=pypi" alt="PyPI"/>
   </a>
 </p>
 
-## 📢 Latest Updates (v1.5.10 - 2025-07-20)
+## 📢 Latest Updates (v1.5.11 - 2025-07-20)
 
-### 🔧 PyDoll API Compatibility Fixes
+### 🔧 Critical Tab ID and PyDoll API Fixes
 
-#### ✅ Fixed PyDoll API Integration
-- **Fixed**: Replaced deprecated/incorrect API calls with PyDoll's actual methods
-- **Updated**: All navigation tools now use `execute_script()` for reliable data retrieval
-- **Enhanced**: Tab information retrieval using JavaScript execution
-- **Improved**: Browser initial tab is now properly stored and accessible
+#### ✅ Fixed Tab ID Parameter Handling
+- **Fixed**: `find_element` failed with "Tab None not found" errors even when tab_id was provided
+- **Enhanced**: Added proper tab validation with clear error messages
+- **Improved**: Tab ID is now correctly handled throughout all element tools
 
-#### 🎯 Specific Fixes
-- **Navigation**: URL and title retrieval now uses JavaScript execution instead of non-existent methods
-- **Tab Management**: Fixed `list_tabs` to show actual URLs and titles
-- **Error Handling**: Better error messages when PyDoll operations fail
-- **Compatibility**: Ensured compatibility with PyDoll's actual API structure
+#### 🎯 Enhanced PyDoll API Compatibility
+- **Element Finding**: Completely rewrote element finding to use `execute_script` with JavaScript
+- **CSS Selectors**: Now uses `document.querySelectorAll()` for reliable element finding
+- **XPath Support**: Implemented via `document.evaluate()` for XPath queries
+- **Natural Attributes**: Custom JavaScript logic for PyDoll's natural attribute searches
+- **JavaScript Execution**: Fixed to use PyDoll's `execute_script` API with proper result parsing
 
 ## 📢 Previous Updates (v1.5.9 - 2025-07-20)
 
